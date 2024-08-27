@@ -1,5 +1,6 @@
+import CONSOLE from "../utils/console";
 import EventEmitter from "../utils/event-emitter";
-import { WsMessage, WsMessageFromJSON } from "./generated";
+import { WsClientMessage, WsClientMessageToJSON, WsMessage, WsMessageFromJSON } from "./generated";
 
 /**
  * Declaration of all events the {@link WebSocketWrapper} exposes:
@@ -45,38 +46,67 @@ export type WebSocketState = "disconnected" | "connecting" | "connected" | "wait
  * Use {@link EventEmitter.addEventListener `addEventListener`} and {@link EventEmitter.removeEventListener `removeEventListener`} to listen for {@link WebSocketEvents events}.
  */
 export class WebSocketWrapper extends EventEmitter<WebSocketEvents> {
-    ws: WebSocket | null = null;
-    url: string = "";
-    _state: WebSocketState = "disconnected";
+    private ws: WebSocket | null = null;
+    private timeout: number | null = null;
+    private url: string = "";
+    private _state: WebSocketState = "disconnected";
 
+    /** Open a new connection discarding any previous one */
     connect(url: string) {
         this.url = url;
-        this._reconnect();
+        this.clearOld();
+        this.reconnect();
     }
 
+    send(msg: WsClientMessage) {
+        if (this.ws !== null && this.state === "connected") {
+            this.ws.send(JSON.stringify(WsClientMessageToJSON(msg)));
+        }
+    }
+
+    /** Explicitly discards the connection without opening a new one */
     disconnect() {
+        this.clearOld();
+        this.state = "disconnected";
+    }
+
+    /** Sets `ws = null` and handles the old websocket (if any) */
+    private clearOld() {
+        if (this.timeout !== null) {
+            clearTimeout(this.timeout);
+            this.timeout = null;
+        }
         if (this.ws !== null) {
-            this.ws.close();
+            if (this.state === "connected") {
+                this.ws.close();
+            } else {
+                this.ws.onopen = function () {
+                    this.close();
+                };
+            }
+            this.ws.onmessage = null;
+            this.ws.onclose = null;
             this.ws = null;
         }
     }
 
-    _reconnect = () => {
+    private reconnect = () => {
+        this.state = "connecting";
         this.ws = new WebSocket(this.url);
         this.ws.onopen = () => {
             this.state = "connected";
         };
         this.ws.onmessage = (event) => {
             if (typeof event.data !== "string") {
-                console.error("Received a non string websocket message: ", event.data);
+                CONSOLE.error("Received a non string websocket message: ", event.data);
             } else {
                 try {
                     const message = WsMessageFromJSON(JSON.parse(event.data));
                     this.emitEvent(`message`, message);
                     this.emitEvent(`message.${message.type}`, message);
                 } catch (e) {
-                    if (e instanceof SyntaxError) console.error("Received a non json websocket message: ", event.data);
-                    else console.error("Received malformed json websocket message: ", JSON.parse(event.data));
+                    if (e instanceof SyntaxError) CONSOLE.error("Received a non json websocket message: ", event.data);
+                    else CONSOLE.error("Received malformed json websocket message: ", JSON.parse(event.data));
                 }
             }
         };
@@ -84,17 +114,17 @@ export class WebSocketWrapper extends EventEmitter<WebSocketEvents> {
             switch (this.state) {
                 case "disconnected":
                 case "waiting":
-                    console.error("There shouldn't be any open websocket to close");
+                    CONSOLE.error("There shouldn't be any open websocket to close");
                     break;
                 case "connecting":
-                    console.info("Failed to connect. Retry in 10s");
+                    CONSOLE.info("Failed to connect. Retry in 10s");
                     this.state = "waiting";
-                    setTimeout(this._reconnect, 10000);
+                    this.timeout = setTimeout(this.reconnect, 10000);
                     break;
                 case "connected":
-                    if (event.wasClean) console.info("Websocket has been closed cleanly", event.reason);
-                    else console.error("Websocket lost connection", event.reason);
-                    this._reconnect();
+                    if (event.wasClean) CONSOLE.info("Websocket has been closed cleanly", event.reason);
+                    else CONSOLE.error("Websocket lost connection", event.reason);
+                    this.reconnect();
                     break;
             }
             this.ws = null;
@@ -104,7 +134,8 @@ export class WebSocketWrapper extends EventEmitter<WebSocketEvents> {
     get state() {
         return this._state;
     }
-    set state(value: WebSocketState) {
+
+    private set state(value: WebSocketState) {
         this._state = value;
         this.emitEvent(`state`, value);
         this.emitEvent(`state.${value}`, undefined);

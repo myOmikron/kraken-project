@@ -1,23 +1,23 @@
-import React, { CSSProperties } from "react";
-import { handleApiError } from "../../../utils/helper";
+import React from "react";
 import Select from "react-select";
-import { selectStyles } from "../../../components/select-menu";
-import { Result } from "../../../utils/result";
 import { ApiError } from "../../../api/error";
-import Input from "../../../components/input";
+import { selectStyles } from "../../../components/select-menu";
 import "../../../styling/workspace-table.css";
-import ArrowLeftIcon from "../../../svg/arrow-left";
-import ArrowRightIcon from "../../../svg/arrow-right";
 import ArrowFirstIcon from "../../../svg/arrow-first";
 import ArrowLastIcon from "../../../svg/arrow-last";
+import ArrowLeftIcon from "../../../svg/arrow-left";
+import ArrowRightIcon from "../../../svg/arrow-right";
 import PlusIcon from "../../../svg/plus";
-import Popup from "reactjs-popup";
-import FilterInput, { FilterInputProps } from "./filter-input";
-import { toast } from "react-toastify";
+import { handleApiError } from "../../../utils/helper";
+import { Result } from "../../../utils/result";
+import FilterInput, { FilterInputProps, useFilter } from "./filter-input";
 
 export type WorkspaceDataTableProps<T> = {
+    /** workspace UUID */
+    workspace: string;
+
     /** Method used to query a page */
-    query: (limit: number, offset: number) => Promise<Result<GenericPage<T>, ApiError>>;
+    query: (filter: string, limit: number, offset: number) => Promise<Result<GenericPage<T>, ApiError>>;
 
     /**
      * List of dependencies captured by `query`.
@@ -25,7 +25,7 @@ export type WorkspaceDataTableProps<T> = {
      * I.e. add every variable the `query` function captures from its environment.
      * Read about {@link React.useEffect}'s second argument for more details.
      */
-    queryDeps?: React.DependencyList;
+    queryDeps: React.DependencyList;
 
     /** The table's header row and a function for rendering the body's rows */
     children: [React.ReactNode, (item: T) => React.ReactNode];
@@ -39,6 +39,8 @@ export type WorkspaceDataTableProps<T> = {
      * When this callback is omitted, the button is as well.
      */
     onAdd?: () => void;
+
+    noBackground?: boolean;
 };
 export type GenericPage<T> = {
     items: Array<T>;
@@ -59,19 +61,22 @@ export default function WorkspaceTable<T extends { uuid: string }>(props: Worksp
         children: [header, renderItem],
         columnsTemplate,
         onAdd,
+        noBackground,
     } = props;
 
-    const { items, ...table } = useTable(query, queryDeps);
+    const filter = useFilter(props.workspace, "global");
+    const { items, ...table } = useTable(
+        (limit, offset) => query(filter.applied, limit, offset),
+        [filter.applied, ...queryDeps],
+    );
 
     return StatelessWorkspaceTable({
         ...table,
         children: [header, items.map(renderItem)],
         columnsTemplate,
         onAdd,
-        applyFilter() {
-            toast.warn("Not implemented yet");
-        },
-        filterTarget: "global",
+        filter,
+        solidBackground: noBackground,
     });
 }
 
@@ -87,8 +92,6 @@ export type StatelessWorkspaceTableProps = {
     offset: number;
     setOffset: (offset: number) => void;
 
-    applyFilter: (filter: string) => void;
-
     /** The table's header row and body rows*/
     children: [React.ReactNode, Array<React.ReactNode>];
 
@@ -102,8 +105,11 @@ export type StatelessWorkspaceTableProps = {
      */
     onAdd?: () => void;
 
-    filterTarget: FilterInputProps["target"];
+    filter: FilterInputProps;
+
+    solidBackground?: boolean;
 };
+
 export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
     const {
         total,
@@ -111,14 +117,15 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
         setLimit,
         offset,
         setOffset: setRawOffset,
-        applyFilter,
         children: [header, body],
         columnsTemplate,
         onAdd,
-        filterTarget,
+        filter,
+        solidBackground,
     } = props;
 
     const lastOffset = Math.floor(total / limit) * limit;
+
     function setOffset(offset: number) {
         if (offset < 0) {
             setRawOffset(0);
@@ -129,12 +136,17 @@ export function StatelessWorkspaceTable(props: StatelessWorkspaceTableProps) {
         }
     }
 
-    // @ts-ignore
-    const style: CSSProperties = { "--columns": columnsTemplate };
     return (
-        <div className={"workspace-table pane"} style={style}>
+        <div
+            className={
+                solidBackground !== undefined && solidBackground
+                    ? "workspace-table solid-background"
+                    : "workspace-table pane"
+            }
+            style={{ "--columns": columnsTemplate } as Record<string, string>}
+        >
             <div className={"workspace-table-pre-header"}>
-                <FilterInput placeholder={"Filter..."} applyFilter={applyFilter} target={filterTarget} />
+                <FilterInput {...filter} />
                 {onAdd === undefined ? null : (
                     <button className={"button"} type={"button"} onClick={onAdd}>
                         <PlusIcon />
@@ -192,7 +204,7 @@ export function useTable<T extends { uuid: string }>(
     query: (limit: number, offset: number) => Promise<Result<GenericPage<T>, ApiError>>,
     queryDeps?: React.DependencyList,
 ) {
-    const [limit, setLimit] = React.useState(20);
+    const [limit, setLimit] = React.useState(100);
     const [offset, setOffset] = React.useState(0);
     const [total, setTotal] = React.useState(0);
     const [items, setItems] = React.useState<Array<T>>([]);

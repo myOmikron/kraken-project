@@ -1,16 +1,23 @@
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
+use rorm::and;
 use rorm::db::Executor;
+use rorm::insert;
 use rorm::prelude::*;
-use rorm::{and, insert, query};
+use rorm::query;
 use thiserror::Error;
 use uuid::Uuid;
 
 use crate::api::handler::common::error::ApiError;
 use crate::chan::global::GLOBAL;
-use crate::models::{
-    OauthClient, User, Workspace, WorkspaceAccessToken, WorkspaceInvitation, WorkspaceMember,
-    WorkspaceMemberPermission,
-};
+use crate::models::OauthClient;
+use crate::models::User;
+use crate::models::Workspace;
+use crate::models::WorkspaceAccessToken;
+use crate::models::WorkspaceInvitation;
+use crate::models::WorkspaceMember;
+use crate::models::WorkspaceMemberPermission;
+use crate::models::WorkspaceNotesInsert;
 
 #[derive(Patch)]
 #[rorm(model = "WorkspaceMember")]
@@ -114,7 +121,7 @@ impl Workspace {
         user: Uuid,
     ) -> Result<bool, rorm::Error> {
         if let Some(users) = GLOBAL
-            .workspace_cache
+            .workspace_users_cache
             .get_users(workspace, executor)
             .await?
         {
@@ -162,7 +169,9 @@ impl Workspace {
             return Err(InsertWorkspaceError::EmptyName);
         }
 
-        insert!(executor, WorkspaceInsert)
+        let mut guard = executor.ensure_transaction().await?;
+
+        insert!(guard.get_transaction(), WorkspaceInsert)
             .return_nothing()
             .single(&WorkspaceInsert {
                 uuid,
@@ -171,6 +180,16 @@ impl Workspace {
                 owner: ForeignModelByField::Key(owner),
             })
             .await?;
+
+        insert!(guard.get_transaction(), WorkspaceNotesInsert)
+            .single(&WorkspaceNotesInsert {
+                uuid,
+                notes: "".to_string(),
+                workspace: ForeignModelByField::Key(uuid),
+            })
+            .await?;
+
+        guard.commit().await?;
 
         Ok(uuid)
     }

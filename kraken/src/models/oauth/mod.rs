@@ -1,10 +1,13 @@
 use rorm::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{User, Workspace};
+use crate::models::User;
+use crate::models::Workspace;
 
+mod convert;
 #[cfg(feature = "bin")]
 mod operations;
 

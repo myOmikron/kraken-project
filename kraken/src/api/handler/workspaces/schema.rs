@@ -1,15 +1,20 @@
 //! The schemas of workspace related are defined in this module
 
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use chrono::DateTime;
+use chrono::Utc;
+use serde::Deserialize;
+use serde::Serialize;
+use utoipa::IntoParams;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::attack_results::schema::{
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    FullUdpServiceDetectionResult, SimpleDnsResolutionResult, SimpleDnsTxtScanResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
-};
+use crate::api::handler::attack_results::schema::FullQueryCertificateTransparencyResult;
+use crate::api::handler::attack_results::schema::FullServiceDetectionResult;
+use crate::api::handler::attack_results::schema::FullUdpServiceDetectionResult;
+use crate::api::handler::attack_results::schema::SimpleDnsResolutionResult;
+use crate::api::handler::attack_results::schema::SimpleDnsTxtScanResult;
+use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
+use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
 use crate::api::handler::attacks::schema::SimpleAttack;
 use crate::api::handler::common::de_optional;
 use crate::api::handler::domains::schema::SimpleDomain;
@@ -46,7 +51,7 @@ pub struct UpdateWorkspaceRequest {
     pub name: Option<String>,
     /// Description of the workspace
     #[schema(example = "This workspace is for work and for work only!")]
-    #[serde(deserialize_with = "de_optional")]
+    #[serde(default, deserialize_with = "de_optional")]
     pub description: Option<Option<String>>,
 }
 
@@ -95,6 +100,8 @@ pub struct SimpleWorkspace {
     pub description: Option<String>,
     /// The owner of the workspace
     pub owner: SimpleUser,
+    /// Is this workspace archived?
+    pub archived: bool,
     /// The point in time the workspace was created
     pub created_at: DateTime<Utc>,
 }
@@ -110,12 +117,16 @@ pub struct FullWorkspace {
     /// The description of the workspace
     #[schema(example = "This workspace is ultra secure and should not be looked at!!")]
     pub description: Option<String>,
+    /// Notes of the workspace
+    pub notes: String,
     /// The owner of the workspace
     pub owner: SimpleUser,
     /// The attacks linked to this workspace
     pub attacks: Vec<SimpleAttack>,
     /// The member of the workspace
     pub members: Vec<SimpleUser>,
+    /// Is this workspace archived?
+    pub archived: bool,
     /// The point in time the workspace was created
     pub created_at: DateTime<Utc>,
 }
@@ -142,8 +153,6 @@ pub enum SearchResultEntry {
     DnsRecordResultEntry(SimpleDnsResolutionResult),
     /// DNS TXT Scan Result
     DnsTxtScanResultEntry(SimpleDnsTxtScanResult),
-    /// TCP Port Result
-    TcpPortScanResultEntry(SimpleTcpPortScanResult),
     /// Dehashed Query Result
     DehashedQueryResultEntry(SimpleQueryUnhashedResult),
     /// Certificate Transparency Result

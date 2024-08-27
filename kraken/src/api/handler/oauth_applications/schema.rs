@@ -1,9 +1,7 @@
-use rorm::Patch;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
-
-use crate::models::OauthClient;
 
 /// Create a new oauth application
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -30,8 +28,9 @@ pub struct UpdateAppRequest {
 }
 
 /// A simple (secret-less) version of a workspace
-#[derive(Serialize, Deserialize, ToSchema, Patch, Debug, Clone)]
-#[rorm(model = "OauthClient")]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[cfg_attr(feature = "bin", derive(rorm::Patch))]
+#[cfg_attr(feature = "bin", rorm(model = "crate::models::OauthClient"))]
 pub struct SimpleOauthClient {
     /// The uuid of the client
     pub uuid: Uuid,
@@ -44,8 +43,9 @@ pub struct SimpleOauthClient {
 }
 
 /// A complete version of a workspace
-#[derive(Serialize, Deserialize, ToSchema, Patch, Debug, Clone)]
-#[rorm(model = "OauthClient")]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[cfg_attr(feature = "bin", derive(rorm::Patch))]
+#[cfg_attr(feature = "bin", rorm(model = "crate::models::OauthClient"))]
 pub struct FullOauthClient {
     /// The uuid of the client
     pub uuid: Uuid,

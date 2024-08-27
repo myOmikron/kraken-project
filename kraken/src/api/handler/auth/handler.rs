@@ -1,25 +1,41 @@
 use actix_toolbox::tb_middleware::Session;
-use actix_web::web::{Data, Json};
-use actix_web::{get, post, HttpResponse};
+use actix_web::get;
+use actix_web::post;
+use actix_web::web::Data;
+use actix_web::web::Json;
+use actix_web::HttpResponse;
 use argon2::password_hash::Error;
-use argon2::{Argon2, PasswordHash, PasswordVerifier};
+use argon2::Argon2;
+use argon2::PasswordHash;
+use argon2::PasswordVerifier;
 use chrono::Utc;
 use log::debug;
-use rorm::prelude::{BackRef, ForeignModelByField};
-use rorm::{query, update, FieldAccess, Model};
+use rorm::prelude::BackRef;
+use rorm::prelude::ForeignModelByField;
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
-use webauthn_rs::prelude::{
-    CreationChallengeResponse, CredentialID, Passkey, PasskeyAuthentication, PasskeyRegistration,
-    PublicKeyCredential, RequestChallengeResponse,
-};
+use webauthn_rs::prelude::CreationChallengeResponse;
+use webauthn_rs::prelude::CredentialID;
+use webauthn_rs::prelude::Passkey;
+use webauthn_rs::prelude::PasskeyAuthentication;
+use webauthn_rs::prelude::PasskeyRegistration;
+use webauthn_rs::prelude::PublicKeyCredential;
+use webauthn_rs::prelude::RequestChallengeResponse;
 use webauthn_rs::Webauthn;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::auth::schema::{FinishRegisterRequest, LoginRequest};
-use crate::api::handler::common::error::{ApiError, ApiResult};
+use crate::api::handler::auth::schema::FinishRegisterRequest;
+use crate::api::handler::auth::schema::LoginRequest;
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
 use crate::api::middleware::AuthenticationRequired;
 use crate::chan::global::GLOBAL;
-use crate::models::{LocalUser, LocalUserKey, User};
+use crate::models::LocalUser;
+use crate::models::LocalUserKey;
+use crate::models::User;
 
 /// Test the current login state
 ///

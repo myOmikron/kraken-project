@@ -1,15 +1,19 @@
 use argon2::password_hash::SaltString;
-use argon2::{Argon2, PasswordHasher};
+use argon2::Argon2;
+use argon2::PasswordHasher;
 use rand::thread_rng;
 use rorm::db::Executor;
 use rorm::fields::types::Json;
+use rorm::insert;
 use rorm::prelude::*;
-use rorm::{insert, query};
+use rorm::query;
 use thiserror::Error;
 use uuid::Uuid;
 use webauthn_rs::prelude::Passkey;
 
-use super::{LocalUser, LocalUserKey, User};
+use super::LocalUser;
+use super::LocalUserKey;
+use super::User;
 use crate::api::handler::common::error::ApiError;
 use crate::models::UserPermission;
 

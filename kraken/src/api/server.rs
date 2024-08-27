@@ -3,32 +3,68 @@
 use std::io;
 
 use actix_toolbox::tb_middleware::actix_session::config::TtlExtensionPolicy;
-use actix_toolbox::tb_middleware::{
-    setup_logging_mw, DBSessionStore, LoggingMiddlewareConfig, PersistentSession, SessionMiddleware,
-};
+use actix_toolbox::tb_middleware::setup_logging_mw;
+use actix_toolbox::tb_middleware::DBSessionStore;
+use actix_toolbox::tb_middleware::LoggingMiddlewareConfig;
+use actix_toolbox::tb_middleware::PersistentSession;
+use actix_toolbox::tb_middleware::SessionMiddleware;
 use actix_web::cookie::time::Duration;
-use actix_web::cookie::{Key, KeyError};
+use actix_web::cookie::Key;
+use actix_web::cookie::KeyError;
 use actix_web::http::StatusCode;
-use actix_web::middleware::{Compress, ErrorHandlers};
-use actix_web::web::{scope, Data, JsonConfig, PayloadConfig};
-use actix_web::{App, HttpServer};
+use actix_web::middleware::Compress;
+use actix_web::middleware::ErrorHandlers;
+use actix_web::web::scope;
+use actix_web::web::Data;
+use actix_web::web::JsonConfig;
+use actix_web::web::PayloadConfig;
+use actix_web::App;
+use actix_web::HttpServer;
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use thiserror::Error;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
-use webauthn_rs::prelude::{Url, WebauthnError};
+use webauthn_rs::prelude::Url;
+use webauthn_rs::prelude::WebauthnError;
 use webauthn_rs::WebauthnBuilder;
 
-use crate::api::handler::{
-    api_keys, attack_results, attacks, auth, data_export, domains, global_tags, hosts, leeches,
-    oauth, oauth_applications, ports, services, settings, users, websocket, wordlists,
-    workspace_invitations, workspace_tags, workspaces,
-};
-use crate::api::middleware::{
-    handle_not_found, json_extractor_error, AdminRequired, AuthenticationRequired,
-};
-use crate::api::swagger::{ExternalApi, FrontendApi};
+use super::service;
+use crate::api::handler::api_keys;
+use crate::api::handler::attack_results;
+use crate::api::handler::attacks;
+use crate::api::handler::auth;
+use crate::api::handler::bearer_tokens;
+use crate::api::handler::data_export;
+use crate::api::handler::domains;
+use crate::api::handler::files;
+use crate::api::handler::finding_affected;
+use crate::api::handler::finding_categories;
+use crate::api::handler::finding_definitions;
+use crate::api::handler::findings;
+use crate::api::handler::global_tags;
+use crate::api::handler::hosts;
+use crate::api::handler::http_services;
+use crate::api::handler::leeches;
+use crate::api::handler::oauth;
+use crate::api::handler::oauth_applications;
+use crate::api::handler::ports;
+use crate::api::handler::services;
+use crate::api::handler::settings;
+use crate::api::handler::users;
+use crate::api::handler::websocket;
+use crate::api::handler::wordlists;
+use crate::api::handler::workspace_invitations;
+use crate::api::handler::workspace_tags;
+use crate::api::handler::workspaces;
+use crate::api::middleware::handle_not_found;
+use crate::api::middleware::json_extractor_error;
+use crate::api::middleware::AdminRequired;
+use crate::api::middleware::AuthenticationRequired;
+use crate::api::middleware::TokenRequired;
+use crate::api::swagger::ExternalApi;
+use crate::api::swagger::FrontendApi;
+use crate::api::swagger::ServiceApi;
 use crate::chan::global::GLOBAL;
 use crate::config::Config;
 use crate::modules::oauth::OauthManager;
@@ -86,6 +122,10 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     utoipa_swagger_ui::Url::new("external-api", "/api-doc/external-api.json"),
                     ExternalApi::openapi(),
                 ),
+                (
+                    utoipa_swagger_ui::Url::new("service-api", "/api-doc/service-api.json"),
+                    ServiceApi::openapi(),
+                ),
             ]))
             .service(
                 scope("/api/v1/auth")
@@ -107,6 +147,11 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
             .service(scope("/api/v1/oauth-server").service(oauth::handler::token))
             .service(scope("/api/v1/export").service(data_export::handler::export_workspace))
             .service(
+                scope("/api/v1/service")
+                    .wrap(TokenRequired)
+                    .service(service::workspaces::handler::create_workspace),
+            )
+            .service(
                 scope("/api/v1/admin")
                     .wrap(AdminRequired)
                     .service(leeches::handler_admin::get_leech)
@@ -121,6 +166,9 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(users::handler_admin::get_all_users_admin)
                     .service(workspaces::handler_admin::get_workspace_admin)
                     .service(workspaces::handler_admin::get_all_workspaces_admin)
+                    .service(files::handler_admin::get_all_files_admin)
+                    .service(files::handler_admin::download_file_admin)
+                    .service(files::handler_admin::delete_file_admin)
                     .service(oauth_applications::handler_admin::create_oauth_app)
                     .service(oauth_applications::handler_admin::get_all_oauth_apps)
                     .service(oauth_applications::handler_admin::get_oauth_app)
@@ -134,7 +182,15 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(wordlists::handler_admin::create_wordlist_admin)
                     .service(wordlists::handler_admin::get_all_wordlists_admin)
                     .service(wordlists::handler_admin::update_wordlist_admin)
-                    .service(wordlists::handler_admin::delete_wordlist_admin),
+                    .service(wordlists::handler_admin::delete_wordlist_admin)
+                    .service(finding_categories::handler_admin::create_finding_category)
+                    .service(finding_categories::handler_admin::update_finding_category)
+                    .service(finding_categories::handler_admin::delete_finding_category)
+                    .service(finding_definitions::handler_admin::get_finding_definition_usage)
+                    .service(finding_definitions::handler_admin::delete_finding_definition)
+                    .service(bearer_tokens::handler_admin::create_bearer_token)
+                    .service(bearer_tokens::handler_admin::delete_bearer_token)
+                    .service(bearer_tokens::handler_admin::list_all_bearer_tokens),
             )
             .service(
                 scope("/api/v1")
@@ -156,8 +212,13 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(workspaces::handler::search)
                     .service(workspaces::handler::get_search_results)
                     .service(workspaces::handler::get_searches)
+                    .service(workspaces::handler::archive_workspace)
+                    .service(workspaces::handler::unarchive_workspace)
+                    .service(files::handler::upload_file)
+                    .service(files::handler::upload_image)
+                    .service(files::handler::download_thumbnail)
+                    .service(files::handler::download_file)
                     .service(attacks::handler::bruteforce_subdomains)
-                    .service(attacks::handler::scan_tcp_ports)
                     .service(attacks::handler::query_certificate_transparency)
                     .service(attacks::handler::delete_attack)
                     .service(attacks::handler::get_attack)
@@ -169,9 +230,9 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(attacks::handler::udp_service_detection)
                     .service(attacks::handler::dns_resolution)
                     .service(attacks::handler::dns_txt_scan)
+                    .service(attacks::handler::os_detection)
                     .service(attacks::handler::testssl)
                     .service(attack_results::handler::get_bruteforce_subdomains_results)
-                    .service(attack_results::handler::get_tcp_port_scan_results)
                     .service(attack_results::handler::get_query_certificate_transparency_results)
                     .service(attack_results::handler::get_query_unhashed_results)
                     .service(attack_results::handler::get_host_alive_results)
@@ -179,6 +240,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(attack_results::handler::get_udp_service_detection_results)
                     .service(attack_results::handler::get_dns_resolution_results)
                     .service(attack_results::handler::get_dns_txt_scan_results)
+                    .service(attack_results::handler::get_os_detection_results)
                     .service(attack_results::handler::get_testssl_results)
                     .service(api_keys::handler::create_api_key)
                     .service(api_keys::handler::get_api_keys)
@@ -196,6 +258,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(hosts::handler::delete_host)
                     .service(hosts::handler::get_host_sources)
                     .service(hosts::handler::get_host_relations)
+                    .service(hosts::handler::get_host_findings)
                     .service(ports::handler::get_all_ports)
                     .service(ports::handler::get_port)
                     .service(ports::handler::create_port)
@@ -203,6 +266,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(ports::handler::delete_port)
                     .service(ports::handler::get_port_sources)
                     .service(ports::handler::get_port_relations)
+                    .service(ports::handler::get_port_findings)
                     .service(services::handler::get_all_services)
                     .service(services::handler::get_service)
                     .service(services::handler::create_service)
@@ -210,6 +274,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(services::handler::delete_service)
                     .service(services::handler::get_service_sources)
                     .service(services::handler::get_service_relations)
+                    .service(services::handler::get_service_findings)
                     .service(domains::handler::get_all_domains)
                     .service(domains::handler::get_domain)
                     .service(domains::handler::create_domain)
@@ -217,10 +282,33 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(domains::handler::delete_domain)
                     .service(domains::handler::get_domain_sources)
                     .service(domains::handler::get_domain_relations)
+                    .service(domains::handler::get_domain_findings)
+                    .service(http_services::handler::get_all_http_services)
+                    .service(http_services::handler::get_http_service)
+                    .service(http_services::handler::create_http_service)
+                    .service(http_services::handler::update_http_service)
+                    .service(http_services::handler::delete_http_service)
+                    .service(http_services::handler::get_http_service_sources)
+                    .service(http_services::handler::get_http_service_relations)
+                    .service(http_services::handler::get_http_service_findings)
                     .service(wordlists::handler::get_all_wordlists)
                     .service(workspace_invitations::handler::get_all_invitations)
                     .service(workspace_invitations::handler::accept_invitation)
-                    .service(workspace_invitations::handler::decline_invitation),
+                    .service(workspace_invitations::handler::decline_invitation)
+                    .service(findings::handler::create_finding)
+                    .service(findings::handler::get_all_findings)
+                    .service(findings::handler::get_finding)
+                    .service(findings::handler::update_finding)
+                    .service(findings::handler::delete_finding)
+                    .service(finding_affected::handler::create_finding_affected)
+                    .service(finding_affected::handler::get_finding_affected)
+                    .service(finding_affected::handler::update_finding_affected)
+                    .service(finding_affected::handler::delete_finding_affected)
+                    .service(finding_categories::handler::get_all_finding_categories)
+                    .service(finding_definitions::handler::create_finding_definition)
+                    .service(finding_definitions::handler::get_finding_definition)
+                    .service(finding_definitions::handler::get_all_finding_definitions)
+                    .service(finding_definitions::handler::update_finding_definition),
             )
     })
     .bind((

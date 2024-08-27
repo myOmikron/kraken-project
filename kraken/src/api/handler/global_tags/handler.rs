@@ -3,8 +3,10 @@ use actix_web::web::Json;
 use rorm::query;
 
 use crate::api::handler::common::error::ApiResult;
-use crate::api::handler::global_tags::schema::{FullGlobalTag, ListGlobalTags};
+use crate::api::handler::global_tags::schema::FullGlobalTag;
+use crate::api::handler::global_tags::schema::ListGlobalTags;
 use crate::chan::global::GLOBAL;
+use crate::models::convert::FromDb;
 use crate::models::GlobalTag;
 
 /// Retrieve all global tags
@@ -28,7 +30,7 @@ pub async fn get_all_global_tags() -> ApiResult<Json<ListGlobalTags>> {
             .map(|x| FullGlobalTag {
                 uuid: x.uuid,
                 name: x.name,
-                color: x.color.into(),
+                color: FromDb::from_db(x.color),
             })
             .collect(),
     }))

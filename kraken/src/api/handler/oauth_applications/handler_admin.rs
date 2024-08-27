@@ -1,14 +1,27 @@
-use actix_web::web::{Json, Path};
-use actix_web::{delete, get, post, put, HttpResponse};
-use rand::distributions::{Alphanumeric, DistString};
-use rorm::{insert, query, update, FieldAccess, Model};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::post;
+use actix_web::put;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
+use rand::distributions::Alphanumeric;
+use rand::distributions::DistString;
+use rorm::insert;
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{PathUuid, UuidResponse};
-use crate::api::handler::oauth_applications::schema::{
-    CreateAppRequest, FullOauthClient, ListOauthApplications, UpdateAppRequest,
-};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::UuidResponse;
+use crate::api::handler::oauth_applications::schema::CreateAppRequest;
+use crate::api::handler::oauth_applications::schema::FullOauthClient;
+use crate::api::handler::oauth_applications::schema::ListOauthApplications;
+use crate::api::handler::oauth_applications::schema::UpdateAppRequest;
 use crate::chan::global::GLOBAL;
 use crate::models::OauthClient;
 

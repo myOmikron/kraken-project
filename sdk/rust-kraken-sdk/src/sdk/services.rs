@@ -1,16 +1,21 @@
 use std::net::IpAddr;
 use std::num::NonZeroU16;
 
-use ipnetwork::IpNetwork;
-use kraken::api::handler::common::schema::{PageParams, ServiceResultsPage, UuidResponse};
-use kraken::api::handler::services::schema::{
-    CreateServiceRequest, FullService, GetAllServicesQuery, ServiceRelations, UpdateServiceRequest,
-};
-use kraken::models::{ManualServiceCertainty, PortProtocol};
+use kraken::api::handler::common::schema::ServiceResultsPage;
+use kraken::api::handler::common::schema::UuidResponse;
+use kraken::api::handler::findings::schema::ListFindings;
+use kraken::api::handler::findings::schema::SimpleFinding;
+use kraken::api::handler::services::schema::CreateServiceRequest;
+use kraken::api::handler::services::schema::FullService;
+use kraken::api::handler::services::schema::GetAllServicesQuery;
+use kraken::api::handler::services::schema::ManualServiceCertainty;
+use kraken::api::handler::services::schema::ServiceProtocols;
+use kraken::api::handler::services::schema::ServiceRelations;
+use kraken::api::handler::services::schema::UpdateServiceRequest;
 use uuid::Uuid;
 
-use crate::sdk::utils::KrakenRequest;
-use crate::{KrakenClient, KrakenResult};
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 impl KrakenClient {
     /// Add a service manually to kraken
@@ -20,26 +25,18 @@ impl KrakenClient {
         name: String,
         certainty: ManualServiceCertainty,
         ip_addr: IpAddr,
-        port: Option<(NonZeroU16, PortProtocol)>,
+        port: Option<(NonZeroU16, ServiceProtocols)>,
     ) -> KrakenResult<Uuid> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/services"))
-            .expect("Valid Url");
-
         let uuid: UuidResponse = self
-            .make_request(
-                KrakenRequest::post(url)
-                    .body(CreateServiceRequest {
-                        name,
-                        certainty,
-                        host: IpNetwork::from(ip_addr),
-                        port: port.map(|x| x.0.get()),
-                        protocol: port.map(|x| x.1),
-                    })
-                    .build(),
-            )
+            .post(&format!("api/v1/workspaces/{workspace}/services"))
+            .body(CreateServiceRequest {
+                name,
+                certainty,
+                host: ip_addr,
+                port: port.map(|x| x.0.get()),
+                protocols: port.map(|x| x.1),
+            })
+            .send()
             .await?;
 
         Ok(uuid.uuid)
@@ -49,36 +46,19 @@ impl KrakenClient {
     pub async fn get_all_services(
         &self,
         workspace: Uuid,
-        page: PageParams,
+        query: GetAllServicesQuery,
     ) -> KrakenResult<ServiceResultsPage> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/services/all"))
-            .expect("Valid Url");
-
-        self.make_request(
-            KrakenRequest::post(url)
-                .body(GetAllServicesQuery {
-                    page,
-                    host: None,
-                    global_filter: None,
-                    service_filter: None,
-                })
-                .build(),
-        )
-        .await
+        self.post(&format!("api/v1/workspaces/{workspace}/services/all"))
+            .body(query)
+            .send()
+            .await
     }
 
     /// Get a single service
     pub async fn get_service(&self, workspace: Uuid, service: Uuid) -> KrakenResult<FullService> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/services/{service}"))
-            .expect("Valid Url");
-
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(&format!("api/v1/workspaces/{workspace}/services/{service}"))
+            .send()
+            .await
     }
 
     /// Update a service
@@ -90,28 +70,17 @@ impl KrakenClient {
         service: Uuid,
         update: UpdateServiceRequest,
     ) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/services/{service}"))
-            .expect("Valid Url");
-
-        self.make_request(KrakenRequest::put(url).body(update).build())
+        self.put(&format!("api/v1/workspaces/{workspace}/services/{service}"))
+            .body(update)
+            .send()
             .await
     }
 
     /// Delete a service
     pub async fn delete_service(&self, workspace: Uuid, service: Uuid) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/services/{service}"))
-            .expect("Valid url");
-
-        self.make_request(KrakenRequest::delete(url).build())
-            .await?;
-
-        Ok(())
+        self.delete(&format!("api/v1/workspaces/{workspace}/services/{service}"))
+            .send()
+            .await
     }
 
     /// List all direct relations to the service
@@ -120,14 +89,25 @@ impl KrakenClient {
         workspace: Uuid,
         service: Uuid,
     ) -> KrakenResult<ServiceRelations> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!(
-                "api/v1/workspaces/{workspace}/services/{service}/relations"
-            ))
-            .expect("Valid Url");
+        self.get(&format!(
+            "api/v1/workspaces/{workspace}/services/{service}/relations"
+        ))
+        .send()
+        .await
+    }
 
-        self.make_request(KrakenRequest::get(url).build()).await
+    /// List all findings affecting the service
+    pub async fn get_service_findings(
+        &self,
+        workspace: Uuid,
+        service: Uuid,
+    ) -> KrakenResult<Vec<SimpleFinding>> {
+        let list: ListFindings = self
+            .get(&format!(
+                "api/v1/workspaces/{workspace}/services/{service}/findings"
+            ))
+            .send()
+            .await?;
+        Ok(list.findings)
     }
 }

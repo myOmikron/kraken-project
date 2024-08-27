@@ -1,16 +1,27 @@
-use actix_web::web::{Json, Path};
-use actix_web::{delete, get, HttpResponse};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
 use futures::TryStreamExt;
-use rorm::{and, query, FieldAccess, Model};
+use rorm::and;
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::common::error::{ApiError, ApiResult};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::PathUuid;
-use crate::api::handler::oauth_decisions::schema::{FullOauthDecision, ListOauthDecisions};
+use crate::api::handler::oauth_decisions::schema::FullOauthDecision;
+use crate::api::handler::oauth_decisions::schema::ListOauthDecisions;
 use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
-use crate::models::{OAuthDecision, Workspace, WorkspaceAccessToken};
+use crate::models::convert::FromDb;
+use crate::models::OAuthDecision;
+use crate::models::Workspace;
+use crate::models::WorkspaceAccessToken;
 
 /// Retrieve a user's remembered oauth decisions
 #[utoipa::path(
@@ -48,8 +59,9 @@ pub async fn get_decisions(
             description: workspace.description,
             created_at: workspace.created_at,
             owner,
+            archived: workspace.archived,
         },
-        action,
+        action: FromDb::from_db(action),
     })
     .try_collect()
     .await?;

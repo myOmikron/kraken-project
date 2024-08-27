@@ -1,0 +1,42 @@
+[Migration]
+Hash = "7682543522135667670"
+Initial = false
+Dependency = 4
+Replaces = []
+
+# BEGIN;
+#
+# ALTER TABLE domain ALTER COLUMN comment TYPE varchar(1024);
+# ALTER TABLE host ALTER COLUMN comment TYPE varchar(1024);
+# ALTER TABLE port ALTER COLUMN comment TYPE varchar(1024);
+# ALTER TABLE service ALTER COLUMN comment TYPE varchar(1024);
+#
+# END;
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TABLE domain ALTER COLUMN comment TYPE varchar(1024);"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TABLE host ALTER COLUMN comment TYPE varchar(1024);"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TABLE port ALTER COLUMN comment TYPE varchar(1024);"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "ALTER TABLE service ALTER COLUMN comment TYPE varchar(1024);"

@@ -1,0 +1,89 @@
+[Migration]
+Hash = "7762196673103440615"
+Initial = false
+Dependency = 12
+Replaces = []
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "findingaffected"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "finding"
+
+[Migration.Operations.Field]
+Name = "workspace"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "workspace"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"
+
+[[Migration.Operations]]
+Type = "DeleteField"
+Model = "findingdetails"
+Name = "screenshot"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "findingdetails"
+
+[Migration.Operations.Field]
+Name = "screenshot"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "mediafile"
+ColumnName = "uuid"
+OnDelete = "SetNull"
+OnUpdate = "Cascade"
+
+[[Migration.Operations]]
+Type = "DeleteField"
+Model = "findingdetails"
+Name = "log_file"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "findingdetails"
+
+[Migration.Operations.Field]
+Name = "log_file"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "mediafile"
+ColumnName = "uuid"
+OnDelete = "SetNull"
+OnUpdate = "Cascade"

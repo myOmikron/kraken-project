@@ -1,16 +1,31 @@
-use actix_web::web::{Json, Path};
-use actix_web::{delete, get, post, put, HttpResponse};
-use rorm::{and, query, update, FieldAccess, Model};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::post;
+use actix_web::put;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
+use rorm::and;
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{PathUuid, UuidResponse};
-use crate::api::handler::workspace_tags::schema::{
-    CreateWorkspaceTagRequest, FullWorkspaceTag, ListWorkspaceTags, PathWorkspaceTag,
-    UpdateWorkspaceTag,
-};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::UuidResponse;
+use crate::api::handler::workspace_tags::schema::CreateWorkspaceTagRequest;
+use crate::api::handler::workspace_tags::schema::FullWorkspaceTag;
+use crate::api::handler::workspace_tags::schema::ListWorkspaceTags;
+use crate::api::handler::workspace_tags::schema::PathWorkspaceTag;
+use crate::api::handler::workspace_tags::schema::UpdateWorkspaceTag;
 use crate::chan::global::GLOBAL;
-use crate::models::{Workspace, WorkspaceTag};
+use crate::models::convert::FromDb;
+use crate::models::convert::IntoDb;
+use crate::models::Workspace;
+use crate::models::WorkspaceTag;
 
 /// Create a workspace tag.
 #[utoipa::path(
@@ -108,7 +123,7 @@ pub async fn update_workspace_tag(
         .condition(WorkspaceTag::F.uuid.equals(path.w_uuid))
         .begin_dyn_set()
         .set_if(WorkspaceTag::F.name, req.name)
-        .set_if(WorkspaceTag::F.color, req.color.map(|x| x.into()))
+        .set_if(WorkspaceTag::F.color, req.color.map(|x| x.into_db()))
         .finish_dyn_set()
         .map_err(|_| ApiError::EmptyJson)?
         .exec()
@@ -198,7 +213,7 @@ pub async fn get_all_workspace_tags(
                 .map(|x| FullWorkspaceTag {
                     uuid: x.uuid,
                     name: x.name,
-                    color: x.color.into(),
+                    color: FromDb::from_db(x.color),
                     workspace: *x.workspace.key(),
                 })
                 .collect(),

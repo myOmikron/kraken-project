@@ -1,11 +1,11 @@
 import React from "react";
-import { ManualHostCertainty } from "../../../api/generated";
-import { Api } from "../../../api/api";
-import { handleApiError } from "../../../utils/helper";
-import { toast } from "react-toastify";
-import Input from "../../../components/input";
 import Select from "react-select";
+import { toast } from "react-toastify";
+import { Api } from "../../../api/api";
+import { ManualHostCertainty } from "../../../api/generated";
+import Input from "../../../components/input";
 import { selectStyles } from "../../../components/select-menu";
+import { handleApiError } from "../../../utils/helper";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
 type CreateHostFormProps = {
@@ -34,7 +34,7 @@ export function CreateHostForm(props: CreateHostFormProps) {
         >
             <h2 className={"sub-heading"}>Manually add a host</h2>
             <label>
-                Address:
+                IP / net in CIDR:
                 <Input value={ip} onChange={setIp} required />
             </label>
             <label>

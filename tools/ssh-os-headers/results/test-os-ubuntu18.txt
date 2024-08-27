@@ -1,0 +1,4 @@
+SSH: debug1: Remote protocol version 2.0, remote software version OpenSSH_7.6p1 Ubuntu-4ubuntu0.7
+TCP fingerprint: Fingerprint: 8:2:28:1:fe88:7:5b4:31642
+TCP fingerprint: Fingerprint: 8:2:28:1:fe88:7:5b4:31642
+TCP fingerprint: Fingerprint: 8:2:28:1:fe88:7:5b4:31642

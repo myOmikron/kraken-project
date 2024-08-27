@@ -1,117 +1,76 @@
-import React from "react";
-import { copyToClipboard, handleApiError } from "../../../utils/helper";
-import CopyIcon from "../../../svg/copy";
+import React, { useEffect } from "react";
+import Select, { components } from "react-select";
 import { Api, UUID } from "../../../api/api";
-import "../../../styling/workspace-heading.css";
-import ArrowDownIcon from "../../../svg/arrow-down";
-import ArrowUpIcon from "../../../svg/arrow-up";
 import { SimpleWorkspace } from "../../../api/generated";
+import { clearSelectStyles } from "../../../components/select-menu";
 import { ROUTES } from "../../../routes";
+import "../../../styling/workspace-heading.css";
+import CopyIcon from "../../../svg/copy";
+import { copyToClipboard, handleApiError } from "../../../utils/helper";
 
 type WorkspaceHeadingProps = {
     uuid: UUID;
     name: string;
 };
-type WorkspaceHeadingState = {
-    dropdownOpen: boolean;
-    workspaces?: Array<SimpleWorkspace>;
-};
 
-export default class WorkspaceHeading extends React.Component<WorkspaceHeadingProps, WorkspaceHeadingState> {
-    constructor(props: WorkspaceHeadingProps) {
-        super(props);
+export default function WorkspaceHeading(props: WorkspaceHeadingProps) {
+    const [workspaces, setWorkspaces] = React.useState<Array<SimpleWorkspace>>([]);
 
-        this.state = { dropdownOpen: false };
-    }
+    useEffect(() => {
+        Api.workspaces.all().then(handleApiError(({ workspaces }) => setWorkspaces(workspaces)));
+    }, []);
 
-    componentDidMount() {
-        this.fetchState();
-    }
-
-    fetchState() {
-        Api.workspaces.all().then(
-            handleApiError(({ workspaces }) =>
-                this.setState({
-                    workspaces,
-                })
-            )
-        );
-    }
-
-    render() {
-        return (
-            <div className={"pane workspace-heading"}>
-                {this.state.dropdownOpen ? (
-                    <>
+    return (
+        <div className={"pane workspace-heading"}>
+            <Select<{ label: string; value: string }>
+                className={"dropdown"}
+                components={{
+                    Option: (props) => (
                         <div
-                            className={"workspace-heading-event-listener"}
-                            onClick={() => {
-                                this.setState({ dropdownOpen: false });
+                            onMouseDown={(e) => {
+                                if ((e.ctrlKey && e.button == 0) || e.button == 1) {
+                                    e.stopPropagation();
+                                    ROUTES.WORKSPACE_HOSTS.open({ uuid: props.data.value });
+                                }
                             }}
                         >
-                            {" "}
+                            <components.Option {...props} />
                         </div>
-                        <div className="workspace-heading-dropdown">
-                            <div
-                                className="workspace-heading-dropdown-open"
-                                onClick={() => {
-                                    this.setState({ dropdownOpen: false });
-                                }}
-                            >
-                                <h2 className={"sub-heading"}>{this.props.name}</h2>
-                                <ArrowUpIcon />
-                            </div>
-                            <div className="workspace-heading-dropdown-content">
-                                {this.state.workspaces
-                                    ?.filter((e) => {
-                                        return e.name !== this.props.name;
-                                    })
-                                    .map((w) => {
-                                        return (
-                                            <div
-                                                onClick={(event) => {
-                                                    event.stopPropagation();
-                                                    ROUTES.WORKSPACE_HOSTS.visit({ uuid: w.uuid });
-                                                    this.setState({ dropdownOpen: false });
-                                                }}
-                                                onAuxClick={(event) => {
-                                                    event.stopPropagation();
-                                                    ROUTES.WORKSPACE_HOSTS.open({ uuid: w.uuid });
-                                                    this.setState({ dropdownOpen: false });
-                                                }}
-                                            >
-                                                {w.name}
-                                            </div>
-                                        );
-                                    })}
-                            </div>
-                        </div>
-                    </>
-                ) : (
-                    <div className="workspace-heading-dropdown">
-                        <div
-                            className="workspace-heading-dropdown-heading"
-                            onClick={() => {
-                                this.setState({ dropdownOpen: true });
-                            }}
-                        >
-                            <h2 className={"sub-heading"}>{this.props.name}</h2>
-                            <ArrowDownIcon />
-                        </div>
-                    </div>
-                )}
-                <div className={"workspace-heading-uuid"}>
-                    {this.props.uuid}
-                    <button
-                        className={"icon-button"}
-                        onClick={async () => {
-                            await copyToClipboard(this.props.uuid);
-                        }}
-                    >
-                        <CopyIcon />
-                    </button>
-                </div>
+                    ),
+                }}
+                onChange={(t) => {
+                    if (!t) return;
+                    ROUTES.WORKSPACE_HOSTS.visit({ uuid: t.value });
+                }}
+                options={
+                    workspaces
+                        ?.filter((e) => {
+                            return e.uuid !== props.uuid;
+                        })
+                        .map((w) => ({
+                            label: w.name,
+                            value: w.uuid,
+                        })) ?? []
+                }
+                value={{
+                    label: props.name,
+                    value: props.uuid,
+                }}
+                isClearable={false}
+                autoFocus={false}
+                styles={clearSelectStyles()}
+            />
+            <div className={"workspace-heading-uuid"}>
+                {props.uuid}
+                <button
+                    className={"icon-button"}
+                    onClick={async () => {
+                        await copyToClipboard(props.uuid);
+                    }}
+                >
+                    <CopyIcon />
+                </button>
             </div>
-        );
-    }
+        </div>
+    );
 }

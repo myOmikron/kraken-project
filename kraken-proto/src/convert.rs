@@ -1,14 +1,28 @@
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::IpAddr;
+use std::net::Ipv4Addr;
+use std::net::Ipv6Addr;
 use std::ops::RangeInclusive;
 
-use ipnetwork::{IpNetwork, Ipv4Network, Ipv6Network, NetworkSize};
+use ipnetwork::IpNetwork;
+use ipnetwork::Ipv4Network;
+use ipnetwork::Ipv6Network;
+use ipnetwork::NetworkSize;
 use thiserror::Error;
 use tonic::Status;
 
-use crate::shared::{
-    address, net, net_or_address, Address, Ipv4, Ipv4Net, Ipv6, Ipv6Net, Net, NetOrAddress,
-};
-use crate::{port_or_range, PortOrRange, PortRange};
+use crate::port_or_range;
+use crate::shared::address;
+use crate::shared::net;
+use crate::shared::net_or_address;
+use crate::shared::Address;
+use crate::shared::Ipv4;
+use crate::shared::Ipv4Net;
+use crate::shared::Ipv6;
+use crate::shared::Ipv6Net;
+use crate::shared::Net;
+use crate::shared::NetOrAddress;
+use crate::PortOrRange;
+use crate::PortRange;
 
 /// Error while converting a protobuf message to its rust type
 ///

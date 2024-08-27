@@ -1,28 +1,34 @@
 use std::net::IpAddr;
 
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use chrono::DateTime;
+use chrono::Utc;
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::handler::attack_results::schema::{
-    FullDnsTxtScanResult, FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    FullTestSSLResult, FullUdpServiceDetectionResult, SimpleBruteforceSubdomainsResult,
-    SimpleDnsResolutionResult, SimpleHostAliveResult, SimpleQueryUnhashedResult,
-    SimpleTcpPortScanResult,
-};
+use crate::api::handler::attack_results::schema::FullDnsTxtScanResult;
+use crate::api::handler::attack_results::schema::FullOsDetectionResult;
+use crate::api::handler::attack_results::schema::FullQueryCertificateTransparencyResult;
+use crate::api::handler::attack_results::schema::FullServiceDetectionResult;
+use crate::api::handler::attack_results::schema::FullTestSSLResult;
+use crate::api::handler::attack_results::schema::FullUdpServiceDetectionResult;
+use crate::api::handler::attack_results::schema::SimpleBruteforceSubdomainsResult;
+use crate::api::handler::attack_results::schema::SimpleDnsResolutionResult;
+use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
+use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
+use crate::api::handler::hosts::schema::ManualHostCertainty;
+use crate::api::handler::hosts::schema::OsType;
+use crate::api::handler::ports::schema::ManualPortCertainty;
+use crate::api::handler::ports::schema::PortProtocol;
+use crate::api::handler::services::schema::ManualServiceCertainty;
 use crate::api::handler::users::schema::SimpleUser;
-use crate::models::{
-    ManualHostCertainty, ManualPortCertainty, ManualServiceCertainty, OsType, PortProtocol,
-};
 
 /// Numbers how many attacks of a certain kind found an aggregated model
 #[derive(Copy, Clone, Serialize, Deserialize, ToSchema, Debug, Default)]
 pub struct SimpleAggregationSource {
     /// Bruteforce subdomains via DNS requests
     pub bruteforce_subdomains: usize,
-    /// Scan tcp ports
-    pub tcp_port_scan: usize,
     /// Query certificate transparency
     pub query_certificate_transparency: usize,
     /// Query the dehashed API
@@ -88,8 +94,6 @@ pub struct SourceAttack {
 pub enum SourceAttackResult {
     /// The [`AttackType::BruteforceSubdomains`] and its results
     BruteforceSubdomains(Vec<SimpleBruteforceSubdomainsResult>),
-    /// The [`AttackType::TcpPortScan`] and its results
-    TcpPortScan(Vec<SimpleTcpPortScanResult>),
     /// The [`AttackType::QueryCertificateTransparency`] and its results
     QueryCertificateTransparency(Vec<FullQueryCertificateTransparencyResult>),
     /// The [`AttackType::QueryUnhashed`] and its results
@@ -104,8 +108,10 @@ pub enum SourceAttackResult {
     DnsResolution(Vec<SimpleDnsResolutionResult>),
     /// The [`AttackType::DnsTxtScan`] and its results
     DnsTxtScan(Vec<FullDnsTxtScanResult>),
+    /// The [`AttackType::OSDetection`] and its results
+    OsDetection(Vec<FullOsDetectionResult>),
     /// The [`AttackType::TestSSL`] and its results
-    TestSSL(FullTestSSLResult),
+    TestSSL(Vec<FullTestSSLResult>),
 }
 
 /// The different types of manual inserts
@@ -175,6 +181,30 @@ pub enum ManualInsert {
         /// The workspace the service was inserted to
         workspace: Uuid,
         /// The point in time, the service was inserted
+        created_at: DateTime<Utc>,
+    },
+    /// A manually inserted http service
+    HttpService {
+        /// The service's name
+        name: String,
+        /// The service's domain
+        domain: Option<String>,
+        /// The service's ip address
+        #[schema(value_type = String)]
+        ip_addr: IpAddr,
+        /// The service's port
+        port: u16,
+        /// The base path the service is routed on
+        base_path: String,
+        /// Is this a https service?
+        tls: bool,
+        /// Does this service require sni?
+        sni_require: bool,
+        /// The user which inserted the http service
+        user: SimpleUser,
+        /// The workspace the http service was inserted to
+        workspace: Uuid,
+        /// The point in time, the http service was inserted
         created_at: DateTime<Utc>,
     },
 }

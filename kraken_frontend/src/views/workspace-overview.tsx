@@ -1,89 +1,63 @@
 import React from "react";
-import { Api } from "../api/api";
-import { check, handleApiError } from "../utils/helper";
-import { SimpleWorkspace } from "../api/generated";
-import Loading from "../components/loading";
-import Input from "../components/input";
-import Textarea from "../components/textarea";
 import { toast } from "react-toastify";
-import "../styling/workspace-overview.css";
-import WorkspaceIcon from "../svg/workspace";
+import { Api } from "../api/api";
+import { SimpleWorkspace } from "../api/generated";
 import Checkbox from "../components/checkbox";
+import Input from "../components/input";
+import Loading from "../components/loading";
+import Textarea from "../components/textarea";
 import USER_CONTEXT from "../context/user";
 import { ROUTES } from "../routes";
+import "../styling/workspace-overview.css";
+import WorkspaceIcon from "../svg/workspace";
+import { check, handleApiError } from "../utils/helper";
 
-type Sorting = "none" | "name" | "createdAt" | "lastModified";
+type Sorting = "none" | "name" | "createdAt";
 
-type WorkspacesProps = {};
-type WorkspacesState = {
-    /** Toggle modal to create a new workspace */
-    createNew: boolean;
-
+/** View to expose the `/api/v1/workspaces` endpoints */
+export default function WorkspaceOverview() {
+    const context = React.useContext(USER_CONTEXT);
     // queried data
-    workspaces?: Array<SimpleWorkspace>;
+    const [workspaces, setWorkspaces] = React.useState<Array<SimpleWorkspace> | undefined>(undefined);
 
     // controlled state
     /** New workspace's name */
-    newName: string;
+    const [newName, setNewName] = React.useState<string>("");
     /** New workspace's description */
-    newDesc: string;
-
+    const [newDesc, setNewDesc] = React.useState<string>("");
     /** The search query */
-    search: string;
+    const [search, setSearch] = React.useState<string>("");
 
-    onlyOwner: boolean;
-    onlyMember: boolean;
+    const [onlyOwner, setOnlyOwner] = React.useState<boolean>(false);
+    const [onlyMember, setOnlyMember] = React.useState<boolean>(false);
+    const [onlyArchived, setOnlyArchived] = React.useState<boolean>(false);
 
-    sorting: Sorting;
-};
+    const [sorting, setSorting] = React.useState<Sorting>("none");
 
-/** View to expose the `/api/v1/workspaces` endpoints */
-export default class WorkspaceOverview extends React.Component<WorkspacesProps, WorkspacesState> {
-    state: WorkspacesState = {
-        createNew: false,
-        newDesc: "",
-        newName: "",
-        search: "",
-        onlyOwner: false,
-        onlyMember: false,
-        sorting: "none",
-    };
-
-    static contextType = USER_CONTEXT;
-
-    componentDidMount() {
-        this.fetchState();
+    function retrieveAllWorkspaces() {
+        Api.workspaces.all().then(handleApiError(({ workspaces }) => setWorkspaces(workspaces)));
     }
 
-    fetchState() {
-        Api.workspaces.all().then(
-            handleApiError(({ workspaces }) =>
-                this.setState({
-                    workspaces,
-                }),
-            ),
-        );
-    }
+    React.useEffect(() => retrieveAllWorkspaces(), []);
 
-    async createWorkspace() {
-        const { newName, newDesc } = this.state;
+    async function createWorkspace() {
         if (!check([[newName.length > 0, "Empty name"]])) return;
 
         await Api.workspaces.create({ name: newName, description: newDesc.length > 0 ? newDesc : null }).then(
             handleApiError((_) => {
                 toast.success("Created new workspace");
-                this.setState({ newName: "", newDesc: "", createNew: false });
-                this.fetchState();
+                setNewName("");
+                setNewDesc("");
+                retrieveAllWorkspaces();
             }),
         );
     }
 
-    render() {
-        const { workspaces } = this.state;
-        if (workspaces === undefined) return <Loading />;
-
-        return (
-            <>
+    return (
+        <>
+            {workspaces === undefined ? (
+                <Loading />
+            ) : (
                 <div className={"workspace-list-outer-container"}>
                     <div className={"workspace-list-creation pane"}>
                         <WorkspaceIcon />
@@ -92,23 +66,23 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                             method={"post"}
                             onSubmit={async (e) => {
                                 e.preventDefault();
-                                await this.createWorkspace();
+                                await createWorkspace();
                             }}
                         >
                             <h2 className={"heading"}>Create a new workspace</h2>
                             <div className={"workspace-list-creation-table"}>
                                 <span>Name</span>
                                 <Input
-                                    value={this.state.newName}
+                                    value={newName}
                                     onChange={(v) => {
-                                        this.setState({ newName: v });
+                                        setNewName(v);
                                     }}
                                 />
                                 <span>Description</span>
                                 <Textarea
-                                    value={this.state.newDesc}
+                                    value={newDesc}
                                     onChange={(v) => {
-                                        this.setState({ newDesc: v });
+                                        setNewDesc(v);
                                     }}
                                 />
                                 <button className={"button"}>Create</button>
@@ -118,91 +92,98 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                     <div className={"workspace-list-filter pane"}>
                         <Input
                             placeholder={"Search"}
-                            value={this.state.search}
+                            value={search}
                             onChange={(v) => {
-                                this.setState({ search: v });
+                                setSearch(v);
                             }}
                         />
                         <div className={"workspace-list-filter-ownership"}>
                             <h3 className={"heading"}>Filter</h3>
-                            <div className={"workspace-list-filter-ownership-table"}>
-                                <span>Owner</span>
-                                <Checkbox
-                                    value={this.state.onlyOwner}
-                                    onChange={() => {
-                                        this.setState({ onlyOwner: !this.state.onlyOwner, onlyMember: false });
-                                    }}
-                                />
-                                <span>Member</span>
-                                <Checkbox
-                                    value={this.state.onlyMember}
-                                    onChange={() => {
-                                        this.setState({ onlyOwner: false, onlyMember: !this.state.onlyMember });
-                                    }}
-                                />
+                            <div className={"workspace-list-checkbox-table"}>
+                                <label>
+                                    <Checkbox
+                                        value={onlyOwner}
+                                        onChange={(v) => {
+                                            setOnlyOwner(v);
+                                            setOnlyMember(false);
+                                        }}
+                                    />
+                                    <span>Owner</span>
+                                </label>
+                                <label>
+                                    <Checkbox
+                                        value={onlyMember}
+                                        onChange={(v) => {
+                                            setOnlyOwner(false);
+                                            setOnlyMember(v);
+                                        }}
+                                    />
+                                    <span>Member</span>
+                                </label>
+                                <label>
+                                    <Checkbox
+                                        value={onlyArchived}
+                                        onChange={(v) => {
+                                            setOnlyArchived(v);
+                                        }}
+                                    />
+                                    <span>Archived</span>
+                                </label>
                             </div>
                         </div>
                         <div className={"workspace-list-sorting"}>
                             <h3 className={"heading"}>Sorting</h3>
-                            <div className={"workspace-list-sorting-table"}>
-                                <span>Name</span>
-                                <Checkbox
-                                    value={this.state.sorting === "name"}
-                                    onChange={() => {
-                                        this.setState({ sorting: this.state.sorting === "name" ? "none" : "name" });
-                                    }}
-                                />
-                                <div></div>
-                                <span>Created timestamp</span>
-                                <Checkbox
-                                    value={this.state.sorting === "createdAt"}
-                                    onChange={() => {
-                                        this.setState({
-                                            sorting: this.state.sorting === "createdAt" ? "none" : "createdAt",
-                                        });
-                                    }}
-                                />
-                                <span>Last modified</span>
-                                <Checkbox
-                                    value={this.state.sorting === "lastModified"}
-                                    onChange={() => {
-                                        this.setState({
-                                            sorting: this.state.sorting === "lastModified" ? "none" : "lastModified",
-                                        });
-                                    }}
-                                />
+                            <div className={"workspace-list-checkbox-table"}>
+                                <label>
+                                    <Checkbox
+                                        value={sorting === "name"}
+                                        onChange={() => {
+                                            setSorting(sorting === "name" ? "none" : "name");
+                                        }}
+                                    />
+                                    <span>Name</span>
+                                </label>
+                                <label>
+                                    <Checkbox
+                                        value={sorting === "createdAt"}
+                                        onChange={() => {
+                                            setSorting(sorting === "createdAt" ? "none" : "createdAt");
+                                        }}
+                                    />
+                                    <span>Created timestamp</span>
+                                </label>
                             </div>
                         </div>
                     </div>
                     <div className={"workspace-list-container"}>
                         {workspaces
                             .filter((e) => {
-                                let include = true;
+                                if (search !== "" && !e.name.toLowerCase().includes(search.toLowerCase())) return false;
 
-                                if (this.state.search === "") include = true;
-                                else include = e.name.includes(this.state.search);
+                                const isOwner = e.owner.uuid === context.user.uuid;
 
-                                if (!include) {
-                                    return false;
+                                if (onlyOwner && !isOwner) return false;
+                                if (onlyMember && isOwner) return false;
+
+                                if (onlyArchived != (e.archived ?? false)) return false;
+
+                                return true;
+                            })
+                            .sort((a, b) => {
+                                switch (sorting) {
+                                    case "createdAt":
+                                        return a.createdAt.getTime() - b.createdAt.getTime();
+                                    case "name":
+                                        return a.name.localeCompare(b.name);
+                                    case "none":
+                                        return 0;
                                 }
-
-                                if (this.state.onlyOwner) {
-                                    // @ts-ignore
-                                    include = e.owner.uuid === this.context.user.uuid;
-                                } else if (this.state.onlyMember) {
-                                    // @ts-ignore
-                                    include = e.owner.uuid !== this.context.user.uuid;
-                                }
-
-                                return include;
                             })
                             .map((w) => {
                                 return (
                                     <div
-                                        className={"pane workspace-list-item"}
-                                        onClick={() => {
-                                            ROUTES.WORKSPACE_HOSTS.visit({ uuid: w.uuid });
-                                        }}
+                                        className={`pane workspace-list-item ${w.archived ? "archived" : ""}`}
+                                        {...ROUTES.WORKSPACE_DATA.clickHandler({ uuid: w.uuid })}
                                     >
                                         <h3 className={"heading"}>{w.name}</h3>
                                         <div className={"workspace-list-table"}>
@@ -218,7 +199,7 @@ export default class WorkspaceOverview extends React.Component<WorkspacesProps, 
                             })}
                     </div>
                 </div>
-            </>
-        );
-    }
+            )}
+        </>
+    );
 }

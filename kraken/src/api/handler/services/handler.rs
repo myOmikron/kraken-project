@@ -1,36 +1,65 @@
 use std::collections::HashMap;
 
-use actix_web::web::{Json, Path};
-use actix_web::{delete, get, post, put, HttpResponse};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::post;
+use actix_web::put;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
 use futures::TryStreamExt;
+use ipnetwork::IpNetwork;
+use rorm::and;
 use rorm::conditions::DynamicCollection;
 use rorm::db::sql::value::Value;
+use rorm::insert;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, update, FieldAccess, Model};
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::aggregation_source::schema::{
-    FullAggregationSource, SimpleAggregationSource,
-};
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{
-    PathUuid, ServiceResultsPage, SimpleTag, TagType, UuidResponse,
-};
+use crate::api::handler::aggregation_source::schema::FullAggregationSource;
+use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::ServiceResultsPage;
+use crate::api::handler::common::schema::SimpleTag;
+use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
+use crate::api::handler::common::utils::query_many_severities;
+use crate::api::handler::common::utils::query_single_severity;
+use crate::api::handler::findings::schema::ListFindings;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
-use crate::api::handler::services::schema::{
-    CreateServiceRequest, FullService, GetAllServicesQuery, PathService, ServiceRelations,
-    UpdateServiceRequest,
-};
+use crate::api::handler::services::schema::CreateServiceRequest;
+use crate::api::handler::services::schema::FullService;
+use crate::api::handler::services::schema::GetAllServicesQuery;
+use crate::api::handler::services::schema::PathService;
+use crate::api::handler::services::schema::ServiceRelations;
+use crate::api::handler::services::schema::UpdateServiceRequest;
 use crate::chan::global::GLOBAL;
-use crate::chan::ws_manager::schema::{AggregationType, WsMessage};
-use crate::models::{
-    AggregationSource, AggregationTable, GlobalTag, Host, ManualService, Port, Service,
-    ServiceGlobalTag, ServiceWorkspaceTag, Workspace, WorkspaceTag,
-};
-use crate::modules::filter::{GlobalAST, ServiceAST};
+use crate::chan::ws_manager::schema::AggregationType;
+use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
+use crate::models::convert::IntoDb;
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::FindingAffected;
+use crate::models::GlobalTag;
+use crate::models::Host;
+use crate::models::ManualService;
+use crate::models::Port;
+use crate::models::Service;
+use crate::models::ServiceGlobalTag;
+use crate::models::ServiceWorkspaceTag;
+use crate::models::Workspace;
+use crate::models::WorkspaceTag;
+use crate::modules::filter::GlobalAST;
+use crate::modules::filter::ServiceAST;
 use crate::modules::raw_query::RawQueryBuilder;
 use crate::query_tags;
 
@@ -88,6 +117,7 @@ pub async fn get_all_services(
         Service::F.created_at,
         Service::F.host.select_as::<Host>(),
         Service::F.port,
+        Service::F.protocols,
         Service::F.workspace,
     ));
 
@@ -125,8 +155,8 @@ pub async fn get_all_services(
                 SimplePort {
                     uuid: port.uuid,
                     port: port.port as u16,
-                    protocol: port.protocol,
-                    certainty: port.certainty,
+                    protocol: FromDb::from_db(port.protocol),
+                    certainty: FromDb::from_db(port.certainty),
                     comment: port.comment,
                     created_at: port.created_at,
                     workspace: *port.workspace.key(),
@@ -137,7 +167,6 @@ pub async fn get_all_services(
     }
 
     let mut tags = HashMap::new();
-
     query_tags!(
         tags,
         tx,
@@ -162,37 +191,59 @@ pub async fn get_all_services(
     )
     .await?;
 
+    let severities = query_many_severities(
+        &mut tx,
+        FindingAffected::F.service,
+        services.iter().map(|x| x.0),
+    )
+    .await?;
+
     tx.commit().await?;
 
     let items = services
         .into_iter()
         .map(
-            |(uuid, name, version, certainty, comment, created_at, host, port, workspace)| {
+            |(
+                uuid,
+                name,
+                version,
+                certainty,
+                comment,
+                created_at,
+                host,
+                port,
+                protocols,
+                workspace,
+            )| {
                 FullService {
                     uuid,
                     name,
                     version,
-                    certainty,
+                    certainty: FromDb::from_db(certainty),
                     comment,
                     host: SimpleHost {
                         uuid: host.uuid,
                         ip_addr: host.ip_addr.ip(),
-                        os_type: host.os_type,
+                        os_type: FromDb::from_db(host.os_type),
                         response_time: host.response_time,
-                        certainty: host.certainty,
+                        certainty: FromDb::from_db(host.certainty),
                         comment: host.comment,
                         workspace: *host.workspace.key(),
                         created_at: host.created_at,
                     },
-                    port: port.map(|y| {
+                    port: port.as_ref().map(|y| {
                         // There is an entry with the key y.key(), as y.key() was used to construct
                         // the values in the HashMap
                         #[allow(clippy::unwrap_used)]
-                        ports.remove(y.key()).unwrap()
+                        ports.get(y.key()).unwrap().clone()
                     }),
+                    protocols: port
+                        .and_then(|y| ports.get(y.key()))
+                        .map(|port| port.protocol.into_db().decode_service(protocols)),
                     workspace: *workspace.key(),
                     tags: tags.remove(&uuid).unwrap_or_default(),
                     sources: sources.remove(&uuid).unwrap_or_default(),
+                    severity: severities.get(&uuid).copied().map(FromDb::from_db),
                     created_at,
                 }
             },
@@ -261,12 +312,7 @@ pub async fn get_service(
     let mut tags: Vec<_> = query!(&mut tx, (ServiceGlobalTag::F.global_tag as GlobalTag,))
         .condition(ServiceGlobalTag::F.service.equals(path.s_uuid))
         .stream()
-        .map_ok(|(x,)| SimpleTag {
-            uuid: x.uuid,
-            name: x.name,
-            color: x.color.into(),
-            tag_type: TagType::Global,
-        })
+        .map_ok(|(tag,)| SimpleTag::from(tag))
         .try_collect()
         .await?;
 
@@ -276,23 +322,20 @@ pub async fn get_service(
     )
     .condition(ServiceWorkspaceTag::F.service.equals(path.s_uuid))
     .stream()
-    .map_ok(|(x,)| SimpleTag {
-        uuid: x.uuid,
-        name: x.name,
-        color: x.color.into(),
-        tag_type: TagType::Workspace,
-    })
+    .map_ok(|(tag,)| SimpleTag::from(tag))
     .try_collect()
     .await?;
 
     tags.extend(global_tags);
 
     let sources = query!(&mut tx, (AggregationSource::F.source_type,))
-        .condition(AggregationSource::F.aggregated_uuid.equals(host.uuid))
+        .condition(AggregationSource::F.aggregated_uuid.equals(path.s_uuid))
         .stream()
         .map_ok(|(x,)| x)
         .try_collect()
         .await?;
+
+    let severity = query_single_severity(&mut tx, FindingAffected::F.service, path.s_uuid).await?;
 
     tx.commit().await?;
 
@@ -300,22 +343,25 @@ pub async fn get_service(
         uuid: path.s_uuid,
         name: service.name,
         version: service.version,
-        certainty: service.certainty,
+        certainty: FromDb::from_db(service.certainty),
         host: SimpleHost {
             uuid: host.uuid,
             ip_addr: host.ip_addr.ip(),
-            os_type: host.os_type,
+            os_type: FromDb::from_db(host.os_type),
             response_time: host.response_time,
-            certainty: host.certainty,
+            certainty: FromDb::from_db(host.certainty),
             comment: host.comment,
             workspace: path.w_uuid,
             created_at: host.created_at,
         },
+        protocols: port
+            .as_ref()
+            .map(|port| port.protocol.decode_service(service.protocols)),
         port: port.map(|port| SimplePort {
             uuid: port.uuid,
             port: port.port as u16,
-            protocol: port.protocol,
-            certainty: port.certainty,
+            protocol: FromDb::from_db(port.protocol),
+            certainty: FromDb::from_db(port.certainty),
             host: host.uuid,
             comment: port.comment,
             workspace: path.w_uuid,
@@ -325,6 +371,7 @@ pub async fn get_service(
         workspace: path.w_uuid,
         tags,
         sources,
+        severity: severity.map(FromDb::from_db),
         created_at: service.created_at,
     }))
 }
@@ -353,20 +400,31 @@ pub async fn create_service(
         certainty,
         host,
         port,
-        protocol,
+        protocols,
     } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
 
-    if port.is_some() && protocol.is_none() || port.is_none() && protocol.is_some() {
+    if port.is_some() && protocols.is_none() || port.is_none() && protocols.is_some() {
         return Err(ApiError::InvalidPort);
     }
 
-    Ok(Json(UuidResponse {
-        uuid: ManualService::insert(
-            &GLOBAL.db, workspace, user, name, host, port, protocol, certainty,
-        )
-        .await?,
-    }))
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, workspace, user).await? {
+        return Err(ApiError::MissingPrivileges)?;
+    }
+    let uuid = ManualService::insert(
+        &mut tx,
+        workspace,
+        user,
+        name,
+        IpNetwork::from(host),
+        port.zip(protocols),
+        certainty.into_db(),
+    )
+    .await?;
+    tx.commit().await?;
+
+    Ok(Json(UuidResponse { uuid }))
 }
 
 /// Update a service
@@ -613,8 +671,8 @@ pub async fn get_service_relations(path: Path<PathService>) -> ApiResult<Json<Se
         Some(SimplePort {
             uuid: p.uuid,
             port: p.port as u16,
-            protocol: p.protocol,
-            certainty: p.certainty,
+            protocol: FromDb::from_db(p.protocol),
+            certainty: FromDb::from_db(p.certainty),
             host: *p.host.key(),
             comment: p.comment,
             workspace: *p.workspace.key(),
@@ -630,13 +688,45 @@ pub async fn get_service_relations(path: Path<PathService>) -> ApiResult<Json<Se
         host: SimpleHost {
             uuid: host.uuid,
             ip_addr: host.ip_addr.ip(),
-            os_type: host.os_type,
+            os_type: FromDb::from_db(host.os_type),
             response_time: host.response_time,
-            certainty: host.certainty,
+            certainty: FromDb::from_db(host.certainty),
             comment: host.comment,
             workspace: *host.workspace.key(),
             created_at: host.created_at,
         },
         port,
     }))
+}
+
+/// Get a service's findings
+#[utoipa::path(
+    tag = "Services",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The service's findings", body = ListFindings),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathService),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/services/{s_uuid}/findings")]
+pub async fn get_service_findings(
+    path: Path<PathService>,
+    SessionUser(u_uuid): SessionUser,
+) -> ApiResult<Json<ListFindings>> {
+    let PathService { w_uuid, s_uuid } = path.into_inner();
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, u_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let findings =
+        ListFindings::query_through_affected(&mut tx, w_uuid, FindingAffected::F.service, s_uuid)
+            .await?;
+
+    tx.commit().await?;
+    Ok(Json(findings))
 }

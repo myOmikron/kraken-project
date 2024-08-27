@@ -1,12 +1,19 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './AdminFilesApi';
 export * from './AdminWorkspacesApi';
 export * from './ApiKeysApi';
 export * from './AttacksApi';
 export * from './AuthenticationApi';
+export * from './BearerTokenApi';
 export * from './DomainsApi';
+export * from './FilesApi';
+export * from './FindingCategoriesApi';
+export * from './FindingsApi';
 export * from './GlobalTagsApi';
 export * from './HostsApi';
+export * from './HttpServicesApi';
+export * from './KnowledgeBaseApi';
 export * from './LeechManagementApi';
 export * from './OAuthApi';
 export * from './OAuthApplicationApi';

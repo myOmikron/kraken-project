@@ -2,31 +2,64 @@ use std::collections::HashMap;
 
 use futures::TryStreamExt;
 use log::error;
-use rorm::conditions::{BoxedCondition, Condition, DynamicCollection};
+use rorm::and;
+use rorm::conditions::BoxedCondition;
+use rorm::conditions::Condition;
+use rorm::conditions::DynamicCollection;
 use rorm::db::transaction::Transaction;
 use rorm::fields::traits::FieldEq;
-use rorm::internal::field::{Field, FieldProxy};
-use rorm::{and, query, FieldAccess, Model};
+use rorm::internal::field::Field;
+use rorm::internal::field::FieldProxy;
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
-use crate::api::handler::aggregation_source::schema::{
-    FullAggregationSource, ManualInsert, SimpleAggregationSource, SourceAttack, SourceAttackResult,
-};
-use crate::api::handler::attack_results::schema::{
-    DnsTxtScanEntry, FullDnsTxtScanResult, FullQueryCertificateTransparencyResult,
-    FullServiceDetectionResult, FullTestSSLResult, FullUdpServiceDetectionResult,
-    SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
-    SimpleQueryUnhashedResult, SimpleTcpPortScanResult, TestSSLFinding,
-};
+use crate::api::handler::aggregation_source::schema::FullAggregationSource;
+use crate::api::handler::aggregation_source::schema::ManualInsert;
+use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
+use crate::api::handler::aggregation_source::schema::SourceAttack;
+use crate::api::handler::aggregation_source::schema::SourceAttackResult;
+use crate::api::handler::attack_results::schema::DnsTxtScanEntry;
+use crate::api::handler::attack_results::schema::FullDnsTxtScanResult;
+use crate::api::handler::attack_results::schema::FullOsDetectionResult;
+use crate::api::handler::attack_results::schema::FullQueryCertificateTransparencyResult;
+use crate::api::handler::attack_results::schema::FullServiceDetectionResult;
+use crate::api::handler::attack_results::schema::FullTestSSLResult;
+use crate::api::handler::attack_results::schema::FullUdpServiceDetectionResult;
+use crate::api::handler::attack_results::schema::SimpleBruteforceSubdomainsResult;
+use crate::api::handler::attack_results::schema::SimpleDnsResolutionResult;
+use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
+use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
+use crate::api::handler::attack_results::schema::TestSSLFinding;
 use crate::api::handler::users::schema::SimpleUser;
-use crate::models::{
-    AggregationSource, AggregationTable, Attack, AttackType, BruteforceSubdomainsResult,
-    CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsResolutionResult, DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry, DnsTxtScanSpfEntry,
-    HostAliveResult, ManualDomain, ManualHost, ManualPort, ManualService, ServiceDetectionName,
-    ServiceDetectionResult, SourceType, TcpPortScanResult, TestSSLResultFinding,
-    TestSSLResultHeader, UdpServiceDetectionName, UdpServiceDetectionResult,
-};
+use crate::models::convert::FromDb;
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::Attack;
+use crate::models::AttackType;
+use crate::models::BruteforceSubdomainsResult;
+use crate::models::CertificateTransparencyResult;
+use crate::models::CertificateTransparencyValueName;
+use crate::models::DehashedQueryResult;
+use crate::models::DnsResolutionResult;
+use crate::models::DnsTxtScanAttackResult;
+use crate::models::DnsTxtScanServiceHintEntry;
+use crate::models::DnsTxtScanSpfEntry;
+use crate::models::HostAliveResult;
+use crate::models::ManualDomain;
+use crate::models::ManualHost;
+use crate::models::ManualHttpService;
+use crate::models::ManualPort;
+use crate::models::ManualService;
+use crate::models::OsDetectionResult;
+use crate::models::ServiceDetectionName;
+use crate::models::ServiceDetectionResult;
+use crate::models::SourceType;
+use crate::models::TestSSLResultFinding;
+use crate::models::TestSSLResultHeader;
+use crate::models::UdpServiceDetectionName;
+use crate::models::UdpServiceDetectionResult;
 
 fn field_in<'a, T, F, P, Any>(
     field_proxy: FieldProxy<F, P>,
@@ -100,7 +133,6 @@ impl SimpleAggregationSource {
     fn add(&mut self, source_type: SourceType) {
         match source_type {
             SourceType::BruteforceSubdomains => self.bruteforce_subdomains += 1,
-            SourceType::TcpPortScan => self.tcp_port_scan += 1,
             SourceType::QueryCertificateTransparency => self.query_certificate_transparency += 1,
             SourceType::QueryDehashed => self.query_dehashed += 1,
             SourceType::HostAlive => self.host_alive += 1,
@@ -117,7 +149,9 @@ impl SimpleAggregationSource {
             SourceType::ManualDomain
             | SourceType::ManualHost
             | SourceType::ManualPort
-            | SourceType::ManualService => self.manual = true,
+            | SourceType::ManualService
+            | SourceType::ManualHttpService => self.manual = true,
+            SourceType::TcpPortScan => {}
         }
     }
 }
@@ -162,7 +196,6 @@ impl FullAggregationSource {
 
         type Results<T> = HashMap<Uuid, Vec<T>>;
         let mut bruteforce_subdomains: Results<SimpleBruteforceSubdomainsResult> = Results::new();
-        let mut tcp_port_scan: Results<SimpleTcpPortScanResult> = Results::new();
         let mut certificate_transparency: Results<FullQueryCertificateTransparencyResult> =
             Results::new();
         let mut query_dehashed: Results<SimpleQueryUnhashedResult> = Results::new();
@@ -171,7 +204,8 @@ impl FullAggregationSource {
         let mut udp_service_detection: Results<FullUdpServiceDetectionResult> = Results::new();
         let mut dns_resolution: Results<SimpleDnsResolutionResult> = Results::new();
         let mut dns_txt_scan: Results<FullDnsTxtScanResult> = Results::new();
-        let mut testssl: HashMap<Uuid, FullTestSSLResult> = HashMap::new();
+        let mut os_detection: Results<FullOsDetectionResult> = Results::new();
+        let mut testssl: Results<FullTestSSLResult> = Results::new();
         let mut manual_insert = Vec::new();
         for (source_type, uuids) in sources {
             if uuids.is_empty() {
@@ -192,24 +226,8 @@ impl FullAggregationSource {
                                 created_at: result.created_at,
                                 source: result.source,
                                 destination: result.destination,
-                                dns_record_type: result.dns_record_type,
+                                dns_record_type: FromDb::from_db(result.dns_record_type),
                             });
-                    }
-                }
-                SourceType::TcpPortScan => {
-                    let mut stream = query!(&mut *tx, TcpPortScanResult)
-                        .condition(field_in(TcpPortScanResult::F.uuid, uuids))
-                        .stream();
-                    while let Some(result) = stream.try_next().await? {
-                        tcp_port_scan.entry(*result.attack.key()).or_default().push(
-                            SimpleTcpPortScanResult {
-                                uuid: result.uuid,
-                                attack: *result.attack.key(),
-                                created_at: result.created_at,
-                                address: result.address,
-                                port: result.port as u16,
-                            },
-                        );
                     }
                 }
                 SourceType::QueryCertificateTransparency => {
@@ -321,7 +339,7 @@ impl FullAggregationSource {
                                 uuid: result.uuid,
                                 attack: *result.attack.key(),
                                 created_at: result.created_at,
-                                certainty: result.certainty,
+                                certainty: FromDb::from_db(result.certainty),
                                 service_names: services.remove(&result.uuid).unwrap_or_default(),
                                 host: result.host,
                                 port: result.port as u16,
@@ -359,7 +377,7 @@ impl FullAggregationSource {
                                 uuid: result.uuid,
                                 attack: *result.attack.key(),
                                 created_at: result.created_at,
-                                certainty: result.certainty,
+                                certainty: FromDb::from_db(result.certainty),
                                 service_names: services.remove(&result.uuid).unwrap_or_default(),
                                 host: result.host,
                                 port: result.port as u16,
@@ -380,7 +398,7 @@ impl FullAggregationSource {
                                 created_at: result.created_at,
                                 source: result.source,
                                 destination: result.destination,
-                                dns_record_type: result.dns_record_type,
+                                dns_record_type: FromDb::from_db(result.dns_record_type),
                             });
                     }
                 }
@@ -406,14 +424,14 @@ impl FullAggregationSource {
                                 attack: *result.attack.key(),
                                 domain: result.domain,
                                 created_at: result.created_at,
-                                collection_type: result.collection_type,
+                                collection_type: FromDb::from_db(result.collection_type),
                                 entries: service_hints
                                     .iter()
                                     .filter(|s| *s.collection.key() == result.uuid)
                                     .map(|s| DnsTxtScanEntry::ServiceHint {
                                         created_at: s.created_at,
                                         uuid: s.uuid,
-                                        txt_type: s.txt_type,
+                                        txt_type: FromDb::from_db(s.txt_type),
                                         rule: s.rule.clone(),
                                     })
                                     .chain(
@@ -423,7 +441,7 @@ impl FullAggregationSource {
                                                 created_at: s.created_at,
                                                 uuid: s.uuid,
                                                 rule: s.rule.clone(),
-                                                spf_type: s.spf_type,
+                                                spf_type: FromDb::from_db(s.spf_type),
                                                 spf_ip: s.spf_ip,
                                                 spf_domain: s.spf_domain.clone(),
                                                 spf_domain_ipv4_cidr: s.spf_domain_ipv4_cidr,
@@ -435,14 +453,31 @@ impl FullAggregationSource {
                         );
                     }
                 }
+                SourceType::OSDetection => {
+                    let mut stream = query!(&mut *tx, OsDetectionResult)
+                        .condition(field_in(OsDetectionResult::F.uuid, uuids))
+                        .stream();
+                    while let Some(result) = stream.try_next().await? {
+                        os_detection.entry(*result.attack.key()).or_default().push(
+                            FullOsDetectionResult {
+                                uuid: result.uuid,
+                                attack: *result.attack.key(),
+                                created_at: result.created_at,
+                                host: result.host,
+                                hints: result.hints,
+                                version: result.version,
+                                os: FromDb::from_db(result.os),
+                            },
+                        );
+                    }
+                }
                 SourceType::TestSSL => {
                     {
                         let mut stream = query!(&mut *tx, TestSSLResultHeader)
                             .condition(field_in(TestSSLResultHeader::F.uuid, uuids))
                             .stream();
                         while let Some(result) = stream.try_next().await? {
-                            testssl.insert(
-                                *result.attack.key(),
+                            testssl.entry(*result.attack.key()).or_default().push(
                                 FullTestSSLResult {
                                     uuid: result.uuid,
                                     attack: *result.attack.key(),
@@ -465,12 +500,15 @@ impl FullAggregationSource {
                             ))
                             .stream();
                         while let Some(result) = stream.try_next().await? {
-                            if let Some(slot) = testssl.get_mut(result.attack.key()) {
+                            if let Some(slot) = testssl
+                                .get_mut(result.attack.key())
+                                .and_then(|v| v.last_mut())
+                            {
                                 slot.findings.push(TestSSLFinding {
-                                    section: result.section,
+                                    section: FromDb::from_db(result.section),
                                     id: result.key.to_string(),
                                     value: result.value,
-                                    severity: result.testssl_severity,
+                                    severity: FromDb::from_db(result.testssl_severity),
                                     cve: result.cve,
                                     cwe: result.cwe,
                                     issue: (),
@@ -481,7 +519,6 @@ impl FullAggregationSource {
                 }
                 SourceType::UdpPortScan
                 | SourceType::ForcedBrowsing
-                | SourceType::OSDetection
                 | SourceType::VersionDetection
                 | SourceType::AntiPortScanningDetection => {
                     error!("source type unimplemented: {source_type:?}")
@@ -528,8 +565,8 @@ impl FullAggregationSource {
                     {
                         manual_insert.push(ManualInsert::Host {
                             ip_addr: ip_addr.ip(),
-                            os_type,
-                            certainty,
+                            os_type: FromDb::from_db(os_type),
+                            certainty: FromDb::from_db(certainty),
                             user,
                             workspace: *workspace.key(),
                             created_at,
@@ -556,8 +593,8 @@ impl FullAggregationSource {
                     {
                         manual_insert.push(ManualInsert::Port {
                             port: port as u16,
-                            protocol,
-                            certainty,
+                            protocol: FromDb::from_db(protocol),
+                            certainty: FromDb::from_db(certainty),
                             host: host.ip().to_string(),
                             user,
                             workspace: *workspace.key(),
@@ -586,7 +623,7 @@ impl FullAggregationSource {
                         manual_insert.push(ManualInsert::Service {
                             name,
                             port: port.map(|p| p as u16),
-                            certainty,
+                            certainty: FromDb::from_db(certainty),
                             host: host.ip().to_string(),
                             user,
                             workspace: *workspace.key(),
@@ -595,6 +632,52 @@ impl FullAggregationSource {
                         });
                     }
                 }
+                SourceType::ManualHttpService => {
+                    let mut stream = query!(
+                        &mut *tx,
+                        (
+                            ManualHttpService::F.name,
+                            ManualHttpService::F.domain,
+                            ManualHttpService::F.ip_addr,
+                            ManualHttpService::F.port,
+                            ManualHttpService::F.base_path,
+                            ManualHttpService::F.tls,
+                            ManualHttpService::F.sni_required,
+                            ManualHttpService::F.user as SimpleUser,
+                            ManualHttpService::F.workspace,
+                            ManualHttpService::F.created_at,
+                        )
+                    )
+                    .condition(field_in(ManualHttpService::F.uuid, uuids))
+                    .stream();
+                    while let Some((
+                        name,
+                        domain,
+                        ip_addr,
+                        port,
+                        base_path,
+                        tls,
+                        sni_require,
+                        user,
+                        workspace,
+                        created_at,
+                    )) = stream.try_next().await?
+                    {
+                        manual_insert.push(ManualInsert::HttpService {
+                            name,
+                            domain,
+                            ip_addr: ip_addr.ip(),
+                            port: port as u16,
+                            base_path,
+                            tls,
+                            sni_require,
+                            user,
+                            workspace: *workspace.key(),
+                            created_at,
+                        });
+                    }
+                }
+                SourceType::TcpPortScan => {}
             }
         }
 
@@ -616,7 +699,6 @@ impl FullAggregationSource {
                 Attack::F.uuid,
                 bruteforce_subdomains
                     .keys()
-                    .chain(tcp_port_scan.keys())
                     .chain(certificate_transparency.keys())
                     .chain(query_dehashed.keys())
                     .chain(host_alive.keys())
@@ -624,6 +706,7 @@ impl FullAggregationSource {
                     .chain(udp_service_detection.keys())
                     .chain(dns_resolution.keys())
                     .chain(dns_txt_scan.keys())
+                    .chain(os_detection.keys())
                     .chain(testssl.keys())
                     .copied(),
             ))
@@ -646,10 +729,6 @@ impl FullAggregationSource {
                     AttackType::BruteforceSubdomains => bruteforce_subdomains
                         .remove(&uuid)
                         .map(SourceAttackResult::BruteforceSubdomains),
-
-                    AttackType::TcpPortScan => tcp_port_scan
-                        .remove(&uuid)
-                        .map(SourceAttackResult::TcpPortScan),
                     AttackType::QueryCertificateTransparency => certificate_transparency
                         .remove(&uuid)
                         .map(SourceAttackResult::QueryCertificateTransparency),
@@ -671,15 +750,18 @@ impl FullAggregationSource {
                     AttackType::DnsTxtScan => dns_txt_scan
                         .remove(&uuid)
                         .map(SourceAttackResult::DnsTxtScan),
+                    AttackType::OSDetection => os_detection
+                        .remove(&uuid)
+                        .map(SourceAttackResult::OsDetection),
                     AttackType::TestSSL => testssl.remove(&uuid).map(SourceAttackResult::TestSSL),
                     AttackType::UdpPortScan
                     | AttackType::ForcedBrowsing
-                    | AttackType::OSDetection
                     | AttackType::VersionDetection
                     | AttackType::AntiPortScanningDetection => {
                         error!("An `{attack_type:?}` isn't implemented yet");
                         continue;
                     }
+                    AttackType::TcpPortScan => continue,
                 };
                 if let Some(results) = results {
                     attacks.push(SourceAttack {

@@ -1,21 +1,27 @@
-use chrono::{DateTime, Utc};
-use ipnetwork::IpNetwork;
-use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use std::net::IpAddr;
+
+use chrono::DateTime;
+use chrono::Utc;
+use serde::Deserialize;
+use serde::Serialize;
+use utoipa::IntoParams;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
-use crate::api::handler::common::schema::{PageParams, SimpleTag};
+use crate::api::handler::common::schema::PageParams;
+use crate::api::handler::common::schema::SimpleTag;
+use crate::api::handler::findings::schema::FindingSeverity;
 use crate::api::handler::hosts::schema::SimpleHost;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::api::handler::services::schema::SimpleService;
-use crate::models::{ManualPortCertainty, PortCertainty, PortProtocol};
 
 /// The request to manually add a port
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct CreatePortRequest {
     /// The ip address the port is open on
     #[schema(value_type = String, example = "127.0.0.1")]
-    pub ip_addr: IpNetwork,
+    pub ip_addr: IpAddr,
 
     /// The port to add
     #[schema(example = "8080")]
@@ -89,6 +95,8 @@ pub struct FullPort {
     pub port: u16,
     /// Port protocol
     pub protocol: PortProtocol,
+    /// The certainty of this port
+    pub certainty: PortCertainty,
     /// The host this port is assigned to
     pub host: SimpleHost,
     /// A comment to the port
@@ -99,6 +107,8 @@ pub struct FullPort {
     pub workspace: Uuid,
     /// The number of attacks which found this host
     pub sources: SimpleAggregationSource,
+    /// The severest finding's severity associated with this host
+    pub severity: Option<FindingSeverity>,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
 }
@@ -120,4 +130,40 @@ pub struct PortRelations {
 
     /// Services listening on this port
     pub services: Vec<SimpleService>,
+
+    /// Http services listening on this port
+    pub http_services: Vec<SimpleHttpService>,
+}
+
+/// The certainty states of a port
+#[derive(Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
+pub enum PortCertainty {
+    /// 3rd party historical data
+    Historical = 0,
+    /// 3rd party data
+    SupposedTo = 1,
+    /// The host has responded either by HostAlive, Port or Service Detection or something similar
+    Verified = 2,
+}
+
+/// The certainty of a manually added port
+#[derive(Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+pub enum ManualPortCertainty {
+    /// Historical data
+    Historical,
+    /// Up to date data
+    SupposedTo,
+}
+
+/// A protocol of a port
+#[derive(ToSchema, Debug, Copy, Clone, Serialize, Deserialize)]
+pub enum PortProtocol {
+    /// Unknown protocol
+    Unknown,
+    /// tcp
+    Tcp,
+    /// udp
+    Udp,
+    /// sctp
+    Sctp,
 }

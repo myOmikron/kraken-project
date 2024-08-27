@@ -5,16 +5,28 @@ pub mod spf;
 pub mod txt;
 
 use std::future::Future;
-use std::net::{Ipv4Addr, Ipv6Addr};
+use std::net::Ipv4Addr;
+use std::net::Ipv6Addr;
 
-use futures::{stream, StreamExt};
-use log::{debug, error, info, warn};
+use futures::stream;
+use futures::StreamExt;
+use log::debug;
+use log::error;
+use log::info;
+use log::warn;
 use tokio::sync::mpsc::Sender;
-use trust_dns_resolver::error::{ResolveError, ResolveErrorKind};
-use trust_dns_resolver::proto::rr::{Record, RecordType};
+use trust_dns_resolver::config::LookupIpStrategy;
+use trust_dns_resolver::config::ResolverConfig;
+use trust_dns_resolver::config::ResolverOpts;
+use trust_dns_resolver::error::ResolveError;
+use trust_dns_resolver::error::ResolveErrorKind;
+use trust_dns_resolver::proto::rr::Record;
+use trust_dns_resolver::proto::rr::RecordType;
 use trust_dns_resolver::TokioAsyncResolver;
 
 use crate::modules::dns::errors::DnsResolutionError;
+use crate::modules::dns::errors::LookupResultStatus;
+use crate::modules::dns::errors::ResolutionStatus;
 
 /// Result of a subdomain
 #[derive(Debug, Clone)]
@@ -76,10 +88,6 @@ pub enum DnsRecordResult {
 pub struct DnsResolutionSettings {
     /// The domains to resolve
     pub domains: Vec<String>,
-    /// Maximum of concurrent tasks that should be spawned
-    ///
-    /// 0 means, that there should be no limit.
-    pub concurrent_limit: u32,
 }
 
 /// DNS resolution
@@ -93,76 +101,114 @@ pub async fn dns_resolution(
 ) -> Result<(), DnsResolutionError> {
     info!("Started DNS resolution");
 
-    let resolver = TokioAsyncResolver::tokio_from_system_conf()
-        .map_err(DnsResolutionError::CreateSystemResolver)?;
+    let mut opts = ResolverOpts::default();
+    opts.ip_strategy = LookupIpStrategy::Ipv4AndIpv6;
+    opts.preserve_intermediates = true;
+    opts.shuffle_dns_servers = true;
+    let resolver = TokioAsyncResolver::tokio(ResolverConfig::cloudflare_https(), opts);
 
-    // TODO: hard limit MAX workers
-    let chunk_count = if settings.concurrent_limit == 0 {
-        settings.domains.len()
-    } else {
-        (settings.domains.len() as f32 / settings.concurrent_limit as f32).ceil() as usize
-    };
-
-    stream::iter(settings.domains)
-        .chunks(chunk_count)
-        .for_each_concurrent(settings.concurrent_limit as usize, move |chunk_domains| {
+    let mut failed = stream::iter(settings.domains)
+        .map(move |domain| {
             let resolver = resolver.clone();
             let tx = tx.clone();
-            async move {
-                for domain in chunk_domains {
-                    debug!("Started dns resolution for {}", domain);
-
-                    // A, AAAA, CNAME
-                    if let Ok(res) = resolve(resolver.lookup_ip(&domain)).await {
-                        send_records(&domain, &tx, res.as_lookup().records()).await;
-                    }
-
-                    if let Ok(res) = resolve(resolver.mx_lookup(&domain)).await {
-                        send_records(&domain, &tx, res.as_lookup().records()).await;
-                    }
-
-                    if let Ok(res) = resolve(resolver.tlsa_lookup(&domain)).await {
-                        send_records(&domain, &tx, res.as_lookup().records()).await;
-                    }
-
-                    if let Ok(res) = resolve(resolver.txt_lookup(&domain)).await {
-                        send_records(&domain, &tx, res.as_lookup().records()).await;
-                    }
-
-                    // TODO: noted as unstable interface
-                    if let Ok(res) = resolver.lookup(&domain, RecordType::CAA).await {
-                        send_records(&domain, &tx, res.records()).await;
-                    }
-
-                    debug!("Finished dns resolution for {}", domain);
-                }
-            }
+            resolve_single(domain.clone(), resolver, tx)
         })
+        .buffer_unordered(8)
+        .collect::<Vec<_>>()
         .await;
+    failed.retain(|v| v.has_error() || !v.has_records());
 
-    info!("Finished DNS resolution");
+    info!(
+        "Finished DNS resolution with {} failed domains",
+        failed.len()
+    );
 
-    Ok(())
+    if !failed.is_empty() {
+        Err(DnsResolutionError::SomeFailed(failed))
+    } else {
+        Ok(())
+    }
 }
 
-async fn resolve<T, Func>(resolver: Func) -> Result<T, ()>
+async fn resolve_single(
+    domain: String,
+    resolver: TokioAsyncResolver,
+    tx: Sender<DnsRecordResult>,
+) -> ResolutionStatus {
+    debug!("Started dns resolution for {}", domain);
+
+    macro_rules! run {
+        ( $resolveFn:expr ) => {
+            match resolve($resolveFn).await {
+                Ok(res) => {
+                    if let Some(res) = res {
+                        send_records(&domain, &tx, res.as_lookup().records()).await;
+                        LookupResultStatus::Success
+                    } else {
+                        LookupResultStatus::NoRecords
+                    }
+                }
+                Err(err) => LookupResultStatus::Error(err),
+            }
+        };
+    }
+
+    macro_rules! run_manual {
+        ( $resolveFn:expr ) => {
+            match resolve($resolveFn).await {
+                Ok(res) => {
+                    if let Some(res) = res {
+                        send_records(&domain, &tx, res.records()).await;
+                        LookupResultStatus::Success
+                    } else {
+                        LookupResultStatus::NoRecords
+                    }
+                }
+                Err(err) => LookupResultStatus::Error(err),
+            }
+        };
+    }
+
+    // A, AAAA, CNAME
+    let res = ResolutionStatus {
+        ip: run!(resolver.lookup_ip(&domain)),
+        mx: run!(resolver.mx_lookup(&domain)),
+        tlsa: run!(resolver.tlsa_lookup(&domain)),
+        txt: run!(resolver.txt_lookup(&domain)),
+        // TODO: noted as unstable interface
+        caa: run_manual!(resolver.lookup(&domain, RecordType::CAA)),
+        domain,
+    };
+    debug!("Finished dns resolution: {res}");
+    res
+}
+
+async fn resolve<T, Func>(resolver: Func) -> Result<Option<T>, ResolveError>
 where
     Func: Future<Output = Result<T, ResolveError>>,
 {
-    return resolver.await.map_err(|err| match err.kind() {
-        ResolveErrorKind::Message(err) => error!("Message: {err}"),
-        ResolveErrorKind::Msg(err) => error!("Msg: {err}"),
-        ResolveErrorKind::NoConnections => {
-            error!("There are no resolvers available")
+    let r = resolver.await;
+    match r {
+        Ok(v) => Ok(Some(v)),
+        Err(err) => {
+            match err.kind() {
+                ResolveErrorKind::Message(err) => error!("Message: {err}"),
+                ResolveErrorKind::Msg(err) => error!("Msg: {err}"),
+                ResolveErrorKind::NoConnections => {
+                    error!("There are no resolvers available")
+                }
+                ResolveErrorKind::Io(err) => error!("IO error: {err}"),
+                ResolveErrorKind::Proto(err) => error!("Proto error {err}"),
+                ResolveErrorKind::Timeout => error!("Timeout while query"),
+                ResolveErrorKind::NoRecordsFound { .. } => {
+                    debug!("Wildcard test: no wildcard");
+                    return Ok(None);
+                }
+                _ => error!("Unknown error"),
+            }
+            Err(err)
         }
-        ResolveErrorKind::Io(err) => error!("IO error: {err}"),
-        ResolveErrorKind::Proto(err) => error!("Proto error {err}"),
-        ResolveErrorKind::Timeout => error!("Timeout while query"),
-        ResolveErrorKind::NoRecordsFound { .. } => {
-            debug!("Wildcard test: no wildcard")
-        }
-        _ => error!("Unknown error"),
-    });
+    }
 }
 
 async fn send_records(domain: &str, tx: &Sender<DnsRecordResult>, records: &[Record]) {

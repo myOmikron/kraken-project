@@ -1,16 +1,21 @@
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
-use kraken::api::handler::common::schema::{HostResultsPage, PageParams, UuidResponse};
-use kraken::api::handler::domains::schema::GetAllDomainsQuery;
-use kraken::api::handler::hosts::schema::{
-    CreateHostRequest, FullHost, HostRelations, UpdateHostRequest,
-};
-use kraken::models::ManualHostCertainty;
+use kraken::api::handler::common::schema::HostResultsPage;
+use kraken::api::handler::common::schema::UuidsResponse;
+use kraken::api::handler::findings::schema::ListFindings;
+use kraken::api::handler::findings::schema::SimpleFinding;
+use kraken::api::handler::hosts::schema::CreateHostRequest;
+use kraken::api::handler::hosts::schema::FullHost;
+use kraken::api::handler::hosts::schema::GetAllHostsQuery;
+use kraken::api::handler::hosts::schema::HostRelations;
+use kraken::api::handler::hosts::schema::ManualHostCertainty;
+use kraken::api::handler::hosts::schema::UpdateHostRequest;
 use uuid::Uuid;
 
-use crate::sdk::utils::KrakenRequest;
-use crate::{KrakenClient, KrakenResult};
+use crate::error::KrakenError;
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 impl KrakenClient {
     /// Add a host
@@ -20,60 +25,53 @@ impl KrakenClient {
         ip_addr: IpAddr,
         certainty: ManualHostCertainty,
     ) -> KrakenResult<Uuid> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/{workspace}/hosts"))
-            .expect("Valid url");
+        match &self
+            .add_hosts(workspace, IpNetwork::from(ip_addr), certainty)
+            .await?[..]
+        {
+            [] => Err(KrakenError::DeserializeError(
+                "Body contains no uuid".to_string(),
+            )),
+            [uuid] => Ok(*uuid),
+            _ => Err(KrakenError::DeserializeError(
+                "Body contains multiple uuids".to_string(),
+            )),
+        }
+    }
 
-        let uuid: UuidResponse = self
-            .make_request(
-                KrakenRequest::post(url)
-                    .body(CreateHostRequest {
-                        ip_addr: IpNetwork::from(ip_addr),
-                        certainty,
-                    })
-                    .build(),
-            )
+    /// Add an entire CIDR as hosts
+    pub async fn add_hosts(
+        &self,
+        workspace: Uuid,
+        ip_addr: IpNetwork,
+        certainty: ManualHostCertainty,
+    ) -> KrakenResult<Vec<Uuid>> {
+        let uuids: UuidsResponse = self
+            .post(&format!("api/v1/workspaces/{workspace}/hosts"))
+            .body(CreateHostRequest { ip_addr, certainty })
+            .send()
             .await?;
 
-        Ok(uuid.uuid)
+        Ok(uuids.uuids)
     }
 
     /// Get all hosts of a workspace
     pub async fn get_all_hosts(
         &self,
         workspace: Uuid,
-        page: PageParams,
+        query: GetAllHostsQuery,
     ) -> KrakenResult<HostResultsPage> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/hosts/all"))
-            .expect("Valid url");
-
-        self.make_request(
-            KrakenRequest::post(url)
-                .body(GetAllDomainsQuery {
-                    page,
-                    host: None,
-                    global_filter: None,
-                    domain_filter: None,
-                })
-                .build(),
-        )
-        .await
+        self.post(&format!("api/v1/workspaces/{workspace}/hosts/all"))
+            .body(query)
+            .send()
+            .await
     }
 
     /// Retrieve a single host
     pub async fn get_host(&self, workspace: Uuid, host: Uuid) -> KrakenResult<FullHost> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
-            .expect("Valid url");
-
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
+            .send()
+            .await
     }
 
     /// Update a host
@@ -85,30 +83,17 @@ impl KrakenClient {
         host: Uuid,
         update: UpdateHostRequest,
     ) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
-            .expect("Valid url");
-
-        self.make_request(KrakenRequest::put(url).body(update).build())
-            .await?;
-
-        Ok(())
+        self.put(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
+            .body(update)
+            .send()
+            .await
     }
 
     /// Delete a host
     pub async fn delete_host(&self, workspace: Uuid, host: Uuid) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
-            .expect("Valid url");
-
-        self.make_request(KrakenRequest::delete(url).build())
-            .await?;
-
-        Ok(())
+        self.delete(&format!("api/v1/workspaces/{workspace}/hosts/{host}"))
+            .send()
+            .await
     }
 
     /// Get the direct relations of a host
@@ -117,14 +102,25 @@ impl KrakenClient {
         workspace: Uuid,
         host: Uuid,
     ) -> KrakenResult<HostRelations> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!(
-                "api/v1/workspaces/{workspace}/hosts/{host}/relations"
-            ))
-            .expect("Valid url");
+        self.get(&format!(
+            "api/v1/workspaces/{workspace}/hosts/{host}/relations"
+        ))
+        .send()
+        .await
+    }
 
-        self.make_request(KrakenRequest::get(url).build()).await
+    /// List all findings affecting the host
+    pub async fn get_host_findings(
+        &self,
+        workspace: Uuid,
+        host: Uuid,
+    ) -> KrakenResult<Vec<SimpleFinding>> {
+        let list: ListFindings = self
+            .get(&format!(
+                "api/v1/workspaces/{workspace}/hosts/{host}/findings"
+            ))
+            .send()
+            .await?;
+        Ok(list.findings)
     }
 }

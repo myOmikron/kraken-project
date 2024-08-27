@@ -1,8 +1,10 @@
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use chrono::DateTime;
+use chrono::Utc;
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 
-use crate::models::UserPermission;
+use crate::api::handler::users::schema::UserPermission;
 
 /// The live settings of kraken
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

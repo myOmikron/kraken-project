@@ -1,8 +1,9 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::Color;
+use crate::api::handler::common::schema::Color;
 
 /// The request to create a global tag
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]

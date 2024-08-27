@@ -1,7 +1,9 @@
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
-use kraken_proto::{shared, HostsAliveRequest, HostsAliveResponse};
+use kraken_proto::shared;
+use kraken_proto::HostsAliveRequest;
+use kraken_proto::HostsAliveResponse;
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
@@ -9,12 +11,16 @@ use uuid::Uuid;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::{
-    AggregationSource, AggregationTable, HostAliveResultInsert, HostCertainty, SourceType,
-};
-use crate::modules::attacks::{
-    AttackContext, AttackError, DomainOrNetwork, HandleAttackResponse, HostAliveParams,
-};
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::HostAliveResultInsert;
+use crate::models::HostCertainty;
+use crate::models::SourceType;
+use crate::modules::attacks::AttackContext;
+use crate::modules::attacks::AttackError;
+use crate::modules::attacks::DomainOrNetwork;
+use crate::modules::attacks::HandleAttackResponse;
+use crate::modules::attacks::HostAliveParams;
 
 impl AttackContext {
     /// Executes the "host alive" attack

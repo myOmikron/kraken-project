@@ -32,20 +32,24 @@ export function tokenize(input: string): Array<Token> {
 }
 
 /** The tokens produced by {@link tokenize} */
-export type Token =
-    | { span: Span; type: "column"; value: string }
-    | { span: Span; type: "value"; value: string }
-    | { span: Span; type: "logicalOr" }
-    | { span: Span; type: "logicalAnd" }
-    | { span: Span; type: "logicalNot" }
-    | { span: Span; type: "rangeOperator" };
+export type Token = SpanlessToken & { span: Span };
+
+/** The type of a token */
+export type TokenType = Token["type"];
+
+/** Easier to generate sub-type of {@link Token} */
+export type SpanlessToken =
+    | { type: "column"; value: string }
+    | { type: "value"; value: string }
+    | { type: "logicalOr" }
+    | { type: "logicalAnd" }
+    | { type: "logicalNot" }
+    | { type: "rangeOperator" };
 
 /**
  * A span defines a substring by storing its position in the main string
  *
  * Its properties directly correspond to arguments to {@link String.substring `String.substring`}
- * @property start The index of the span's first character
- * @property end The index of the first character after the span
  */
 export type Span = {
     /** The index of the span's first character */
@@ -60,11 +64,11 @@ const RULES: Array<TokenRule> = [
         then: () => null,
     },
     {
-        regex: /^[^ ,&!:-]+ *:/,
+        regex: /^[^ ,&!:"-]+ *:/,
         then: (text, span) => ({ type: "column", value: text.substring(0, text.length - 1), span }),
     },
     {
-        regex: /^[^ ,&!:-]+/,
+        regex: /^[^ ,&!:"-]+/,
         then: (text, span) => ({ type: "value", value: text, span }),
     },
     {
@@ -93,3 +97,55 @@ type TokenRule = {
     regex: RegExp;
     then: (match: string, span: Span) => Token | null;
 };
+
+/**
+ * Converts a list of tokens to a parsable string.
+ *
+ * @param tokens the tokens to convert to a parsable string.
+ */
+export function tokensToString(tokens: SpanlessToken[]): string {
+    let ret = "";
+    for (const token of tokens) {
+        switch (token.type) {
+            case "column":
+                if (ret != "" && !ret.endsWith(" ")) ret += " ";
+                ret += token.value + ": ";
+                break;
+            case "logicalAnd":
+                ret += " & ";
+                break;
+            case "logicalNot":
+                ret += "!";
+                break;
+            case "logicalOr":
+                ret += ", ";
+                break;
+            case "rangeOperator":
+                ret += " - ";
+                break;
+            case "value":
+                ret += valueToString(token.value);
+                break;
+            default:
+                throw new Error("unexpected token type!");
+        }
+    }
+    return ret;
+}
+
+/**
+ * Escapes a value for insertion into filter strings.
+ *
+ * @param value The value to escape.
+ * @returns The value, either unquoted if it's fine or quoted if it needs to be
+ * quoted.
+ * @throws `Error` if the value is not representable
+ */
+export function valueToString(value: string): string {
+    const existing = tokenize(value);
+    if (existing.length != 1 || existing[0].type != "value") {
+        value = '"' + value + '"';
+        if (tokenize(value).length > 1) throw new Error("Value not representable in filter language!");
+    }
+    return value;
+}

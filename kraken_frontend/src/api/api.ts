@@ -1,12 +1,21 @@
-import { login, test, registerKey, authenticate, logout } from "./auth";
-import { ApiError, parseError, StatusCode } from "./error";
+import CONSOLE from "../utils/console";
+import { Err, Ok, Result } from "../utils/result";
+import { login, logout, test } from "./auth";
+import { ApiError, StatusCode, parseError } from "./error";
 import {
+    AdminWorkspacesApi,
     ApiKeysApi,
-    BruteforceSubdomainsRequest,
+    AttacksApi,
+    Configuration,
     CreateAppRequest,
     CreateDomainRequest,
+    CreateFindingAffectedRequest,
+    CreateFindingCategoryRequest,
+    CreateFindingDefinitionRequest,
+    CreateFindingRequest,
     CreateGlobalTagRequest,
     CreateHostRequest,
+    CreateHttpServiceRequest,
     CreateLeechRequest,
     CreatePortRequest,
     CreateServiceRequest,
@@ -14,28 +23,31 @@ import {
     CreateWordlistRequest,
     CreateWorkspaceRequest,
     CreateWorkspaceTagRequest,
-    DnsResolutionRequest,
-    DnsTxtScanRequest,
     DomainsApi,
+    FilesApi,
+    FindingCategoriesApi,
+    FindingsApi,
     GlobalTagsApi,
-    HostsAliveRequest,
     HostsApi,
+    HttpServicesApi,
+    KnowledgeBaseApi,
+    LeechManagementApi,
     OAuthApi,
     OAuthApplicationApi,
     PortsApi,
-    Query,
-    QueryCertificateTransparencyRequest,
     RequiredError,
     ResponseError,
-    ScanTcpPortsRequest,
-    ServiceDetectionRequest,
-    UdpServiceDetectionRequest,
     ServicesApi,
     SettingsManagementApi,
     UpdateAppRequest,
     UpdateDomainRequest,
+    UpdateFindingAffectedRequest,
+    UpdateFindingCategoryRequest,
+    UpdateFindingDefinitionRequest,
+    UpdateFindingRequest,
     UpdateGlobalTag,
     UpdateHostRequest,
+    UpdateHttpServiceRequest,
     UpdateLeechRequest,
     UpdateMeRequest,
     UpdatePortRequest,
@@ -44,22 +56,14 @@ import {
     UpdateWordlistRequest,
     UpdateWorkspaceRequest,
     UpdateWorkspaceTag,
+    UserAdminManagementApi,
+    UserManagementApi,
     WordlistApi,
     WordlistManagementApi,
     WorkspaceInvitationsApi,
     WorkspaceTagsApi,
-    TestSSLRequest,
-} from "./generated";
-import { Configuration } from "./generated";
-import {
-    AdminWorkspacesApi,
-    AttacksApi,
-    LeechManagementApi,
-    UserAdminManagementApi,
-    UserManagementApi,
     WorkspacesApi,
 } from "./generated";
-import { Err, Ok, Result } from "../utils/result";
 
 /** Database id i.e. and u32 */
 export type ID = number;
@@ -73,6 +77,8 @@ const configuration = new Configuration({
 const userAdminManagement = new UserAdminManagementApi(configuration);
 const adminWorkspaces = new AdminWorkspacesApi(configuration);
 const attacks = new AttacksApi(configuration);
+const findings = new FindingsApi(configuration);
+const files = new FilesApi(configuration);
 // const authentication = new generated.AuthenticationApi(configuration);
 const leechManagement = new LeechManagementApi(configuration);
 const userManagement = new UserManagementApi(configuration);
@@ -87,9 +93,12 @@ const hosts = new HostsApi(configuration);
 const ports = new PortsApi(configuration);
 const domains = new DomainsApi(configuration);
 const services = new ServicesApi(configuration);
+const httpServices = new HttpServicesApi(configuration);
 const apiKeys = new ApiKeysApi(configuration);
 const wordlists = new WordlistApi(configuration);
 const wordlistsManagement = new WordlistManagementApi(configuration);
+const knowledgeBase = new KnowledgeBaseApi(configuration);
+const findingCategories = new FindingCategoriesApi(configuration);
 
 export const Api = {
     admin: {
@@ -145,52 +154,15 @@ export const Api = {
         },
     },
     attacks: {
-        bruteforceSubdomains: (attack: BruteforceSubdomainsRequest) =>
-            handleError(attacks.bruteforceSubdomains({ bruteforceSubdomainsRequest: attack })),
-        queryCertificateTransparency: (attack: QueryCertificateTransparencyRequest) =>
-            handleError(attacks.queryCertificateTransparency({ queryCertificateTransparencyRequest: attack })),
-        hostAlive: (hostsAliveRequest: HostsAliveRequest) =>
-            handleError(attacks.hostsAliveCheck({ hostsAliveRequest })),
-        scanTcpPorts: (attack: ScanTcpPortsRequest) =>
-            handleError(attacks.scanTcpPorts({ scanTcpPortsRequest: attack })),
-        serviceDetection: (attack: ServiceDetectionRequest) =>
-            handleError(attacks.serviceDetection({ serviceDetectionRequest: attack })),
-        udpServiceDetection: (attack: UdpServiceDetectionRequest) =>
-            handleError(attacks.udpServiceDetection({ udpServiceDetectionRequest: attack })),
-        queryDehashed: (uuid: UUID, query: Query) =>
-            handleError(attacks.queryDehashed({ queryDehashedRequest: { workspaceUuid: uuid, query } })),
-        dnsResolution: (attack: DnsResolutionRequest) =>
-            handleError(attacks.dnsResolution({ dnsResolutionRequest: attack })),
-        dnsTxtScan: (attack: DnsTxtScanRequest) => handleError(attacks.dnsTxtScan({ dnsTxtScanRequest: attack })),
-        testssl: (attack: TestSSLRequest) => handleError(attacks.testssl({ testSSLRequest: attack })),
+        impl: attacks, // TODO add testssl
         all: () => handleError(attacks.getAllAttacks()),
         get: (uuid: UUID) => handleError(attacks.getAttack({ uuid })),
         delete: (uuid: UUID) => handleError(attacks.deleteAttack({ uuid })),
-        raw: {
-            getBruteforceSubdomainsResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getBruteforceSubdomainsResults({ uuid, limit, offset })),
-            getDNSResolutionResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getDnsResolutionResults({ uuid, limit, offset })),
-            getHostAliveResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getHostAliveResults({ uuid, limit, offset })),
-            getCertificateTransparencyResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getQueryCertificateTransparencyResults({ uuid, limit, offset })),
-            getUnhashedResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getQueryUnhashedResults({ uuid, limit, offset })),
-            getServiceDetectionResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getServiceDetectionResults({ uuid, limit, offset })),
-            getUdpServiceDetectionResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getUdpServiceDetectionResults({ uuid, limit, offset })),
-            getTcpPortScanResults: (uuid: UUID, limit: number, offset: number) =>
-                handleError(attacks.getTcpPortScanResults({ uuid, limit, offset })),
-        },
     },
     auth: {
         login,
         logout,
         test,
-        registerKey,
-        authenticate,
     },
     user: {
         get: () => handleError(userManagement.getMe()),
@@ -216,8 +188,88 @@ export const Api = {
         delete: (uuid: UUID) => handleError(workspaces.deleteWorkspace({ uuid })),
         transferOwnership: (uuid: UUID, user: UUID) =>
             handleError(workspaces.transferOwnership({ uuid, transferWorkspaceRequest: { user } })),
+        archive: (uuid: UUID) => handleError(workspaces.archiveWorkspace({ uuid })),
+        unarchive: (uuid: UUID) => handleError(workspaces.unarchiveWorkspace({ uuid })),
         attacks: {
             all: (uuid: UUID) => handleError(attacks.getWorkspaceAttacks({ uuid })),
+        },
+        files: {
+            uploadFile: (workspace: UUID, filename: string, data: Blob) =>
+                handleError(
+                    files.uploadFile({
+                        uuid: workspace,
+                        body: data,
+                        filename: filename,
+                    }),
+                ),
+            uploadImage: (workspace: UUID, filename: string, data: Blob) =>
+                handleError(
+                    files.uploadImage({
+                        uuid: workspace,
+                        body: data,
+                        filename: filename,
+                    }),
+                ),
+            downloadFile: (workspace: UUID, file: UUID) =>
+                handleError(
+                    files.downloadFile({
+                        wUuid: workspace,
+                        fUuid: file,
+                    }),
+                ),
+            downloadThumbnail: (workspace: UUID, file: UUID) =>
+                handleError(
+                    files.downloadThumbnail({
+                        wUuid: workspace,
+                        fUuid: file,
+                    }),
+                ),
+        },
+        findings: {
+            all: (workspace: UUID) => handleError(findings.getAllFindings({ uuid: workspace })),
+            create: (workspace: UUID, options: CreateFindingRequest) =>
+                handleError(findings.createFinding({ uuid: workspace, createFindingRequest: options })),
+            get: (workspace: UUID, finding: UUID) =>
+                handleError(findings.getFinding({ wUuid: workspace, fUuid: finding })),
+            update: (workspace: UUID, finding: UUID, options: UpdateFindingRequest) =>
+                handleError(
+                    findings.updateFinding({ wUuid: workspace, fUuid: finding, updateFindingRequest: options }),
+                ),
+            delete: (workspace: UUID, finding: UUID) =>
+                handleError(findings.deleteFinding({ wUuid: workspace, fUuid: finding })),
+            addAffected: (workspace: UUID, finding: UUID, affected: CreateFindingAffectedRequest) =>
+                handleError(
+                    findings.createFindingAffected({
+                        wUuid: workspace,
+                        fUuid: finding,
+                        createFindingAffectedRequest: affected,
+                    }),
+                ),
+            getAffected: (workspace: UUID, finding: UUID, affected: UUID) =>
+                handleError(
+                    findings.getFindingAffected({
+                        wUuid: workspace,
+                        fUuid: finding,
+                        aUuid: affected,
+                    }),
+                ),
+            updateAffected: (workspace: UUID, finding: UUID, affected: UUID, options: UpdateFindingAffectedRequest) =>
+                handleError(
+                    findings.updateFindingAffected({
+                        wUuid: workspace,
+                        fUuid: finding,
+                        aUuid: affected,
+                        updateFindingAffectedRequest: options,
+                    }),
+                ),
+            removeAffected: (workspace: UUID, finding: UUID, affected: UUID) =>
+                handleError(
+                    findings.deleteFindingAffected({
+                        wUuid: workspace,
+                        fUuid: finding,
+                        aUuid: affected,
+                    }),
+                ),
         },
         invitations: {
             all: (uuid: UUID) => handleError(workspaces.getAllWorkspaceInvitations({ uuid })),
@@ -246,6 +298,8 @@ export const Api = {
                 handleError(hosts.getHostSources({ wUuid: workspaceUuid, hUuid: hostUuid })),
             relations: (workspaceUuid: UUID, hostUuid: UUID) =>
                 handleError(hosts.getHostRelations({ wUuid: workspaceUuid, hUuid: hostUuid })),
+            findings: (workspaceUuid: UUID, hostUuid: UUID) =>
+                handleError(hosts.getHostFindings({ wUuid: workspaceUuid, hUuid: hostUuid })),
         },
         ports: {
             all: (
@@ -267,6 +321,8 @@ export const Api = {
                 handleError(ports.getPortSources({ wUuid: workspaceUuid, pUuid: portUuid })),
             relations: (workspaceUuid: UUID, portUuid: UUID) =>
                 handleError(ports.getPortRelations({ wUuid: workspaceUuid, pUuid: portUuid })),
+            findings: (workspaceUuid: UUID, portUuid: UUID) =>
+                handleError(ports.getPortFindings({ wUuid: workspaceUuid, pUuid: portUuid })),
         },
         domains: {
             all: (
@@ -290,6 +346,8 @@ export const Api = {
                 handleError(domains.getDomainSources({ wUuid: workspaceUuid, dUuid: domainUuid })),
             relations: (workspaceUuid: UUID, domainUuid: UUID) =>
                 handleError(domains.getDomainRelations({ wUuid: workspaceUuid, dUuid: domainUuid })),
+            findings: (workspaceUuid: UUID, domainUuid: UUID) =>
+                handleError(domains.getDomainFindings({ wUuid: workspaceUuid, dUuid: domainUuid })),
         },
         services: {
             all: (
@@ -313,6 +371,42 @@ export const Api = {
                 handleError(services.getServiceSources({ wUuid: workspaceUuid, sUuid: serviceUuid })),
             relations: (workspaceUuid: UUID, serviceUuid: UUID) =>
                 handleError(services.getServiceRelations({ wUuid: workspaceUuid, sUuid: serviceUuid })),
+            findings: (workspaceUuid: UUID, serviceUuid: UUID) =>
+                handleError(services.getServiceFindings({ wUuid: workspaceUuid, sUuid: serviceUuid })),
+        },
+        httpServices: {
+            all: (
+                workspaceUuid: UUID,
+                limit: number,
+                offset: number,
+                filter: { host?: UUID; globalFilter?: string; httpServiceFilter?: string } = {},
+            ) =>
+                handleError(
+                    httpServices.getAllHttpServices({
+                        uuid: workspaceUuid,
+                        getAllHttpServicesQuery: { limit, offset, ...filter },
+                    }),
+                ),
+            get: (workspaceUuid: UUID, serviceUuid: UUID) =>
+                handleError(httpServices.getHttpService({ wUuid: workspaceUuid, hsUuid: serviceUuid })),
+            update: (workspaceUuid: UUID, serviceUuid: UUID, updateHttpServiceRequest: UpdateHttpServiceRequest) =>
+                handleError(
+                    httpServices.updateHttpService({
+                        wUuid: workspaceUuid,
+                        hsUuid: serviceUuid,
+                        updateHttpServiceRequest,
+                    }),
+                ),
+            create: (workspaceUuid: UUID, createHttpServiceRequest: CreateHttpServiceRequest) =>
+                handleError(httpServices.createHttpService({ uuid: workspaceUuid, createHttpServiceRequest })),
+            delete: (workspaceUuid: UUID, serviceUuid: UUID) =>
+                handleError(httpServices.deleteHttpService({ wUuid: workspaceUuid, hsUuid: serviceUuid })),
+            sources: (workspaceUuid: UUID, serviceUuid: UUID) =>
+                handleError(httpServices.getHttpServiceSources({ wUuid: workspaceUuid, hsUuid: serviceUuid })),
+            relations: (workspaceUuid: UUID, serviceUuid: UUID) =>
+                handleError(httpServices.getHttpServiceRelations({ wUuid: workspaceUuid, hsUuid: serviceUuid })),
+            findings: (workspaceUuid: UUID, serviceUuid: UUID) =>
+                handleError(httpServices.getHttpServiceFindings({ wUuid: workspaceUuid, hsUuid: serviceUuid })),
         },
         tags: {
             all: (workspaceUuid: UUID) => handleError(workspaceTags.getAllWorkspaceTags({ uuid: workspaceUuid })),
@@ -345,25 +439,71 @@ export const Api = {
         accept: (uuid: UUID) => handleError(workspaceInvitations.acceptInvitation({ uuid })),
         decline: (uuid: UUID) => handleError(workspaceInvitations.declineInvitation({ uuid })),
     },
+    knowledgeBase: {
+        findingDefinitions: {
+            all: () => handleError(knowledgeBase.getAllFindingDefinitions()),
+            get: (findingDefinition: UUID) =>
+                handleError(knowledgeBase.getFindingDefinition({ uuid: findingDefinition })),
+            getUsage: (findingDefinition: UUID) =>
+                handleError(knowledgeBase.getFindingDefinitionUsage({ uuid: findingDefinition })),
+            create: (createFindingDefinitionRequest: CreateFindingDefinitionRequest) =>
+                handleError(knowledgeBase.createFindingDefinition({ createFindingDefinitionRequest })),
+            update: (uuid: UUID, definition: UpdateFindingDefinitionRequest) =>
+                handleError(
+                    knowledgeBase.updateFindingDefinition({
+                        uuid,
+                        updateFindingDefinitionRequest: definition,
+                    }),
+                ),
+            admin: {
+                delete: (findingDefinition: UUID) =>
+                    handleError(knowledgeBase.deleteFindingDefinition({ uuid: findingDefinition })),
+            },
+        },
+    },
+    findingCategories: {
+        admin: {
+            create: (category: CreateFindingCategoryRequest) =>
+                handleError(
+                    findingCategories.createFindingCategory({
+                        createFindingCategoryRequest: category,
+                    }),
+                ),
+            delete: (uuid: string) =>
+                handleError(
+                    findingCategories.deleteFindingCategory({
+                        uuid,
+                    }),
+                ),
+            update: (uuid: string, category: UpdateFindingCategoryRequest) =>
+                handleError(
+                    findingCategories.updateFindingCategory({
+                        uuid,
+                        updateFindingCategoryRequest: category,
+                    }),
+                ),
+        },
+        all: () => handleError(findingCategories.getAllFindingCategories()),
+    },
 };
 
 /**
  * Wraps a promise returned by the generated SDK which handles its errors and returns a {@link Result}
  */
-async function handleError<T>(promise: Promise<T>): Promise<Result<T, ApiError>> {
+export async function handleError<T>(promise: Promise<T>): Promise<Result<T, ApiError>> {
     try {
         return Ok(await promise);
     } catch (e) {
         if (e instanceof ResponseError) {
             return Err(await parseError(e.response));
         } else if (e instanceof RequiredError) {
-            console.error(e);
+            CONSOLE.error(e);
             return Err({
                 status_code: StatusCode.JsonDecodeError,
                 message: "The server's response didn't match the spec",
             });
         } else {
-            console.error("Unknown error occurred:", e);
+            CONSOLE.error("Unknown error occurred:", e);
             return Err({
                 status_code: StatusCode.ArbitraryJSError,
                 message: "Unknown error occurred",

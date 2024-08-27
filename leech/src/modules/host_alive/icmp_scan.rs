@@ -3,11 +3,20 @@
 use std::net::IpAddr;
 use std::time::Duration;
 
-use futures::{stream, StreamExt};
+use futures::stream;
+use futures::StreamExt;
 use ipnetwork::IpNetwork;
-use log::{debug, error, info, trace, warn};
+use log::debug;
+use log::error;
+use log::info;
+use log::trace;
+use log::warn;
 use rand::random;
-use surge_ping::{Client, PingIdentifier, PingSequence, SurgeError, ICMP};
+use surge_ping::Client;
+use surge_ping::PingIdentifier;
+use surge_ping::PingSequence;
+use surge_ping::SurgeError;
+use surge_ping::ICMP;
 use tokio::sync::mpsc::Sender;
 
 use crate::modules::host_alive::error::IcmpScanError;

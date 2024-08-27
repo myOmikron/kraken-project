@@ -1,17 +1,23 @@
-use actix_web::web::{Json, Path};
-use actix_web::{get, post, HttpResponse};
-use rorm::{query, FieldAccess, Model};
+use actix_web::get;
+use actix_web::post;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::common::error::{ApiError, ApiResult};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::PathUuid;
-use crate::api::handler::users::schema::SimpleUser;
-use crate::api::handler::workspace_invitations::schema::{
-    FullWorkspaceInvitation, WorkspaceInvitationList,
-};
+use crate::api::handler::workspace_invitations::schema::FullWorkspaceInvitation;
+use crate::api::handler::workspace_invitations::schema::WorkspaceInvitationList;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
-use crate::models::{Workspace, WorkspaceInvitation, WorkspaceMemberPermission};
+use crate::models::Workspace;
+use crate::models::WorkspaceInvitation;
+use crate::models::WorkspaceMemberPermission;
 
 /// Retrieve all open invitations to workspaces the currently logged-in user
 /// has retrieved
@@ -38,9 +44,9 @@ pub async fn get_all_invitations(
         (
             WorkspaceInvitation::F.uuid,
             WorkspaceInvitation::F.workspace as Workspace,
-            WorkspaceInvitation::F.from as SimpleUser,
-            WorkspaceInvitation::F.target as SimpleUser,
-            WorkspaceInvitation::F.workspace.owner as SimpleUser,
+            WorkspaceInvitation::F.from,
+            WorkspaceInvitation::F.target,
+            WorkspaceInvitation::F.workspace.owner,
         )
     )
     .condition(WorkspaceInvitation::F.target.equals(session_user))
@@ -53,11 +59,24 @@ pub async fn get_all_invitations(
                 uuid: workspace.uuid,
                 name: workspace.name,
                 description: workspace.description,
-                owner,
+                owner: GLOBAL
+                    .user_cache
+                    .get_simple_user(*owner.key())
+                    .await?
+                    .ok_or(ApiError::InternalServerError)?,
                 created_at: workspace.created_at,
+                archived: workspace.archived,
             },
-            target,
-            from,
+            target: GLOBAL
+                .user_cache
+                .get_simple_user(*target.key())
+                .await?
+                .ok_or(ApiError::InternalServerError)?,
+            from: GLOBAL
+                .user_cache
+                .get_simple_user(*from.key())
+                .await?
+                .ok_or(ApiError::InternalServerError)?,
         });
     }
 
@@ -107,6 +126,12 @@ pub async fn accept_invitation(
 
     rorm::delete!(&mut tx, WorkspaceInvitation)
         .condition(WorkspaceInvitation::F.uuid.equals(invitation_uuid))
+        .await?;
+
+    // Refresh cache
+    GLOBAL
+        .workspace_users_cache
+        .refresh_users(*invitation.workspace.key(), &mut tx)
         .await?;
 
     tx.commit().await?;

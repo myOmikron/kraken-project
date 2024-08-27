@@ -2,9 +2,12 @@
 
 use std::net::IpAddr;
 
-use log::{debug, warn};
-use reqwest::{Client, StatusCode};
-use serde::{Deserialize, Serialize};
+use log::debug;
+use log::warn;
+use reqwest::Client;
+use reqwest::StatusCode;
+use serde::Deserialize;
+use serde::Serialize;
 
 pub use crate::modules::whois::error::WhoisError;
 

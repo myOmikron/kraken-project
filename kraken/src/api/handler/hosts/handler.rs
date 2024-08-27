@@ -1,37 +1,70 @@
 use std::collections::HashMap;
 
-use actix_web::web::{Json, Path};
-use actix_web::{delete, get, post, put, HttpResponse};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::post;
+use actix_web::put;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
 use futures::TryStreamExt;
-use rorm::conditions::DynamicCollection;
+use ipnetwork::IpNetwork;
+use rorm::and;
 use rorm::db::sql::value::Value;
+use rorm::insert;
 use rorm::model::PatchSelector;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, update, FieldAccess, Model};
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::aggregation_source::schema::{
-    FullAggregationSource, SimpleAggregationSource,
-};
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{
-    HostResultsPage, PathUuid, SimpleTag, TagType, UuidResponse,
-};
+use crate::api::handler::aggregation_source::schema::FullAggregationSource;
+use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::HostResultsPage;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::SimpleTag;
+use crate::api::handler::common::schema::UuidsResponse;
 use crate::api::handler::common::utils::get_page_params;
+use crate::api::handler::common::utils::query_many_severities;
+use crate::api::handler::common::utils::query_single_severity;
 use crate::api::handler::domains::schema::SimpleDomain;
-use crate::api::handler::hosts::schema::{
-    CreateHostRequest, FullHost, GetAllHostsQuery, HostRelations, PathHost, UpdateHostRequest,
-};
+use crate::api::handler::findings::schema::ListFindings;
+use crate::api::handler::hosts::schema::CreateHostRequest;
+use crate::api::handler::hosts::schema::FullHost;
+use crate::api::handler::hosts::schema::GetAllHostsQuery;
+use crate::api::handler::hosts::schema::HostRelations;
+use crate::api::handler::hosts::schema::PathHost;
+use crate::api::handler::hosts::schema::UpdateHostRequest;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
 use crate::chan::global::GLOBAL;
-use crate::chan::ws_manager::schema::{AggregationType, WsMessage};
-use crate::models::{
-    AggregationSource, AggregationTable, Domain, DomainHostRelation, GlobalTag, Host,
-    HostGlobalTag, HostWorkspaceTag, ManualHost, Port, Service, Workspace, WorkspaceTag,
-};
-use crate::modules::filter::{GlobalAST, HostAST};
+use crate::chan::ws_manager::schema::AggregationType;
+use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
+use crate::models::convert::IntoDb;
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::Domain;
+use crate::models::DomainHostRelation;
+use crate::models::FindingAffected;
+use crate::models::GlobalTag;
+use crate::models::Host;
+use crate::models::HostGlobalTag;
+use crate::models::HostWorkspaceTag;
+use crate::models::HttpService;
+use crate::models::ManualHost;
+use crate::models::Port;
+use crate::models::Service;
+use crate::models::Workspace;
+use crate::models::WorkspaceTag;
+use crate::modules::filter::GlobalAST;
+use crate::modules::filter::HostAST;
 use crate::modules::raw_query::RawQueryBuilder;
 use crate::query_tags;
 
@@ -121,24 +154,34 @@ pub(crate) async fn get_all_hosts(
     )
     .await?;
 
+    let severities = query_many_severities(
+        &mut tx,
+        FindingAffected::F.host,
+        hosts.iter().map(|x| x.uuid),
+    )
+    .await?;
+
     tx.commit().await?;
 
+    let items = hosts
+        .into_iter()
+        .map(|x| FullHost {
+            uuid: x.uuid,
+            ip_addr: x.ip_addr.ip(),
+            comment: x.comment,
+            response_time: x.response_time,
+            certainty: FromDb::from_db(x.certainty),
+            os_type: FromDb::from_db(x.os_type),
+            workspace: *x.workspace.key(),
+            tags: tags.remove(&x.uuid).unwrap_or_default(),
+            sources: sources.remove(&x.uuid).unwrap_or_default(),
+            severity: severities.get(&x.uuid).copied().map(FromDb::from_db),
+            created_at: x.created_at,
+        })
+        .collect();
+
     Ok(Json(HostResultsPage {
-        items: hosts
-            .into_iter()
-            .map(|x| FullHost {
-                uuid: x.uuid,
-                ip_addr: x.ip_addr.ip(),
-                comment: x.comment,
-                response_time: x.response_time,
-                certainty: x.certainty,
-                os_type: x.os_type,
-                workspace: *x.workspace.key(),
-                tags: tags.remove(&x.uuid).unwrap_or_default(),
-                sources: sources.remove(&x.uuid).unwrap_or_default(),
-                created_at: x.created_at,
-            })
-            .collect(),
+        items,
         limit,
         offset,
         total: total as u64,
@@ -182,12 +225,7 @@ pub async fn get_host(
     let mut tags: Vec<_> = query!(&mut tx, (HostGlobalTag::F.global_tag as GlobalTag,))
         .condition(HostGlobalTag::F.host.equals(host.uuid))
         .stream()
-        .map_ok(|(x,)| SimpleTag {
-            uuid: x.uuid,
-            name: x.name,
-            color: x.color.into(),
-            tag_type: TagType::Global,
-        })
+        .map_ok(|(tag,)| SimpleTag::from(tag))
         .try_collect()
         .await?;
 
@@ -197,12 +235,7 @@ pub async fn get_host(
     )
     .condition(HostWorkspaceTag::F.host.equals(host.uuid))
     .stream()
-    .map_ok(|(x,)| SimpleTag {
-        uuid: x.uuid,
-        name: x.name,
-        color: x.color.into(),
-        tag_type: TagType::Workspace,
-    })
+    .map_ok(|(tag,)| SimpleTag::from(tag))
     .try_collect()
     .await?;
 
@@ -215,28 +248,33 @@ pub async fn get_host(
         .try_collect()
         .await?;
 
+    let severity = query_single_severity(&mut tx, FindingAffected::F.host, path.h_uuid).await?;
+
     tx.commit().await?;
 
     Ok(Json(FullHost {
         uuid: host.uuid,
         ip_addr: host.ip_addr.ip(),
         workspace: *host.workspace.key(),
-        os_type: host.os_type,
+        os_type: FromDb::from_db(host.os_type),
         comment: host.comment,
         response_time: host.response_time,
-        certainty: host.certainty,
+        certainty: FromDb::from_db(host.certainty),
         tags,
         sources,
+        severity: severity.map(FromDb::from_db),
         created_at: host.created_at,
     }))
 }
 
 /// Manually add a host
+///
+/// This endpoint also accepts networks inserting all their ips as hosts
 #[utoipa::path(
     tag = "Hosts",
     context_path = "/api/v1",
     responses(
-        (status = 200, description = "Host was created", body = UuidResponse),
+        (status = 200, description = "Host(s) was(/ were) created", body = UuidsResponse),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
@@ -249,12 +287,30 @@ pub async fn create_host(
     req: Json<CreateHostRequest>,
     path: Path<PathUuid>,
     SessionUser(user): SessionUser,
-) -> ApiResult<Json<UuidResponse>> {
+) -> ApiResult<Json<UuidsResponse>> {
     let CreateHostRequest { ip_addr, certainty } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
-    Ok(Json(UuidResponse {
-        uuid: ManualHost::insert(&GLOBAL.db, workspace, user, ip_addr, certainty).await?,
-    }))
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, workspace, user).await? {
+        return Err(ApiError::MissingPrivileges)?;
+    }
+    let mut uuids = Vec::new();
+    for ip in ip_addr.iter() {
+        uuids.push(
+            ManualHost::insert(
+                &mut tx,
+                workspace,
+                user,
+                IpNetwork::from(ip),
+                certainty.into_db(),
+            )
+            .await?,
+        );
+    }
+    tx.commit().await?;
+
+    Ok(Json(UuidsResponse { uuids }))
 }
 
 /// Update a host
@@ -494,8 +550,8 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
         .map_ok(|p| SimplePort {
             uuid: p.uuid,
             port: p.port as u16,
-            protocol: p.protocol,
-            certainty: p.certainty,
+            protocol: FromDb::from_db(p.protocol),
+            certainty: FromDb::from_db(p.certainty),
             host: *p.host.key(),
             comment: p.comment,
             workspace: *p.workspace.key(),
@@ -511,7 +567,7 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
             uuid: s.uuid,
             name: s.name,
             version: s.version,
-            certainty: s.certainty,
+            certainty: FromDb::from_db(s.certainty),
             host: *s.host.key(),
             port: s.port.map(|x| *x.key()),
             comment: s.comment,
@@ -543,12 +599,33 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
                 uuid: d.uuid,
                 domain: d.domain,
                 comment: d.comment,
-                certainty: d.certainty,
+                certainty: FromDb::from_db(d.certainty),
                 workspace: *d.workspace.key(),
                 created_at: d.created_at,
             });
         }
     }
+
+    let http_services = query!(&mut tx, HttpService)
+        .condition(HttpService::F.host.equals(path.h_uuid))
+        .stream()
+        .map_ok(|service| SimpleHttpService {
+            uuid: service.uuid,
+            name: service.name,
+            version: service.version,
+            domain: service.domain.map(|fm| *fm.key()),
+            host: *service.host.key(),
+            port: *service.port.key(),
+            base_path: service.base_path,
+            tls: service.tls,
+            sni_required: service.sni_required,
+            comment: service.comment,
+            certainty: FromDb::from_db(service.certainty),
+            workspace: *service.workspace.key(),
+            created_at: service.created_at,
+        })
+        .try_collect()
+        .await?;
 
     tx.commit().await?;
 
@@ -557,5 +634,38 @@ pub async fn get_host_relations(path: Path<PathHost>) -> ApiResult<Json<HostRela
         services,
         direct_domains,
         indirect_domains,
+        http_services,
     }))
+}
+
+/// Get a host's findings
+#[utoipa::path(
+    tag = "Hosts",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The host's findings", body = ListFindings),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathHost),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/hosts/{h_uuid}/findings")]
+pub async fn get_host_findings(
+    path: Path<PathHost>,
+    SessionUser(u_uuid): SessionUser,
+) -> ApiResult<Json<ListFindings>> {
+    let PathHost { w_uuid, h_uuid } = path.into_inner();
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, u_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let findings =
+        ListFindings::query_through_affected(&mut tx, w_uuid, FindingAffected::F.host, h_uuid)
+            .await?;
+
+    tx.commit().await?;
+    Ok(Json(findings))
 }

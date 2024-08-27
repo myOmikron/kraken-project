@@ -1,18 +1,25 @@
-use futures::{SinkExt, StreamExt, TryStreamExt};
+use futures::SinkExt;
+use futures::StreamExt;
+use futures::TryStreamExt;
 use kraken::chan::ws_manager::schema::WsMessage;
-use log::{debug, error, info};
+use log::debug;
+use log::error;
+use log::info;
 use reqwest::cookie::CookieStore;
 use thiserror::Error;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::Sender;
-use tokio_native_tls::{native_tls, TlsConnector, TlsStream};
+use tokio_native_tls::native_tls;
+use tokio_native_tls::TlsConnector;
+use tokio_native_tls::TlsStream;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 use tokio_tungstenite::tungstenite::http::HeaderValue;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::WebSocketStream;
 
 use crate::error::KrakenError;
-use crate::{KrakenClient, KrakenResult};
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 impl KrakenClient {
     pub(crate) async fn start_ws(&self) -> KrakenResult<()> {

@@ -1,24 +1,26 @@
-import { Api } from "../../../api/api";
 import React from "react";
-import WorkspaceTable from "../components/workspace-table";
+import { Api } from "../../../api/api";
 import { FullDomain, FullHost } from "../../../api/generated";
 import SourcesList from "../components/sources-list";
 import TagList from "../components/tag-list";
+import WorkspaceTable from "../components/workspace-table";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
 export type WorkspaceDataDomainsProps = {
-    onSelect: (uuid: string) => void;
     host: FullHost | null;
 };
 
 export function WorkspaceHostDomains(props: WorkspaceDataDomainsProps) {
-    const { onSelect, host } = props;
+    const { host } = props;
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
     return (
         <WorkspaceTable<FullDomain>
-            query={(limit, offset) => Api.workspaces.domains.all(workspace, limit, offset, { host: host?.uuid })}
+            workspace={workspace}
+            query={(filter, limit, offset) =>
+                Api.workspaces.domains.all(workspace, limit, offset, { host: host?.uuid, globalFilter: filter })
+            }
             queryDeps={[workspace, host?.uuid]}
             columnsTemplate={"1fr 1fr 1fr 1fr"}
         >
@@ -29,7 +31,7 @@ export function WorkspaceHostDomains(props: WorkspaceDataDomainsProps) {
                 <span>Attacks</span>
             </div>
             {(domain) => (
-                <div className={"workspace-table-row"} onClick={() => onSelect(domain.uuid)}>
+                <div key={domain.uuid} className={"workspace-table-row"}>
                     <span>{domain.domain}</span>
                     <TagList tags={domain.tags} />
                     <span>{domain.comment}</span>

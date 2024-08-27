@@ -1,10 +1,13 @@
 use std::future::Future;
-use std::net::{Ipv4Addr, Ipv6Addr};
+use std::net::Ipv4Addr;
+use std::net::Ipv6Addr;
 use std::str::FromStr;
 
 use ipnetwork::IpNetwork;
+use kraken_proto::shared;
 use kraken_proto::shared::dns_record::Record;
-use kraken_proto::{shared, DnsResolutionRequest, DnsResolutionResponse};
+use kraken_proto::DnsResolutionRequest;
+use kraken_proto::DnsResolutionResponse;
 use rorm::insert;
 use rorm::prelude::*;
 use uuid::Uuid;
@@ -12,13 +15,19 @@ use uuid::Uuid;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::{
-    AggregationSource, AggregationTable, DnsRecordType, DnsResolutionResultInsert, DomainCertainty,
-    DomainDomainRelation, DomainHostRelation, HostCertainty, SourceType,
-};
-use crate::modules::attacks::{
-    AttackContext, AttackError, DnsResolutionParams, HandleAttackResponse,
-};
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::DnsRecordType;
+use crate::models::DnsResolutionResultInsert;
+use crate::models::DomainCertainty;
+use crate::models::DomainDomainRelation;
+use crate::models::DomainHostRelation;
+use crate::models::HostCertainty;
+use crate::models::SourceType;
+use crate::modules::attacks::AttackContext;
+use crate::modules::attacks::AttackError;
+use crate::modules::attacks::DnsResolutionParams;
+use crate::modules::attacks::HandleAttackResponse;
 
 impl AttackContext {
     // What's up with this signature?

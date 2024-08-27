@@ -1,55 +1,117 @@
 //! In this module is the definition of the gRPC services
 
 use std::future::Future;
-use std::net::{IpAddr, SocketAddr};
+use std::net::IpAddr;
+use std::num::NonZeroU32;
+use std::num::NonZeroUsize;
 use std::ops::RangeInclusive;
 use std::pin::Pin;
 use std::time::Duration;
 
-use chrono::{Datelike, Timelike};
+use chrono::Datelike;
+use chrono::Timelike;
 use futures::stream::BoxStream;
 use futures::Stream;
 use ipnetwork::IpNetwork;
+use itertools::Itertools;
+use kraken_proto::any_attack_response;
 use kraken_proto::req_attack_service_server::ReqAttackService;
+use kraken_proto::shared;
 use kraken_proto::shared::dns_record::Record;
 use kraken_proto::shared::dns_txt_scan::Info;
-use kraken_proto::shared::{
-    spf_directive, spf_part, Aaaa, Address, CertEntry, DnsRecord, DnsTxtKnownEntry, DnsTxtScan,
-    GenericRecord, Net, SpfDirective, SpfExplanationModifier, SpfInfo, SpfMechanismA,
-    SpfMechanismAll, SpfMechanismExists, SpfMechanismInclude, SpfMechanismIp, SpfMechanismMx,
-    SpfMechanismPtr, SpfPart, SpfQualifier, SpfRedirectModifier, SpfUnknownModifier, A,
-};
-use kraken_proto::{
-    any_attack_response, shared, test_ssl_scans, test_ssl_service, BruteforceSubdomainRequest,
-    BruteforceSubdomainResponse, CertificateTransparencyRequest, CertificateTransparencyResponse,
-    DnsResolutionRequest, DnsResolutionResponse, DnsTxtScanRequest, DnsTxtScanResponse,
-    HostsAliveRequest, HostsAliveResponse, ServiceCertainty, ServiceDetectionRequest,
-    ServiceDetectionResponse, StartTlsProtocol, TcpPortScanRequest, TcpPortScanResponse,
-    TestSslFinding, TestSslRequest, TestSslResponse, TestSslScanResult, TestSslService,
-    TestSslSeverity, UdpServiceDetectionRequest, UdpServiceDetectionResponse,
-};
+use kraken_proto::shared::spf_directive;
+use kraken_proto::shared::spf_part;
+use kraken_proto::shared::Aaaa;
+use kraken_proto::shared::Address;
+use kraken_proto::shared::CertEntry;
+use kraken_proto::shared::DnsRecord;
+use kraken_proto::shared::DnsTxtKnownService;
+use kraken_proto::shared::DnsTxtKnownServiceList;
+use kraken_proto::shared::DnsTxtScan;
+use kraken_proto::shared::DnsTxtServiceHint;
+use kraken_proto::shared::GenericRecord;
+use kraken_proto::shared::Net;
+use kraken_proto::shared::OperatingSystem;
+use kraken_proto::shared::SpfDirective;
+use kraken_proto::shared::SpfExplanationModifier;
+use kraken_proto::shared::SpfInfo;
+use kraken_proto::shared::SpfMechanismA;
+use kraken_proto::shared::SpfMechanismAll;
+use kraken_proto::shared::SpfMechanismExists;
+use kraken_proto::shared::SpfMechanismInclude;
+use kraken_proto::shared::SpfMechanismIp;
+use kraken_proto::shared::SpfMechanismMx;
+use kraken_proto::shared::SpfMechanismPtr;
+use kraken_proto::shared::SpfPart;
+use kraken_proto::shared::SpfQualifier;
+use kraken_proto::shared::SpfRedirectModifier;
+use kraken_proto::shared::SpfUnknownModifier;
+use kraken_proto::shared::A;
+use kraken_proto::test_ssl_scans;
+use kraken_proto::test_ssl_service;
+use kraken_proto::BruteforceSubdomainRequest;
+use kraken_proto::BruteforceSubdomainResponse;
+use kraken_proto::CertificateTransparencyRequest;
+use kraken_proto::CertificateTransparencyResponse;
+use kraken_proto::DnsResolutionRequest;
+use kraken_proto::DnsResolutionResponse;
+use kraken_proto::DnsTxtScanRequest;
+use kraken_proto::DnsTxtScanResponse;
+use kraken_proto::HostsAliveRequest;
+use kraken_proto::HostsAliveResponse;
+use kraken_proto::OsDetectionRequest;
+use kraken_proto::OsDetectionResponse;
+use kraken_proto::ServiceCertainty;
+use kraken_proto::ServiceDetectionRequest;
+use kraken_proto::ServiceDetectionResponse;
+use kraken_proto::StartTlsProtocol;
+use kraken_proto::TestSslFinding;
+use kraken_proto::TestSslRequest;
+use kraken_proto::TestSslResponse;
+use kraken_proto::TestSslScanResult;
+use kraken_proto::TestSslService;
+use kraken_proto::TestSslSeverity;
+use kraken_proto::UdpServiceDetectionRequest;
+use kraken_proto::UdpServiceDetectionResponse;
 use log::error;
 use prost_types::Timestamp;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
-use tonic::{Request, Response, Status};
+use tonic::Request;
+use tonic::Response;
+use tonic::Status;
 use uuid::Uuid;
 
 use crate::backlog::Backlog;
-use crate::modules::bruteforce_subdomains::{
-    bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
-};
-use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
-use crate::modules::dns::spf::{SPFMechanism, SPFPart, SPFQualifier};
-use crate::modules::dns::txt::{start_dns_txt_scan, DnsTxtScanSettings, TxtScanInfo};
-use crate::modules::dns::{dns_resolution, DnsRecordResult, DnsResolutionSettings};
-use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
-use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
-use crate::modules::service_detection::udp::{
-    start_udp_service_detection, UdpServiceDetectionSettings,
-};
-use crate::modules::service_detection::{detect_service, DetectServiceSettings, Service};
-use crate::modules::testssl::{self, run_testssl};
+use crate::modules::bruteforce_subdomains::bruteforce_subdomains;
+use crate::modules::bruteforce_subdomains::BruteforceSubdomainResult;
+use crate::modules::bruteforce_subdomains::BruteforceSubdomainsSettings;
+use crate::modules::certificate_transparency::query_ct_api;
+use crate::modules::certificate_transparency::CertificateTransparencySettings;
+use crate::modules::dns::dns_resolution;
+use crate::modules::dns::spf::SPFMechanism;
+use crate::modules::dns::spf::SPFPart;
+use crate::modules::dns::spf::SPFQualifier;
+use crate::modules::dns::txt::start_dns_txt_scan;
+use crate::modules::dns::txt::DnsTxtScanSettings;
+use crate::modules::dns::txt::TxtScanInfo;
+use crate::modules::dns::txt::TxtServiceHint;
+use crate::modules::dns::DnsRecordResult;
+use crate::modules::dns::DnsResolutionSettings;
+use crate::modules::host_alive::icmp_scan::start_icmp_scan;
+use crate::modules::host_alive::icmp_scan::IcmpScanSettings;
+use crate::modules::os_detection::os_detection;
+use crate::modules::os_detection::OperatingSystemInfo;
+use crate::modules::os_detection::OsDetectionSettings;
+use crate::modules::service_detection::tcp::start_tcp_service_detection;
+use crate::modules::service_detection::tcp::TcpServiceDetectionResult;
+use crate::modules::service_detection::tcp::TcpServiceDetectionSettings;
+use crate::modules::service_detection::udp::start_udp_service_detection;
+use crate::modules::service_detection::udp::UdpServiceDetectionSettings;
+use crate::modules::service_detection::Service;
+use crate::modules::testssl;
+use crate::rpc::attacks::testssl::run_testssl;
+use crate::utils::IteratorExt;
 
 /// The Attack service
 pub struct Attacks {
@@ -108,58 +170,6 @@ impl ReqAttackService for Attacks {
         )
     }
 
-    type RunTcpPortScanStream =
-        Pin<Box<dyn Stream<Item = Result<TcpPortScanResponse, Status>> + Send>>;
-
-    async fn run_tcp_port_scan(
-        &self,
-        request: Request<TcpPortScanRequest>,
-    ) -> Result<Response<Self::RunTcpPortScanStream>, Status> {
-        let req = request.into_inner();
-
-        let attack_uuid = Uuid::parse_str(&req.attack_uuid)
-            .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
-
-        let mut ports = req
-            .ports
-            .into_iter()
-            .map(RangeInclusive::try_from)
-            .collect::<Result<Vec<_>, _>>()?;
-        if ports.is_empty() {
-            ports.push(1..=u16::MAX);
-        }
-
-        let settings = TcpPortScannerSettings {
-            addresses: req
-                .targets
-                .into_iter()
-                .map(IpNetwork::try_from)
-                .collect::<Result<_, _>>()?,
-            ports,
-            timeout: Duration::from_millis(req.timeout),
-            max_retries: req.max_retries,
-            retry_interval: Duration::from_millis(req.retry_interval),
-            concurrent_limit: req.concurrent_limit,
-            skip_icmp_check: req.skip_icmp_check,
-        };
-
-        self.stream_attack(
-            attack_uuid,
-            {
-                |tx| async move {
-                    start_tcp_con_port_scan(settings, tx)
-                        .await
-                        .map_err(|err| Status::unknown(err.to_string()))
-                }
-            },
-            |value| TcpPortScanResponse {
-                address: Some(Address::from(value.ip())),
-                port: value.port() as u32,
-            },
-            any_attack_response::Response::TcpPortScan,
-        )
-    }
-
     async fn query_certificate_transparency(
         &self,
         request: Request<CertificateTransparencyRequest>,
@@ -214,53 +224,102 @@ impl ReqAttackService for Attacks {
         Ok(Response::new(ct_res))
     }
 
+    type ServiceDetectionStream =
+        Pin<Box<dyn Stream<Item = Result<ServiceDetectionResponse, Status>> + Send>>;
+
     async fn service_detection(
         &self,
         request: Request<ServiceDetectionRequest>,
-    ) -> Result<Response<ServiceDetectionResponse>, Status> {
+    ) -> Result<Response<Self::ServiceDetectionStream>, Status> {
         let request = request.into_inner();
-        let settings = DetectServiceSettings {
-            socket: SocketAddr::new(
-                IpAddr::try_from(
-                    request
-                        .address
-                        .clone()
-                        .ok_or(Status::invalid_argument("Missing address"))?,
-                )?,
-                request
-                    .port
-                    .try_into()
-                    .map_err(|_| Status::invalid_argument("Port is out of range"))?,
-            ),
-            timeout: Duration::from_millis(request.timeout),
-            always_run_everything: false,
+
+        let attack_uuid = Uuid::parse_str(&request.attack_uuid)
+            .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
+
+        let mut ports = request
+            .ports
+            .into_iter()
+            .map(RangeInclusive::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
+        if ports.is_empty() {
+            ports.push(1..=u16::MAX);
+        }
+
+        let concurrent_limit = NonZeroU32::new(request.concurrent_limit)
+            .ok_or_else(|| Status::invalid_argument("concurrent_limit can't be zero"))?;
+
+        let settings = TcpServiceDetectionSettings {
+            addresses: request
+                .targets
+                .into_iter()
+                .map(IpNetwork::try_from)
+                .collect::<Result<_, _>>()?,
+            ports,
+            connect_timeout: Duration::from_millis(request.connect_timeout),
+            receive_timeout: Duration::from_millis(request.receive_timeout),
+            max_retries: request.max_retries,
+            retry_interval: Duration::from_millis(request.retry_interval),
+            concurrent_limit,
+            skip_icmp_check: request.skip_icmp_check,
+            just_scan: false,
         };
 
-        let service = detect_service(settings).await.map_err(|err| {
-            error!("Service detection failed: {err:?}");
-            Status::internal("Service detection failed. See logs")
-        })?;
-
-        Ok(Response::new(match service {
-            Service::Unknown => ServiceDetectionResponse {
-                response_type: ServiceCertainty::Unknown as _,
-                services: Vec::new(),
-                address: request.address,
-                port: request.port,
+        self.stream_attack(
+            attack_uuid,
+            {
+                |tx| async move {
+                    start_tcp_service_detection(settings, tx)
+                        .await
+                        .map_err(|err| {
+                            error!("Service detection failed: {err:?}");
+                            Status::internal("Service detection failed. See logs")
+                        })
+                }
             },
-            Service::Maybe(services) => ServiceDetectionResponse {
-                response_type: ServiceCertainty::Maybe as _,
-                services: services.iter().map(|s| s.to_string()).collect(),
-                address: request.address,
-                port: request.port,
+            |TcpServiceDetectionResult {
+                 tls_service,
+                 tcp_service,
+                 addr,
+             }| {
+                let mut response = ServiceDetectionResponse {
+                    address: Some(shared::Address::from(addr.ip())),
+                    port: addr.port() as u32,
+                    // The following are updated in the 2 match statements below
+                    is_tls: true,
+                    tcp_certainty: ServiceCertainty::Unknown as _,
+                    tcp_services: Vec::new(),
+                    tls_certainty: ServiceCertainty::Unknown as _,
+                    tls_services: Vec::new(),
+                };
+                match tcp_service {
+                    Service::Unknown => (),
+                    Service::Maybe(services) => {
+                        response.tcp_certainty = ServiceCertainty::Maybe as _;
+                        response.tcp_services = services.into_iter().map(str::to_string).collect();
+                    }
+                    Service::Definitely(service) => {
+                        response.tcp_certainty = ServiceCertainty::Definitely as _;
+                        response.tcp_services = vec![service.to_string()];
+                    }
+                }
+                match tls_service {
+                    None => {
+                        response.is_tls = false;
+                    }
+                    Some(Service::Unknown) => (),
+                    Some(Service::Maybe(services)) => {
+                        response.tls_certainty = ServiceCertainty::Maybe as _;
+                        response.tls_services = services.into_iter().map(str::to_string).collect();
+                    }
+                    Some(Service::Definitely(service)) => {
+                        response.tls_certainty = ServiceCertainty::Definitely as _;
+                        response.tls_services = vec![service.to_string()];
+                    }
+                }
+                response
             },
-            Service::Definitely(service) => ServiceDetectionResponse {
-                response_type: ServiceCertainty::Definitely as _,
-                services: vec![service.to_string()],
-                address: request.address,
-                port: request.port,
-            },
-        }))
+            any_attack_response::Response::ServiceDetection,
+        )
     }
 
     type UdpServiceDetectionStream =
@@ -285,12 +344,11 @@ impl ReqAttackService for Attacks {
         }
 
         let settings = UdpServiceDetectionSettings {
-            ip: IpAddr::try_from(
-                request
-                    .address
-                    .clone()
-                    .ok_or(Status::invalid_argument("Missing address"))?,
-            )?,
+            addresses: request
+                .targets
+                .into_iter()
+                .map(IpNetwork::try_from)
+                .collect::<Result<_, _>>()?,
             ports,
             concurrent_limit: request.concurrent_limit,
             max_retries: request.max_retries,
@@ -308,16 +366,16 @@ impl ReqAttackService for Attacks {
                 }
             },
             move |value| UdpServiceDetectionResponse {
-                address: request.address.clone(),
+                address: Some(shared::Address::from(value.address)),
                 port: value.port as u32,
                 certainty: match value.service {
                     Service::Unknown => ServiceCertainty::Unknown as _,
                     Service::Maybe(_) => ServiceCertainty::Maybe as _,
-                    Service::Definitely(_) => ServiceCertainty::Definitely as _,
+                    Service::Definitely { .. } => ServiceCertainty::Definitely as _,
                 },
                 services: match value.service {
                     Service::Unknown => Vec::new(),
-                    Service::Maybe(services) => services.iter().map(|s| s.to_string()).collect(),
+                    Service::Maybe(services) => services.into_iter().map(str::to_string).collect(),
                     Service::Definitely(service) => vec![service.to_string()],
                 },
             },
@@ -383,7 +441,7 @@ impl ReqAttackService for Attacks {
 
         let settings = DnsResolutionSettings {
             domains: req.targets,
-            concurrent_limit: req.concurrent_limit,
+            // TODO: concurrent limit currently has no effect
         };
 
         self.stream_attack(
@@ -457,50 +515,7 @@ impl ReqAttackService for Attacks {
             |value| DnsTxtScanResponse {
                 record: Some(DnsTxtScan {
                     domain: value.domain,
-                    rule: value.rule,
                     info: Some(match value.info {
-                        TxtScanInfo::HasGoogleAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasGoogleAccount as _)
-                        }
-                        TxtScanInfo::HasDocusignAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasDocusignAccount as _)
-                        }
-                        TxtScanInfo::HasAppleAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasAppleAccount as _)
-                        }
-                        TxtScanInfo::HasFacebookAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasFacebookAccount as _)
-                        }
-                        TxtScanInfo::HasHubspotAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasHubspotAccount as _)
-                        }
-                        TxtScanInfo::HasMsDynamics365 => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasMsDynamics365 as _)
-                        }
-                        TxtScanInfo::HasStripeAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasStripeAccount as _)
-                        }
-                        TxtScanInfo::HasOneTrustSso => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasOneTrustSso as _)
-                        }
-                        TxtScanInfo::HasBrevoAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasBrevoAccount as _)
-                        }
-                        TxtScanInfo::HasGlobalsignAccount => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasGlobalsignAccount as _)
-                        }
-                        TxtScanInfo::HasGlobalsignSMime => {
-                            Info::WellKnown(DnsTxtKnownEntry::HasGlobalsignSMime as _)
-                        }
-                        TxtScanInfo::OwnsAtlassianAccounts => {
-                            Info::WellKnown(DnsTxtKnownEntry::OwnsAtlassianAccounts as _)
-                        }
-                        TxtScanInfo::OwnsZoomAccounts => {
-                            Info::WellKnown(DnsTxtKnownEntry::OwnsZoomAccounts as _)
-                        }
-                        TxtScanInfo::EmailProtonMail => {
-                            Info::WellKnown(DnsTxtKnownEntry::EmailProtonMail as _)
-                        }
                         TxtScanInfo::SPF { parts } => Info::Spf(SpfInfo {
                             parts: parts
                                 .iter()
@@ -587,10 +602,210 @@ impl ReqAttackService for Attacks {
                                 })
                                 .collect(),
                         }),
+                        TxtScanInfo::ServiceHints { hints } => {
+                            Info::WellKnown(DnsTxtKnownServiceList {
+                                hints: hints
+                                    .into_iter()
+                                    .map(|hint| DnsTxtKnownService {
+                                        rule: hint.0,
+                                        service: match hint.1 {
+                                            TxtServiceHint::HasGoogleAccount => {
+                                                DnsTxtServiceHint::HasGoogleAccount as _
+                                            }
+                                            TxtServiceHint::HasDocusignAccount => {
+                                                DnsTxtServiceHint::HasDocusignAccount as _
+                                            }
+                                            TxtServiceHint::HasAppleAccount => {
+                                                DnsTxtServiceHint::HasAppleAccount as _
+                                            }
+                                            TxtServiceHint::HasFacebookAccount => {
+                                                DnsTxtServiceHint::HasFacebookAccount as _
+                                            }
+                                            TxtServiceHint::HasHubspotAccount => {
+                                                DnsTxtServiceHint::HasHubspotAccount as _
+                                            }
+                                            TxtServiceHint::HasMsDynamics365 => {
+                                                DnsTxtServiceHint::HasMsDynamics365 as _
+                                            }
+                                            TxtServiceHint::HasStripeAccount => {
+                                                DnsTxtServiceHint::HasStripeAccount as _
+                                            }
+                                            TxtServiceHint::HasOneTrustSso => {
+                                                DnsTxtServiceHint::HasOneTrustSso as _
+                                            }
+                                            TxtServiceHint::HasBrevoAccount => {
+                                                DnsTxtServiceHint::HasBrevoAccount as _
+                                            }
+                                            TxtServiceHint::HasGlobalsignAccount => {
+                                                DnsTxtServiceHint::HasGlobalsignAccount as _
+                                            }
+                                            TxtServiceHint::HasGlobalsignSMime => {
+                                                DnsTxtServiceHint::HasGlobalsignSMime as _
+                                            }
+                                            TxtServiceHint::OwnsAtlassianAccounts => {
+                                                DnsTxtServiceHint::OwnsAtlassianAccounts as _
+                                            }
+                                            TxtServiceHint::OwnsZoomAccounts => {
+                                                DnsTxtServiceHint::OwnsZoomAccounts as _
+                                            }
+                                            TxtServiceHint::EmailProtonMail => {
+                                                DnsTxtServiceHint::EmailProtonMail as _
+                                            }
+                                        },
+                                    })
+                                    .collect(),
+                            })
+                        }
                     }),
                 }),
             },
             any_attack_response::Response::DnsTxtScan,
+        )
+    }
+
+    type OsDetectionStream =
+        Pin<Box<dyn Stream<Item = Result<OsDetectionResponse, Status>> + Send>>;
+
+    async fn os_detection(
+        &self,
+        request: Request<OsDetectionRequest>,
+    ) -> Result<Response<Self::OsDetectionStream>, Status> {
+        let req = request.into_inner();
+
+        if req.targets.is_empty() {
+            return Err(Status::invalid_argument("no targets specified"));
+        }
+
+        let addresses: Vec<_> = req
+            .targets
+            .into_iter()
+            .map(IpNetwork::try_from)
+            .collect::<Result<_, _>>()?;
+
+        let attack_uuid = Uuid::parse_str(&req.attack_uuid)
+            .map_err(|_| Status::invalid_argument("attack_uuid has to be an Uuid"))?;
+
+        let fingerprint_port = match req.fingerprint_port {
+            None => None,
+            Some(p) => Some(
+                u16::try_from(p)
+                    .map_err(|_| Status::invalid_argument("`fingerprint_port` out of range"))?,
+            ),
+        };
+
+        let ssh_port = match req.ssh_port {
+            None => None,
+            Some(p) => Some(
+                u16::try_from(p)
+                    .map_err(|_| Status::invalid_argument("`ssh_port` out of range"))?,
+            ),
+        };
+
+        let concurrent_limit = NonZeroUsize::new(req.concurrent_limit as usize);
+
+        self.stream_attack(
+            attack_uuid,
+            |tx| async move {
+                addresses
+                    .iter()
+                    .cloned()
+                    .flat_map(|network| network.into_iter())
+                    .try_for_each_concurrent(concurrent_limit, |address| async move {
+                        let os = os_detection(OsDetectionSettings {
+                            ip_addr: address,
+                            fingerprint_port,
+                            fingerprint_timeout: Duration::from_millis(req.fingerprint_timeout),
+                            ssh_port,
+                            ssh_connect_timeout: Duration::from_millis(req.ssh_connect_timeout),
+                            ssh_timeout: Duration::from_millis(req.ssh_timeout),
+                            port_ack_timeout: Duration::from_millis(req.port_ack_timeout),
+                            port_parallel_syns: req.port_parallel_syns as usize,
+                        })
+                        .await
+                        .map_err(|err| {
+                            error!("OS detection failed: {err:?}");
+                            Status::internal("OS detection failed. See logs")
+                        })?;
+
+                        let address = Address::from(address);
+
+                        tx.send(match os {
+                            OperatingSystemInfo::Unknown { hint } => OsDetectionResponse {
+                                host: Some(address),
+                                os: OperatingSystem::Unknown as _,
+                                hints: hint.iter().cloned().collect(),
+                                versions: Vec::new(),
+                            },
+                            OperatingSystemInfo::Linux {
+                                distro,
+                                kernel_version,
+                                hint,
+                            } => OsDetectionResponse {
+                                host: Some(address),
+                                os: OperatingSystem::Linux as _,
+                                hints: if kernel_version.is_empty() {
+                                    hint.iter().cloned().collect()
+                                } else {
+                                    hint.iter()
+                                        .cloned()
+                                        .chain(vec![format!(
+                                            "Kernel {}",
+                                            kernel_version.iter().join(" OR ")
+                                        )])
+                                        .collect()
+                                },
+                                versions: distro
+                                    .iter()
+                                    .map(|(distro, v)| match v {
+                                        None => format!("{distro:?}"),
+                                        Some(v) => format!("{distro:?} {v}"),
+                                    })
+                                    .collect(),
+                            },
+                            OperatingSystemInfo::BSD { version, hint } => OsDetectionResponse {
+                                host: Some(address),
+                                os: OperatingSystem::Bsd as _,
+                                hints: hint.iter().cloned().collect(),
+                                versions: version.iter().cloned().collect(),
+                            },
+                            OperatingSystemInfo::Android { version, hint } => OsDetectionResponse {
+                                host: Some(address),
+                                os: OperatingSystem::Android as _,
+                                hints: hint.iter().cloned().collect(),
+                                versions: version.iter().cloned().collect(),
+                            },
+                            OperatingSystemInfo::OSX { version, hint } => OsDetectionResponse {
+                                host: Some(address),
+                                os: OperatingSystem::Osx as _,
+                                hints: hint.iter().cloned().collect(),
+                                versions: version.iter().cloned().collect(),
+                            },
+                            OperatingSystemInfo::IOS { version, hint } => OsDetectionResponse {
+                                host: Some(address),
+                                os: OperatingSystem::Ios as _,
+                                hints: hint.iter().cloned().collect(),
+                                versions: version.iter().cloned().collect(),
+                            },
+                            OperatingSystemInfo::Windows { version, hint } => OsDetectionResponse {
+                                host: Some(address),
+                                os: OperatingSystem::Windows as _,
+                                hints: hint.iter().cloned().collect(),
+                                versions: version
+                                    .iter()
+                                    .map(|(ver, v)| match v {
+                                        None => format!("{ver}"),
+                                        Some(v) => format!("{ver} {v}"),
+                                    })
+                                    .collect(),
+                            },
+                        })
+                        .await
+                        .map_err(|_| Status::internal("failed to send"))
+                    })
+                    .await
+            },
+            |value| value,
+            any_attack_response::Response::OsDetection,
         )
     }
 

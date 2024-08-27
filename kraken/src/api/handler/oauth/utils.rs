@@ -1,12 +1,14 @@
 use actix_web::body::BoxBody;
 use actix_web::web::Redirect;
-use actix_web::{HttpResponse, ResponseError};
+use actix_web::HttpResponse;
+use actix_web::ResponseError;
 use log::error;
 use serde::Serialize;
 use url::Url;
 
 use crate::api::handler::common::error::ApiError;
-use crate::modules::oauth::schemas::{TokenError, TokenErrorType};
+use crate::modules::oauth::schemas::TokenError;
+use crate::modules::oauth::schemas::TokenErrorType;
 
 pub(crate) fn build_redirect(
     url: &str,

@@ -1,36 +1,55 @@
 use std::str::FromStr;
 use std::time::Duration;
 
-use actix_web::web::{Data, Form, Json, Path, Query, Redirect};
-use actix_web::{get, post};
+use actix_web::get;
+use actix_web::post;
+use actix_web::web::Data;
+use actix_web::web::Form;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::web::Query;
+use actix_web::web::Redirect;
 use base64::prelude::BASE64_URL_SAFE_NO_PAD;
 use base64::Engine;
 use chrono::Utc;
 use log::debug;
-use rand::distributions::{Alphanumeric, DistString};
+use rand::distributions::Alphanumeric;
+use rand::distributions::DistString;
 use rand::thread_rng;
-use rorm::{query, FieldAccess, Model};
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 use serde::Serialize;
-use sha2::{Digest, Sha256};
+use sha2::Digest;
+use sha2::Sha256;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::schema::PathUuid;
-use crate::api::handler::oauth::schema::{OAuthDecisionQuery, OpenRequestInfo};
+use crate::api::handler::oauth::schema::OAuthDecisionQuery;
+use crate::api::handler::oauth::schema::OpenRequestInfo;
 use crate::api::handler::oauth::utils::build_redirect;
 use crate::api::handler::oauth_applications::schema::SimpleOauthClient;
-use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
-use crate::models::{
-    OAuthDecision, OAuthDecisionAction, OauthClient, User, Workspace, WorkspaceAccessToken,
-};
-use crate::modules::oauth::schemas::{
-    AuthError, AuthErrorType, AuthRequest, CodeChallengeMethod, TokenError, TokenErrorType,
-    TokenRequest, TokenResponse,
-};
-use crate::modules::oauth::{OAuthRequest, OAuthScope, OauthManager, OpenIfError};
+use crate::models::OAuthDecision;
+use crate::models::OAuthDecisionAction;
+use crate::models::OauthClient;
+use crate::models::Workspace;
+use crate::models::WorkspaceAccessToken;
+use crate::modules::oauth::schemas::AuthError;
+use crate::modules::oauth::schemas::AuthErrorType;
+use crate::modules::oauth::schemas::AuthRequest;
+use crate::modules::oauth::schemas::CodeChallengeMethod;
+use crate::modules::oauth::schemas::TokenError;
+use crate::modules::oauth::schemas::TokenErrorType;
+use crate::modules::oauth::schemas::TokenRequest;
+use crate::modules::oauth::schemas::TokenResponse;
+use crate::modules::oauth::OAuthRequest;
+use crate::modules::oauth::OAuthScope;
+use crate::modules::oauth::OauthManager;
+use crate::modules::oauth::OpenIfError;
 
 /// Initial endpoint an application redirects the user to.
 ///
@@ -216,7 +235,7 @@ pub async fn info(
         .condition(OauthClient::F.uuid.equals(request.client_pk))
         .one()
         .await?;
-    let (uuid, name, description, created_at, owner) = query!(
+    let (uuid, name, description, created_at, owner, archived) = query!(
         &GLOBAL.db,
         (
             Workspace::F.uuid,
@@ -224,16 +243,18 @@ pub async fn info(
             Workspace::F.description,
             Workspace::F.created_at,
             Workspace::F.owner,
+            Workspace::F.archived,
         )
     )
     .condition(Workspace::F.uuid.equals(request.scope.workspace))
     .one()
     .await?;
 
-    let owner = query!(&GLOBAL.db, User)
-        .condition(User::F.uuid.equals(*owner.key()))
-        .one()
-        .await?;
+    let owner = GLOBAL
+        .user_cache
+        .get_simple_user(*owner.key())
+        .await?
+        .ok_or(ApiError::InternalServerError)?;
 
     Ok(Json(OpenRequestInfo {
         workspace: SimpleWorkspace {
@@ -241,11 +262,8 @@ pub async fn info(
             name,
             description,
             created_at,
-            owner: SimpleUser {
-                display_name: owner.display_name,
-                username: owner.username,
-                uuid: owner.uuid,
-            },
+            owner,
+            archived,
         },
         oauth_application,
     }))

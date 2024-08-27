@@ -1,21 +1,22 @@
-import { Api } from "../../../api/api";
 import React, { useState } from "react";
-import { FullAggregationSource, FullPort, PortRelations, TagType } from "../../../api/generated";
-import { handleApiError } from "../../../utils/helper";
-import Textarea from "../../../components/textarea";
 import { toast } from "react-toastify";
+import { Api } from "../../../api/api";
+import { FullAggregationSource, FullPort, ListFindings, PortRelations, TagType } from "../../../api/generated";
+import SelectableText from "../../../components/selectable-text";
+import Textarea from "../../../components/textarea";
+import { handleApiError } from "../../../utils/helper";
+import CertaintyIcon from "../components/certainty-icon";
 import EditableTags from "../components/editable-tags";
+import { PortRelationsList } from "../components/relations-list";
+import SeverityIcon from "../components/severity-icon";
 import { WORKSPACE_CONTEXT } from "../workspace";
+import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
-import ArrowLeftIcon from "../../../svg/arrow-left";
-import ArrowRightIcon from "../../../svg/arrow-right";
-import RelationRightIcon from "../../../svg/relation-right";
-import RelationLeftIcon from "../../../svg/relation-left";
 
 export type WorkspaceDataPortDetailsProps = {
     port: string;
     updatePort?: (uuid: string, update: Partial<FullPort>) => void;
-    tab: "general" | "results" | "relations";
+    tab: "general" | "results" | "relations" | "findings";
 };
 
 export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
@@ -24,23 +25,15 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
     const [attacks, setAttacks] = useState({} as FullAggregationSource);
-    const [limit, setLimit] = useState(0);
-    const [page, setPage] = useState(0);
     const [port, setPort] = React.useState<FullPort | null>(null);
     const [relations, setRelations] = React.useState<PortRelations | null>(null);
+    const [findings, setFindings] = React.useState<ListFindings | null>(null);
     React.useEffect(() => {
         Api.workspaces.ports.get(workspace, uuid).then(handleApiError(setPort));
         Api.workspaces.ports.relations(workspace, uuid).then(handleApiError(setRelations));
-        Api.workspaces.ports.sources(workspace, uuid).then(
-            handleApiError((x) => {
-                setAttacks(x);
-                setLimit(x.attacks.length - 1);
-            })
-        );
+        Api.workspaces.ports.findings(workspace, uuid).then(handleApiError(setFindings));
+        Api.workspaces.ports.sources(workspace, uuid).then(handleApiError(setAttacks));
     }, [workspace, uuid]);
-    React.useEffect(() => {
-        setPage(0);
-    }, [uuid]);
 
     /** Send an update to the server and parent component */
     function update(uuid: string, update: Partial<FullPort>, msg?: string) {
@@ -56,19 +49,38 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                 handleApiError(() => {
                     if (msg !== undefined) toast.success(msg);
                     if (signalUpdate !== undefined) signalUpdate(uuid, update);
-                })
+                }),
             );
     }
 
     if (port === null) return null;
-    return (
-        <>
-            {tab === "general" ? (
+    switch (tab) {
+        case "general":
+            return (
                 <>
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Port</h3>
                         {`${port.port} open on ${port.host.ipAddr}`}
                     </div>
+                    <div className="workspace-data-details-pane">
+                        <h3 className="sub-heading">Certainty</h3>
+                        <div className="workspace-data-certainty-list">
+                            <CertaintyIcon certainty={port.certainty} />
+                        </div>
+                    </div>
+                    {port.severity && (
+                        <div className="workspace-data-details-pane">
+                            <h3 className="sub-heading">Severity</h3>
+                            <div className="workspace-data-certainty-list">
+                                <SeverityIcon
+                                    tooltip={false}
+                                    className={"icon workspace-data-certainty-icon"}
+                                    severity={port.severity}
+                                />
+                                {port.severity}
+                            </div>
+                        </div>
+                    )}
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Comment</h3>
                         <Textarea value={port.comment} onChange={(comment) => setPort({ ...port, comment })} />
@@ -90,75 +102,26 @@ export function WorkspaceDataPortDetails(props: WorkspaceDataPortDetailsProps) {
                             }}
                         />
                     </div>
+                    <SelectableText className="uuid">{uuid}</SelectableText>
                 </>
-            ) : (
-                <>
-                    {tab === "results" ? (
-                        <div className="workspace-data-details-flex">
-                            <WorkspaceDataDetailsResults attack={attacks.attacks[page]} uuid={port.uuid} />
-                            <div className="workspace-data-details-table-controls">
-                                <div className="workspace-data-details-controls-container">
-                                    <button
-                                        className={"workspace-table-button"}
-                                        disabled={page === 0}
-                                        onClick={() => {
-                                            setPage(page - 1);
-                                        }}
-                                    >
-                                        <ArrowLeftIcon />
-                                    </button>
-                                    <div className="workspace-table-controls-page-container">
-                                        <span>
-                                            {page + 1} of {limit + 1}
-                                        </span>
-                                    </div>
-                                    <button
-                                        className={"workspace-table-button"}
-                                        disabled={page === limit}
-                                        onClick={() => {
-                                            setPage(page + 1);
-                                        }}
-                                    >
-                                        <ArrowRightIcon />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="workspace-data-details-overflow">
-                            <div className="workspace-data-details-relations-container">
-                                <div className="workspace-data-details-relations-header">
-                                    <div className="workspace-data-details-relations-heading">Connection</div>
-                                    <div className="workspace-data-details-relations-heading">Type</div>
-                                    <div className="workspace-data-details-relations-heading">To</div>
-                                </div>
-                                <div className="workspace-data-details-relations-body">
-                                    {relations?.host !== null && relations?.host !== undefined ? (
-                                        <>
-                                            <div title={"Direct"}>
-                                                <RelationLeftIcon />
-                                            </div>
-                                            <span>Host</span>
-                                            <span>{relations.host.ipAddr} </span>
-                                        </>
-                                    ) : undefined}
-                                    {relations?.services.map((s) => {
-                                        return (
-                                            <>
-                                                <div title={"Direct"}>
-                                                    <RelationRightIcon />
-                                                </div>
-                                                <span>Service</span>
-                                                <span>{s.name} </span>
-                                            </>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </>
-            )}
-        </>
-    );
+            );
+        case "results":
+            return (
+                <div className="workspace-data-details-flex">
+                    <WorkspaceDataDetailsResults attacks={attacks.attacks} />
+                </div>
+            );
+        case "relations":
+            return (
+                <div className="workspace-data-details-overflow">
+                    <PortRelationsList relations={relations} />
+                </div>
+            );
+        case "findings":
+            return (
+                <div className="workspace-data-details-overflow">
+                    <WorkspaceDataDetailsFindings findings={findings} />
+                </div>
+            );
+    }
 }

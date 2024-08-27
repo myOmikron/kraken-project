@@ -1,7 +1,8 @@
 service: pop3
 prevalence: often
 probes:
-  - protocol: TCP
+  - tcp: yes
+    tls: yes
     # https://datatracker.ietf.org/doc/html/rfc2449
     # initial greeting
     # status indicator +OK or -ERR

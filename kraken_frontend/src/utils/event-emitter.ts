@@ -1,10 +1,26 @@
-/** An event handler is any function taking an event */
-export type EventHandler<Event> = (event: Event) => any;
+import CONSOLE from "./console";
 
-/** Handle returned by {@link EventEmitter.addEventListener addEventListener} to identify the added listener */
+/** An event handler is any function taking an event */
+export type EventHandler<Event> = (event: Event) => void;
+
+/** Handle returned by {@link EventEmitter#addEventListener `addEventListener`} to identify the added listener */
 export type ListenerHandle<K> = [K, number];
 
-/** Base class for things which emit events others can listen for */
+/**
+ * Base class for things which emit events others can listen for
+ *
+ * The generic `Events` should be an object mapping event types to their events' data:
+ * ```ts
+ * type Events = {
+ *     // event of type "foo" consists of a number
+ *     foo: number;
+ *     // event of type "bar" consists of a string
+ *     bar: string;
+ *     // event of type "baz" consists of a custom event object
+ *     baz: BazEvent;
+ * };
+ * ```
+ */
 export default class EventEmitter<Events extends {}> {
     /** Map from event type to group of listeners */
     listeners: { [K in keyof Events]?: ListenerGroup<Events[K]> } = {};
@@ -27,7 +43,7 @@ export default class EventEmitter<Events extends {}> {
      *
      * @param type the type of event (identified by a string) to listen for
      * @param listener the callback function to invoke when the event is emitted
-     * @return a handle which can be used to remove the appended event listener via {@link EventEmitter.removeEventListener removeEventListener}
+     * @returns a handle which can be used to remove the appended event listener via {@link EventEmitter#removeEventListener `removeEventListener`}
      */
     addEventListener<K extends keyof Events>(type: K, listener: EventHandler<Events[K]>): ListenerHandle<K> {
         let group: ListenerGroup<Events[K]> | undefined = this.listeners[type];
@@ -39,9 +55,9 @@ export default class EventEmitter<Events extends {}> {
     }
 
     /**
-     * Remove an existing event listener identified by the handle returned from {@link EventEmitter.addEventListener addEventListener}
+     * Remove an existing event listener identified by the handle returned from {@link EventEmitter#addEventListener `addEventListener`}
      *
-     * @param handle returned from {@link EventEmitter.addEventListener addEventListener} to identify the event listener
+     * @param handle returned from {@link EventEmitter#addEventListener `addEventListener`} to identify the event listener
      */
     removeEventListener<K extends keyof Events>(handle: ListenerHandle<K>) {
         const [type, id] = handle;
@@ -50,6 +66,7 @@ export default class EventEmitter<Events extends {}> {
     }
 }
 
+/** Internal class managing the listeners for a single event type */
 class ListenerGroup<E> {
     /** Simple counter to generate unique ids */
     nextId: number = 0;
@@ -57,18 +74,27 @@ class ListenerGroup<E> {
     /** Map from id to event handler */
     listener: Map<number, EventHandler<E>> = new Map();
 
-    /** Emit an event */
+    /**
+     * Emit an event
+     *
+     * @param event data to call all current listeners with
+     */
     emit(event: E) {
         for (const perm of this.listener.values()) {
             try {
                 perm(event);
             } catch (error) {
-                console.error("Error inside event listener:", error);
+                CONSOLE.error("Error inside event listener:", error);
             }
         }
     }
 
-    /** Add an event listener */
+    /**
+     * Add an event listener
+     *
+     * @param eventListener function to be called when the event is emitted
+     * @returns id used to remove the event listener
+     */
     add(eventListener: EventHandler<E>): number {
         const id = this.nextId;
         this.listener.set(id, eventListener);
@@ -76,7 +102,11 @@ class ListenerGroup<E> {
         return id;
     }
 
-    /** Remove an event listener */
+    /**
+     * Remove an event listener
+     *
+     * @param id id obtained when adding the event listener
+     */
     remove(id: number) {
         this.listener.delete(id);
     }

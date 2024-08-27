@@ -1,21 +1,32 @@
-import Home from "./views/home";
-import React from "react";
+import { AggregationType } from "./api/generated";
+import AdminGuard from "./components/admin-guard";
 import { Router } from "./utils/router";
-import KrakenNetwork from "./views/kraken-network";
-import Me from "./views/me";
 import AdminUsers from "./views/admin/users";
 import AdminWorkspaces from "./views/admin/workspaces";
-import AdminGuard from "./components/admin-guard";
-import WorkspaceOverview from "./views/workspace-overview";
-import OauthRequest from "./views/oauth-request";
+import Home from "./views/home";
+import { CreateFindingDefinition } from "./views/knowledge-base/create-finding-definition";
+import { EditFindingDefinition } from "./views/knowledge-base/edit-finding-definition";
+import { ListFindingDefinition } from "./views/knowledge-base/list-finding-definition";
+import KrakenNetwork from "./views/kraken-network";
+import Me from "./views/me";
 import { ContentWithMenu } from "./views/menu";
+import OauthRequest from "./views/oauth-request";
 import Settings from "./views/settings";
+import WorkspaceOverview from "./views/workspace-overview";
 import Workspace from "./views/workspace/workspace";
-import WorkspaceSettings from "./views/workspace/workspace-settings";
-import WorkspaceData from "./views/workspace/workspace-data";
 import WorkspaceAttacks, { TargetType } from "./views/workspace/workspace-attacks";
-import WorkspaceHosts from "./views/workspace/workspace-hosts";
+import WorkspaceData from "./views/workspace/workspace-data";
+import {
+    CreateFindingObject,
+    WorkspaceCreateFinding,
+} from "./views/workspace/workspace-finding/workspace-create-finding";
+import WorkspaceEditFinding from "./views/workspace/workspace-finding/workspace-edit-finding";
+import WorkspaceFindings from "./views/workspace/workspace-findings";
+import WorkspaceFindingsQuickAttach from "./views/workspace/workspace-findings-quick-attach";
 import WorkspaceHost from "./views/workspace/workspace-host";
+import WorkspaceHosts from "./views/workspace/workspace-hosts";
+import WorkspaceNotes from "./views/workspace/workspace-notes";
+import WorkspaceSettings from "./views/workspace/workspace-settings";
 
 export const ROUTER = new Router();
 
@@ -80,6 +91,42 @@ export const ROUTES = {
             </ContentWithMenu>
         ),
     }),
+    WORKSPACE_SELECTION_ATTACKS: ROUTER.add<
+        {
+            workspaceUuid: string;
+        },
+        {
+            domains: string[];
+            hosts: string[];
+            ports: string[];
+            services: string[];
+            httpServices: string[];
+        }
+    >({
+        url: "workspaces/{workspaceUuid}/attacks/selection",
+        parser: { workspaceUuid: String },
+        render: ({ workspaceUuid }, hiddenParams) => {
+            if (hiddenParams === undefined) {
+                ROUTES.WORKSPACE_ATTACKS.visit({ uuid: workspaceUuid });
+                return <></>;
+            }
+            const { domains, hosts, ports, services, httpServices } = hiddenParams;
+            return (
+                <ContentWithMenu>
+                    <Workspace view={"attacks"} uuid={workspaceUuid}>
+                        <WorkspaceAttacks
+                            targetType="selection"
+                            domains={domains}
+                            hosts={hosts}
+                            ports={ports}
+                            services={services}
+                            httpServices={httpServices}
+                        />
+                    </Workspace>
+                </ContentWithMenu>
+            );
+        },
+    }),
     WORKSPACE_TARGETED_ATTACKS: ROUTER.add({
         url: "workspaces/{workspaceUuid}/attacks/{targetType}/{targetUuid}",
         parser: { workspaceUuid: String, targetType: TargetType, targetUuid: String },
@@ -87,6 +134,61 @@ export const ROUTES = {
             <ContentWithMenu>
                 <Workspace view={"attacks"} uuid={workspaceUuid}>
                     <WorkspaceAttacks targetType={targetType} targetUuid={targetUuid} />
+                </Workspace>
+            </ContentWithMenu>
+        ),
+    }),
+    WORKSPACE_FINDINGS_LIST: ROUTER.add({
+        url: "workspaces/{uuid}/findings",
+        parser: { uuid: String },
+        render: ({ uuid }) => (
+            <ContentWithMenu>
+                <Workspace uuid={uuid} view={"findings"}>
+                    <WorkspaceFindings view={"table"} />
+                </Workspace>
+            </ContentWithMenu>
+        ),
+    }),
+    WORKSPACE_FINDINGS_QUICK_ATTACH: ROUTER.add({
+        url: "workspaces/{workspace}/findings/attach/{type}/{uuid}",
+        parser: { workspace: String, type: String, uuid: String },
+        render: ({ workspace, type, uuid }) => (
+            <ContentWithMenu>
+                <Workspace uuid={workspace} view={"findings"}>
+                    <WorkspaceFindingsQuickAttach type={type as AggregationType} uuid={uuid} />
+                </Workspace>
+            </ContentWithMenu>
+        ),
+    }),
+    WORKSPACE_FINDINGS_GRAPH: ROUTER.add({
+        url: "workspaces/{uuid}/findings/graph",
+        parser: { uuid: String },
+        render: ({ uuid }) => (
+            <ContentWithMenu>
+                <Workspace uuid={uuid} view={"findings"}>
+                    <WorkspaceFindings view={"graph"} />
+                </Workspace>
+            </ContentWithMenu>
+        ),
+    }),
+    WORKSPACE_FINDINGS_CREATE: ROUTER.add<{ uuid: string }, { affected: CreateFindingObject[] }>({
+        url: "workspaces/{uuid}/findings/create",
+        parser: { uuid: String },
+        render: ({ uuid }, hiddenParams) => (
+            <ContentWithMenu>
+                <Workspace uuid={uuid} view={"findings"}>
+                    <WorkspaceCreateFinding initAffected={hiddenParams ? hiddenParams.affected : []} />
+                </Workspace>
+            </ContentWithMenu>
+        ),
+    }),
+    WORKSPACE_FINDINGS_EDIT: ROUTER.add({
+        url: "workspaces/{wUuid}/findings/{fUuid}",
+        parser: { wUuid: String, fUuid: String },
+        render: ({ wUuid, fUuid }) => (
+            <ContentWithMenu>
+                <Workspace uuid={wUuid} view={"findings"}>
+                    <WorkspaceEditFinding uuid={fUuid} />
                 </Workspace>
             </ContentWithMenu>
         ),
@@ -124,8 +226,44 @@ export const ROUTES = {
             </ContentWithMenu>
         ),
     }),
-    KNOWLEDGE_BASE: ROUTER.add({ url: "knowledge", parser: {}, render: () => undefined }),
-
+    WORKSPACE_NOTES: ROUTER.add({
+        url: "workspaces/{uuid}/notes",
+        parser: { uuid: String },
+        render: ({ uuid }) => (
+            <ContentWithMenu>
+                <Workspace view={"notes"} uuid={uuid}>
+                    <WorkspaceNotes />
+                </Workspace>
+            </ContentWithMenu>
+        ),
+    }),
+    FINDING_DEFINITION_LIST: ROUTER.add({
+        url: "knowledge/finding-definition",
+        parser: {},
+        render: () => (
+            <ContentWithMenu>
+                <ListFindingDefinition />
+            </ContentWithMenu>
+        ),
+    }),
+    FINDING_DEFINITION_CREATE: ROUTER.add({
+        url: "knowledge/finding-definition/create",
+        parser: {},
+        render: () => (
+            <ContentWithMenu>
+                <CreateFindingDefinition />
+            </ContentWithMenu>
+        ),
+    }),
+    FINDING_DEFINITION_EDIT: ROUTER.add({
+        url: "knowledge/finding-definition/{uuid}",
+        parser: { uuid: String },
+        render: ({ uuid }) => (
+            <ContentWithMenu>
+                <EditFindingDefinition uuid={uuid} />
+            </ContentWithMenu>
+        ),
+    }),
     OAUTH_REQUEST: ROUTER.add({
         url: "oauth-request/{uuid}",
         parser: { uuid: String },

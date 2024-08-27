@@ -3,7 +3,7 @@ import "../index.css";
 
 export default function ArrowFirstIcon(props: React.HTMLAttributes<HTMLDivElement>) {
     return (
-        <div className={"pagination-icon"} {...props}>
+        <div className={"icon"} {...props}>
             <svg
                 className="neon"
                 width="800px"
@@ -11,9 +11,8 @@ export default function ArrowFirstIcon(props: React.HTMLAttributes<HTMLDivElemen
                 viewBox="0 0 1024 1024"
                 xmlns="http://www.w3.org/2000/svg"
             >
-                <g fill="#000000" fillRule="nonzero">
-                    <path d="M358.989 657.36h51.154V366.64H358.99zM631.348 656.96l36.118-36.29L559.112 511.8l108.354-108.87-36.118-36.29L486.875 511.8z" />
-                </g>
+                <rect x="228" y="256" width="96" height="512" />
+                <path d="M704.7 759.2l61.8-61.8L581.1 512l185.4-185.4-61.8-61.8L457.5 512z" />
             </svg>
         </div>
     );

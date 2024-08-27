@@ -4,25 +4,44 @@
 
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use std::net::{AddrParseError, SocketAddr};
+use std::net::AddrParseError;
+use std::net::SocketAddr;
 use std::str::FromStr;
 
-use kraken_proto::backlog_service_server::{BacklogService, BacklogServiceServer};
-use kraken_proto::push_attack_service_server::{PushAttackService, PushAttackServiceServer};
-use kraken_proto::{
-    any_attack_response, push_attack_request, AnyAttackResponse, BacklogRequest, BacklogResponse,
-    PushAttackRequest, PushAttackResponse,
-};
-use log::{error, info, warn};
-use rorm::{query, FieldAccess, Model};
+use kraken_proto::any_attack_response;
+use kraken_proto::backlog_service_server::BacklogService;
+use kraken_proto::backlog_service_server::BacklogServiceServer;
+use kraken_proto::push_attack_request;
+use kraken_proto::push_attack_service_server::PushAttackService;
+use kraken_proto::push_attack_service_server::PushAttackServiceServer;
+use kraken_proto::AnyAttackResponse;
+use kraken_proto::BacklogRequest;
+use kraken_proto::BacklogResponse;
+use kraken_proto::PushAttackRequest;
+use kraken_proto::PushAttackResponse;
+use log::error;
+use log::info;
+use log::warn;
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
+use tokio::task::JoinHandle;
 use tonic::transport::Server;
-use tonic::{Code, Request, Response, Status};
+use tonic::Code;
+use tonic::Request;
+use tonic::Response;
+use tonic::Status;
 use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
 use crate::config::Config;
-use crate::models::{AttackType, InsertAttackError, Leech, LeechApiKey, Workspace};
-use crate::modules::attacks::{AttackContext, HandleAttackResponse};
+use crate::models::AttackType;
+use crate::models::InsertAttackError;
+use crate::models::Leech;
+use crate::models::LeechApiKey;
+use crate::models::Workspace;
+use crate::modules::attacks::AttackContext;
+use crate::modules::attacks::HandleAttackResponse;
 
 /// Helper type to implement result handler to
 pub struct Results;
@@ -77,7 +96,6 @@ impl PushAttackService for Results {
                 push_attack_request::Response::DnsResolution(_) => AttackType::DnsResolution,
                 push_attack_request::Response::DnsTxtScan(_) => AttackType::DnsTxtScan,
                 push_attack_request::Response::HostsAlive(_) => AttackType::HostAlive,
-                push_attack_request::Response::TcpPortScan(_) => AttackType::TcpPortScan,
                 push_attack_request::Response::BruteforceSubdomain(_) => {
                     AttackType::BruteforceSubdomains
                 }
@@ -89,6 +107,7 @@ impl PushAttackService for Results {
                 push_attack_request::Response::UdpServiceDetection(_) => {
                     AttackType::UdpServiceDetection
                 }
+                push_attack_request::Response::OsDetection(_) => AttackType::OSDetection,
             },
         )
         .await
@@ -108,19 +127,19 @@ impl PushAttackService for Results {
             push_attack_request::Response::HostsAlive(repeated) => {
                 attack.handle_vec_response(repeated.responses).await
             }
-            push_attack_request::Response::TcpPortScan(repeated) => {
-                attack.handle_vec_response(repeated.responses).await
-            }
             push_attack_request::Response::BruteforceSubdomain(repeated) => {
                 attack.handle_vec_response(repeated.responses).await
             }
             push_attack_request::Response::CertificateTransparency(response) => {
                 attack.handle_response(response).await
             }
-            push_attack_request::Response::ServiceDetection(response) => {
-                attack.handle_response(response).await
+            push_attack_request::Response::ServiceDetection(repeated) => {
+                attack.handle_vec_response(repeated.responses).await
             }
             push_attack_request::Response::UdpServiceDetection(repeated) => {
+                attack.handle_vec_response(repeated.responses).await
+            }
+            push_attack_request::Response::OsDetection(repeated) => {
                 attack.handle_vec_response(repeated.responses).await
             }
             push_attack_request::Response::Testssl(response) => {
@@ -182,9 +201,6 @@ impl BacklogService for Results {
                 any_attack_response::Response::HostsAlive(response) => {
                     attack_context.handle_response(response).await
                 }
-                any_attack_response::Response::TcpPortScan(response) => {
-                    attack_context.handle_response(response).await
-                }
                 any_attack_response::Response::BruteforceSubdomain(response) => {
                     attack_context.handle_response(response).await
                 }
@@ -198,6 +214,9 @@ impl BacklogService for Results {
                     attack_context.handle_response(response).await
                 }
                 any_attack_response::Response::Testssl(response) => {
+                    attack_context.handle_response(response).await
+                }
+                any_attack_response::Response::OsDetection(response) => {
                     attack_context.handle_response(response).await
                 }
             };
@@ -235,12 +254,12 @@ pub async fn auth_leech<T>(request: &Request<T>) -> Result<(), Status> {
 /// - `config`: Reference to [Config]
 ///
 /// Returns an error if the rpc listen address is invalid
-pub fn start_rpc_server(config: &Config) -> Result<(), AddrParseError> {
+pub fn start_rpc_server(config: &Config) -> Result<JoinHandle<()>, AddrParseError> {
     let listen_address = config.server.rpc_listen_address.parse()?;
     let listen_port = config.server.rpc_listen_port;
     let tls_config = GLOBAL.tls.tonic_server();
 
-    tokio::spawn(async move {
+    let handle = tokio::spawn(async move {
         info!("Starting gRPC server");
         // TLS config should be valid is it is constructed by our TLS manager
         #[allow(clippy::expect_used)]
@@ -257,7 +276,7 @@ pub fn start_rpc_server(config: &Config) -> Result<(), AddrParseError> {
         }
     });
 
-    Ok(())
+    Ok(handle)
 }
 
 /// Convert [`rorm::Error`] to [`tonic::Status`]

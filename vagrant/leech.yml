@@ -123,8 +123,3 @@
         enabled: yes
         name: leech.service
         state: restarted
-
-    - name: Restart leech
-      systemd:
-        name: leech.service
-        state: restarted

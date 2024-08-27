@@ -1,15 +1,23 @@
 use std::fmt;
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
-use rorm::prelude::{BackRef, ForeignModel};
-use rorm::{field, DbEnum, Model};
-use serde::{Deserialize, Serialize};
+use rorm::field;
+use rorm::prelude::BackRef;
+use rorm::prelude::ForeignModel;
+use rorm::DbEnum;
+use rorm::Model;
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{GlobalTag, Workspace, WorkspaceTag};
+use crate::models::GlobalTag;
+use crate::models::Workspace;
+use crate::models::WorkspaceTag;
 
+mod convert;
 #[cfg(feature = "bin")]
 mod operations;
 
@@ -71,8 +79,11 @@ pub struct Host {
     /// The domains of a host
     pub domains: BackRef<field!(DomainHostRelation::F.host)>,
 
+    /// The http services of a host
+    pub http_services: BackRef<field!(HttpService::F.host)>,
+
     /// A comment to the host
-    #[rorm(max_length = 255)]
+    #[rorm(max_length = 1024)]
     pub comment: String,
 
     /// The certainty of this host
@@ -166,8 +177,17 @@ pub struct Service {
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub port: Option<ForeignModel<Port>>,
 
+    /// The transport protocols the service responds to.
+    ///
+    /// By "transport protocols" we mean protocols layered above the [`PortProtocol`] which are not applications yet.
+    /// For example: TLS
+    ///
+    /// This integer is a bitset whose interpretation depends on the `port`'s `protocol`.
+    #[rorm(default = 0)] // = Unknown
+    pub protocols: i16,
+
     /// A comment to the service
-    #[rorm(max_length = 255)]
+    #[rorm(max_length = 1024)]
     pub comment: String,
 
     /// Workspace tags of the service
@@ -265,8 +285,11 @@ pub struct Port {
     /// The services that link to this port
     pub services: BackRef<field!(Service::F.port)>,
 
+    /// The http services of a port
+    pub http_services: BackRef<field!(HttpService::F.port)>,
+
     /// A comment to the port
-    #[rorm(max_length = 255)]
+    #[rorm(max_length = 1024)]
     pub comment: String,
 
     /// Workspace tags of the port
@@ -340,7 +363,7 @@ pub struct Domain {
     pub certainty: DomainCertainty,
 
     /// A comment to the domain
-    #[rorm(max_length = 255)]
+    #[rorm(max_length = 1024)]
     pub comment: String,
 
     /// Domains resolving to this host
@@ -351,6 +374,9 @@ pub struct Domain {
 
     /// Domains, this one resolves to
     pub destinations: BackRef<field!(DomainDomainRelation::F.source)>,
+
+    /// The http services of a domain
+    pub http_services: BackRef<field!(HttpService::F.domain)>,
 
     /// Workspace tags of the domain
     pub workspace_tags: BackRef<field!(DomainWorkspaceTag::F.domain)>,
@@ -375,9 +401,11 @@ pub struct DomainDomainRelation {
     pub uuid: Uuid,
 
     /// The source address
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub source: ForeignModel<Domain>,
 
     /// The destination address
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub destination: ForeignModel<Domain>,
 
     /// A reference to the workspace for faster querying
@@ -393,9 +421,11 @@ pub struct DomainHostRelation {
     pub uuid: Uuid,
 
     /// The source domain
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub domain: ForeignModel<Domain>,
 
     /// The destination host
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub host: ForeignModel<Host>,
 
     /// Does this relation exist directly as a dns record or is it the result of a chain of `CNAME`s?
@@ -475,6 +505,114 @@ pub struct DomainWorkspaceTag {
     pub domain: ForeignModel<Domain>,
 }
 
+/// An HTTP Service
+///
+/// This aggregation is intended to hold information regarding
+/// an HTTP service (e.g. nginx or wordpress)
+// Unique over name + base_path + host + port + domain + tls + sni_required
+#[derive(Model)]
+pub struct HttpService {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The name of the http service
+    #[rorm(max_length = 255)]
+    pub name: String,
+
+    /// Optional version of the http service
+    #[rorm(index, max_length = 255)]
+    pub version: Option<String>,
+
+    /// The base path of the http service
+    #[rorm(max_length = 1024)]
+    pub base_path: String,
+
+    /// Marks whether the http service is accessible over TLS
+    /// If it is accessible via raw TCP and TLS, two http services
+    /// should be created
+    pub tls: bool,
+
+    /// Marks whether SNI is required to
+    pub sni_required: bool,
+
+    /// An optional domain that is used to access the http service
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub domain: Option<ForeignModel<Domain>>,
+
+    /// The host this http service is running on
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub host: ForeignModel<Host>,
+
+    /// The port this http service is running on
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub port: ForeignModel<Port>,
+
+    /// The option to add some notes to the http service
+    #[rorm(max_length = 1024)]
+    pub comment: String,
+
+    /// The certainty of this http service
+    pub certainty: HttpServiceCertainty,
+
+    /// Workspace tags of the http service
+    pub workspace_tags: BackRef<field!(HttpServiceWorkspaceTag::F.http_service)>,
+
+    /// Global tags of the http service
+    pub global_tags: BackRef<field!(HttpServiceGlobalTag::F.http_service)>,
+
+    /// A reference to the workspace this http service is referencing
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
+
+    /// The point in time, this entry was created
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
+}
+
+/// The certainty of a http service
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
+pub enum HttpServiceCertainty {
+    /// 3rd party historical data
+    Historical = 0,
+    /// 3rd party data
+    SupposedTo = 1,
+    /// One of our attacks verified this service
+    Verified = 2,
+}
+
+/// M2M relation between [GlobalTag] and [HttpService]
+#[derive(Model)]
+pub struct HttpServiceGlobalTag {
+    /// Primary key of the entry
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The global tag this entry links to
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub global_tag: ForeignModel<GlobalTag>,
+
+    /// The HttpService this entry links to
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub http_service: ForeignModel<HttpService>,
+}
+
+/// M2M relation between [WorkspaceTag] and [HttpService]
+#[derive(Model)]
+pub struct HttpServiceWorkspaceTag {
+    /// Primary key of the entry
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The workspace tag this entry links to
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub workspace_tag: ForeignModel<WorkspaceTag>,
+
+    /// The http service this entry links to
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub http_service: ForeignModel<HttpService>,
+}
+
 /// Generic M2M relation between aggregated models (ex: [`Host`])
 /// and the sources which contributed to them (ex: [`HostAliveResult`])
 #[derive(Model)]
@@ -509,8 +647,11 @@ pub struct AggregationSource {
 pub enum SourceType {
     /// The [`BruteforceSubdomainsResult`] table
     BruteforceSubdomains,
-    /// The [`TcpPortScanResult`] table
+
+    /// Effectively deleted, but postgres can't delete enum variants
+    #[serde(skip)]
     TcpPortScan,
+
     /// The [`CertificateTransparencyResult`] table
     QueryCertificateTransparency,
     /// The [`DehashedQueryResult`] table
@@ -529,7 +670,7 @@ pub enum SourceType {
     UdpPortScan,
     /// The table for the not yet implemented [`AttackType::ForcedBrowsing`] results
     ForcedBrowsing,
-    /// The table for the not yet implemented [`AttackType::OSDetection`] results
+    /// The [`OsDetectionResult`] table
     OSDetection,
     /// The table for the not yet implemented [`AttackType::VersionDetection`] results
     VersionDetection,
@@ -545,6 +686,8 @@ pub enum SourceType {
     ManualPort,
     /// The [`ManualService`] table
     ManualService,
+    /// The [`ManualHttpService`] table
+    ManualHttpService,
 }
 
 /// Enum used in [`AggregationSource`] to identify which table it points to
@@ -558,6 +701,8 @@ pub enum AggregationTable {
     Service,
     /// The [`Domain`] table
     Domain,
+    /// The [`HttpService`] table
+    HttpService,
 }
 
 impl fmt::Display for AggregationTable {
@@ -567,6 +712,7 @@ impl fmt::Display for AggregationTable {
             AggregationTable::Port => Port::TABLE,
             AggregationTable::Service => Service::TABLE,
             AggregationTable::Domain => Domain::TABLE,
+            AggregationTable::HttpService => HttpService::TABLE,
         };
         write!(f, "{table}")
     }

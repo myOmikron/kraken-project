@@ -1,50 +1,37 @@
 mod codegen;
-pub mod generated;
-pub mod parse;
+mod parse;
+mod schema;
 
 use std::error::Error;
-use std::fmt::{Debug, Display, Formatter};
 use std::fs;
 
 pub use codegen::generate_code;
+pub use schema::Prevalence;
+pub use schema::Probe;
+pub use schema::ProbeFile;
 
-use crate::parse::ParseError;
+pub use crate::parse::parse_file;
+pub use crate::parse::CheckProbeError;
+pub use crate::parse::ParseError;
+pub use crate::parse::ParseErrorKind;
+pub use crate::parse::ProbeFileDirectory;
 
-#[derive(Debug)]
-struct FileParseError {
-    file: String,
-    error: ParseError,
-}
-
-impl Display for FileParseError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "parse error in {}: {}", self.file, self.error)
-    }
-}
-
-impl Error for FileParseError {}
-
-pub fn generate(in_dirs: &[&str], out_file: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn generate(
+    in_dirs: &[(&str, ProbeFileDirectory)],
+    out_file: &str,
+) -> Result<(), Box<dyn Error>> {
     let mut services = Vec::new();
 
-    for dir in in_dirs {
+    for (dir, kind) in in_dirs.iter().copied() {
         println!("cargo:rerun-if-changed={}", dir);
-        for file in fs::read_dir(dir)? {
-            let file = file?;
-            let path = file.path();
+        let mut files = fs::read_dir(dir)?
+            .map(|result| result.map(|entry| entry.path()))
+            .collect::<Result<Vec<_>, _>>()?;
+        files.sort();
+        for path in files {
             if let Some(ext) = path.extension() {
                 if ext == "probe" {
-                    let path = path
-                        .to_str()
-                        .ok_or("build script path should always be convertible to string")?;
-                    let content = fs::read_to_string(&file.path())?;
-                    let service = parse::Service::from_file(path, &content).map_err(
-                        |parse_error: ParseError| FileParseError {
-                            file: String::from(path),
-                            error: parse_error,
-                        },
-                    )?;
-                    services.push(service);
+                    services.push(parse_file(path, kind)?);
                 }
             }
         }

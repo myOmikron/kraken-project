@@ -1,35 +1,66 @@
 use std::collections::HashMap;
 
-use actix_web::web::{Json, Path};
-use actix_web::{delete, get, post, put, HttpResponse};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::post;
+use actix_web::put;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
 use futures::TryStreamExt;
-use rorm::conditions::DynamicCollection;
+use ipnetwork::IpNetwork;
+use rorm::and;
 use rorm::db::sql::value::Value;
+use rorm::insert;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, insert, query, update, FieldAccess, Model};
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::aggregation_source::schema::{
-    FullAggregationSource, SimpleAggregationSource,
-};
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{
-    PathUuid, PortResultsPage, SimpleTag, TagType, UuidResponse,
-};
+use crate::api::handler::aggregation_source::schema::FullAggregationSource;
+use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::PortResultsPage;
+use crate::api::handler::common::schema::SimpleTag;
+use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
+use crate::api::handler::common::utils::query_many_severities;
+use crate::api::handler::common::utils::query_single_severity;
+use crate::api::handler::findings::schema::ListFindings;
 use crate::api::handler::hosts::schema::SimpleHost;
-use crate::api::handler::ports::schema::{
-    CreatePortRequest, FullPort, GetAllPortsQuery, PathPort, PortRelations, UpdatePortRequest,
-};
+use crate::api::handler::http_services::schema::SimpleHttpService;
+use crate::api::handler::ports::schema::CreatePortRequest;
+use crate::api::handler::ports::schema::FullPort;
+use crate::api::handler::ports::schema::GetAllPortsQuery;
+use crate::api::handler::ports::schema::PathPort;
+use crate::api::handler::ports::schema::PortRelations;
+use crate::api::handler::ports::schema::UpdatePortRequest;
 use crate::api::handler::services::schema::SimpleService;
 use crate::chan::global::GLOBAL;
-use crate::chan::ws_manager::schema::{AggregationType, WsMessage};
-use crate::models::{
-    AggregationSource, AggregationTable, GlobalTag, Host, ManualPort, Port, PortGlobalTag,
-    PortWorkspaceTag, Service, Workspace, WorkspaceTag,
-};
-use crate::modules::filter::{GlobalAST, PortAST};
+use crate::chan::ws_manager::schema::AggregationType;
+use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
+use crate::models::convert::IntoDb;
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::FindingAffected;
+use crate::models::GlobalTag;
+use crate::models::Host;
+use crate::models::HttpService;
+use crate::models::ManualPort;
+use crate::models::Port;
+use crate::models::PortGlobalTag;
+use crate::models::PortWorkspaceTag;
+use crate::models::Service;
+use crate::models::Workspace;
+use crate::models::WorkspaceTag;
+use crate::modules::filter::GlobalAST;
+use crate::modules::filter::PortAST;
 use crate::modules::raw_query::RawQueryBuilder;
 use crate::query_tags;
 
@@ -82,6 +113,7 @@ pub async fn get_all_ports(
         Port::F.uuid,
         Port::F.port,
         Port::F.protocol,
+        Port::F.certainty,
         Port::F.comment,
         Port::F.created_at,
         Port::F.host.select_as::<Host>(),
@@ -131,20 +163,26 @@ pub async fn get_all_ports(
     )
     .await?;
 
+    let severities =
+        query_many_severities(&mut tx, FindingAffected::F.port, ports.iter().map(|x| x.0)).await?;
+
+    tx.commit().await?;
+
     let items = ports
         .into_iter()
         .map(
-            |(uuid, port, protocol, comment, created_at, host, workspace)| FullPort {
+            |(uuid, port, protocol, certainty, comment, created_at, host, workspace)| FullPort {
                 uuid,
                 port: port as u16,
-                protocol,
+                protocol: FromDb::from_db(protocol),
                 comment,
+                certainty: FromDb::from_db(certainty),
                 host: SimpleHost {
                     uuid: host.uuid,
                     ip_addr: host.ip_addr.ip(),
-                    os_type: host.os_type,
+                    os_type: FromDb::from_db(host.os_type),
                     response_time: host.response_time,
-                    certainty: host.certainty,
+                    certainty: FromDb::from_db(host.certainty),
                     workspace: *host.workspace.key(),
                     comment: host.comment,
                     created_at: host.created_at,
@@ -152,12 +190,11 @@ pub async fn get_all_ports(
                 workspace: *workspace.key(),
                 tags: tags.remove(&uuid).unwrap_or_default(),
                 sources: sources.remove(&uuid).unwrap_or_default(),
+                severity: severities.get(&uuid).copied().map(FromDb::from_db),
                 created_at,
             },
         )
         .collect();
-
-    tx.commit().await?;
 
     Ok(Json(PortResultsPage {
         items,
@@ -208,12 +245,7 @@ pub async fn get_port(
     let mut tags: Vec<_> = query!(&mut tx, (PortGlobalTag::F.global_tag as GlobalTag,))
         .condition(PortGlobalTag::F.port.equals(path.p_uuid))
         .stream()
-        .map_ok(|(x,)| SimpleTag {
-            uuid: x.uuid,
-            name: x.name,
-            color: x.color.into(),
-            tag_type: TagType::Global,
-        })
+        .map_ok(|(tag,)| SimpleTag::from(tag))
         .try_collect()
         .await?;
 
@@ -223,12 +255,7 @@ pub async fn get_port(
     )
     .condition(PortWorkspaceTag::F.port.equals(path.p_uuid))
     .stream()
-    .map_ok(|(x,)| SimpleTag {
-        uuid: x.uuid,
-        name: x.name,
-        color: x.color.into(),
-        tag_type: TagType::Workspace,
-    })
+    .map_ok(|(tag,)| SimpleTag::from(tag))
     .try_collect()
     .await?;
 
@@ -241,18 +268,21 @@ pub async fn get_port(
         .try_collect()
         .await?;
 
+    let severity = query_single_severity(&mut tx, FindingAffected::F.port, path.p_uuid).await?;
+
     tx.commit().await?;
 
     Ok(Json(FullPort {
         uuid: port.uuid,
         port: port.port as u16,
-        protocol: port.protocol,
+        protocol: FromDb::from_db(port.protocol),
+        certainty: FromDb::from_db(port.certainty),
         host: SimpleHost {
             uuid: host.uuid,
             ip_addr: host.ip_addr.ip(),
-            os_type: host.os_type,
+            os_type: FromDb::from_db(host.os_type),
             response_time: host.response_time,
-            certainty: host.certainty,
+            certainty: FromDb::from_db(host.certainty),
             comment: host.comment,
             workspace: path.w_uuid,
             created_at: host.created_at,
@@ -260,6 +290,7 @@ pub async fn get_port(
         comment: port.comment,
         tags,
         sources,
+        severity: severity.map(FromDb::from_db),
         workspace: path.w_uuid,
         created_at: port.created_at,
     }))
@@ -292,12 +323,24 @@ pub async fn create_port(
         protocol,
     } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
-    Ok(Json(UuidResponse {
-        uuid: ManualPort::insert(
-            &GLOBAL.db, workspace, user, ip_addr, port, certainty, protocol,
-        )
-        .await?,
-    }))
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, workspace, user).await? {
+        return Err(ApiError::MissingPrivileges)?;
+    }
+    let uuid = ManualPort::insert(
+        &mut tx,
+        workspace,
+        user,
+        IpNetwork::from(ip_addr),
+        port,
+        certainty.into_db(),
+        protocol.into_db(),
+    )
+    .await?;
+    tx.commit().await?;
+
+    Ok(Json(UuidResponse { uuid }))
 }
 
 /// Update a port
@@ -537,7 +580,7 @@ pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRela
             uuid: s.uuid,
             name: s.name,
             version: s.version,
-            certainty: s.certainty,
+            certainty: FromDb::from_db(s.certainty),
             host: *s.host.key(),
             port: s.port.map(|x| *x.key()),
             comment: s.comment,
@@ -553,6 +596,27 @@ pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRela
         .await?
         .ok_or(ApiError::InvalidUuid)?;
 
+    let http_services = query!(&mut tx, HttpService)
+        .condition(HttpService::F.port.equals(path.p_uuid))
+        .stream()
+        .map_ok(|service| SimpleHttpService {
+            uuid: service.uuid,
+            name: service.name,
+            version: service.version,
+            domain: service.domain.map(|fm| *fm.key()),
+            host: *service.host.key(),
+            port: *service.port.key(),
+            base_path: service.base_path,
+            tls: service.tls,
+            sni_required: service.sni_required,
+            comment: service.comment,
+            certainty: FromDb::from_db(service.certainty),
+            workspace: *service.workspace.key(),
+            created_at: service.created_at,
+        })
+        .try_collect()
+        .await?;
+
     tx.commit().await?;
 
     Ok(Json(PortRelations {
@@ -560,12 +624,45 @@ pub async fn get_port_relations(path: Path<PathPort>) -> ApiResult<Json<PortRela
             uuid: host.uuid,
             ip_addr: host.ip_addr.ip(),
             response_time: host.response_time,
-            certainty: host.certainty,
-            os_type: host.os_type,
+            certainty: FromDb::from_db(host.certainty),
+            os_type: FromDb::from_db(host.os_type),
             comment: host.comment,
             workspace: *host.workspace.key(),
             created_at: host.created_at,
         },
         services,
+        http_services,
     }))
+}
+
+/// Get a port's findings
+#[utoipa::path(
+    tag = "Ports",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The port's findings", body = ListFindings),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathPort),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/ports/{p_uuid}/findings")]
+pub async fn get_port_findings(
+    path: Path<PathPort>,
+    SessionUser(u_uuid): SessionUser,
+) -> ApiResult<Json<ListFindings>> {
+    let PathPort { w_uuid, p_uuid } = path.into_inner();
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, u_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let findings =
+        ListFindings::query_through_affected(&mut tx, w_uuid, FindingAffected::F.port, p_uuid)
+            .await?;
+
+    tx.commit().await?;
+    Ok(Json(findings))
 }

@@ -1,6 +1,7 @@
 service: ssh
 prevalence: often
 probes:
-  - protocol: TCP
+  - tcp: yes
     # https://datatracker.ietf.org/doc/html/rfc4253#section-4.2
-    regex: ^SSH-[\d.]+-[^ -]+(?: [^\r\n]+)?\r?\n
+    regex: |-
+      ^SSH-[\d.]+-[^ -]+(?: [^\r\n]+)?\r?\n

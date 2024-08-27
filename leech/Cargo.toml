@@ -1,6 +1,6 @@
 [package]
 name = "leech"
-version = "0.1.0"
+version = "0.4.2"
 edition = "2021"
 authors = ["Niklas Pfister <git@omikron.dev>"]
 license = "AGPL-3.0"
@@ -36,10 +36,10 @@ futures = { version = "~0.3" }
 tokio-stream = { version = "~0.1" }
 
 # Expansion of the Iterator trait
-itertools = { version = "~0.12" }
+itertools = { version = "~0.13" }
 
 # gRPC implementation
-tonic = { version = "~0.10", features = ["transport", "tls"] }
+tonic = { version = "~0.11", features = ["transport", "tls"] }
 # codegenerator
 prost = { version = "~0.12" }
 prost-types = { version = "~0.12" }
@@ -61,6 +61,7 @@ rand = { version = "~0.8" }
 
 # Error handling
 thiserror = { version = "~1" }
+ssl-errors = { path = "ssl-errors" }
 
 # ORM
 rorm = { version = "~0.6", default-features = false, features = ["tokio", "rustls", "cli", "uuid", "postgres-only", "chrono"] }
@@ -76,14 +77,20 @@ surge-ping = { version = "~0.8" }
 rlimit = { version = "~0.10" }
 
 # http request library
-reqwest = { version = "~0.11", features = ["json", "trust-dns", "rustls-tls-native-roots"] }
+reqwest = { version = "~0.12", features = ["json", "trust-dns", "rustls-tls-native-roots"] }
 
 # dehashed api
-dehashed-rs = { version = "~0.4", features = ["tokio"] }
+dehashed-rs = { version = "~0.5", features = ["tokio"] }
 
 native-tls = { version = "~0.2", features = ["alpn"] }
 tokio-native-tls = { version = "~0.3" }
-probe-config = { path = "probe-config" }
+
+# raw sockets
+socket2 = { version = "~0.5" }
+etherparse = { version = "~0.15" }
+nix = { version = "~0.29", features = ["net"] }
+strum = { version = "~0.26" }
+strum_macros = { version = "~0.26" }
 
 tempfile = "~3"
 

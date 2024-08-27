@@ -1,0 +1,29 @@
+[Migration]
+Hash = "13850101934916141327"
+Initial = false
+Dependency = 13
+Replaces = []
+
+[[Migration.Operations]]
+Type = "DeleteField"
+Model = "findingdetails"
+Name = "user_details"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "findingdetails"
+
+[Migration.Operations.Field]
+Name = "user_details"
+Type = "varchar"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "default_value"
+Value = ""
+
+[[Migration.Operations.Field.Annotations]]
+Type = "max_length"
+Value = 65535
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"

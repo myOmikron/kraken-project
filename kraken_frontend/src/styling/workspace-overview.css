@@ -1,7 +1,10 @@
 .workspace-list-outer-container {
-    display: grid;
-    grid-gap: 1em;
+    display: flex;
+    gap: 1em;
+    flex-direction: column;
     animation: yourAnimation 0.3s step-End 0.4s 1 normal backwards;
+    height: 100%;
+    overflow-y: auto;
 }
 
 .workspace-list-creation {
@@ -39,6 +42,9 @@
 }
 
 .workspace-list-filter {
+    position: sticky;
+    top: 0;
+    z-index: 1;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -56,11 +62,18 @@
     margin: 0;
 }
 
-.workspace-list-filter-ownership-table {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    justify-content: center;
-    align-items: center;
+.workspace-list-checkbox-table {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    height: 3.5em;
+    justify-content: space-between;
+    align-items: start;
+    margin-left: -1em;
+}
+
+.workspace-list-checkbox-table > label {
+    margin-left: 1em;
 }
 
 .workspace-list-sorting {
@@ -73,16 +86,11 @@
     margin: 0;
 }
 
-.workspace-list-sorting-table {
-    display: grid;
-    grid-template-columns: 3fr 1fr 1em 3fr 1fr;
-    align-items: center;
-}
-
 .workspace-list-container {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 24em);
     gap: 1em;
+    justify-content: center;
 }
 
 .workspace-list-item {
@@ -91,8 +99,21 @@
     transition: all 200ms;
 }
 
+.workspace-list-item.archived {
+    filter: saturate(0);
+    background: #222;
+    box-shadow:
+        0 0 25em #fff1,
+        inset 0 0 10em #fff2,
+        inset 0 0 0.5em #fff2;
+}
+
 .workspace-list-item:hover {
-    box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2, 0 0 1em var(--primary-op);
+    box-shadow:
+        0 0 25em var(--primary-op),
+        inset 0 0 10em #0cf3,
+        inset 0 0 0.5em #0ff2,
+        0 0 1em var(--primary-op);
 }
 
 .workspace-list-item > .heading {

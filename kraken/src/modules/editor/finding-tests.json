@@ -1,0 +1,167 @@
+[
+  {
+    "before": "Et vitae itaque animi est vel.\nSoluta et rerum vero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n",
+    "change": {
+      "text": "u",
+      "startColumn": 30,
+      "endColumn": 30,
+      "startLine": 1,
+      "endLine": 1
+    },
+    "after": "Et vitae itaque animi est velu.\nSoluta et rerum vero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n"
+  },
+  {
+    "before": "Et vitae itaque animi est velu.\nSoluta et rerum vero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n",
+    "change": {
+      "text": "m",
+      "startColumn": 31,
+      "endColumn": 31,
+      "startLine": 1,
+      "endLine": 1
+    },
+    "after": "Et vitae itaque animi est velum.\nSoluta et rerum vero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n"
+  },
+  {
+    "before": "Et vitae itaque animi est velum.\nSoluta et rerum vero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n",
+    "change": {
+      "text": "",
+      "startColumn": 17,
+      "endColumn": 18,
+      "startLine": 2,
+      "endLine": 2
+    },
+    "after": "Et vitae itaque animi est velum.\nSoluta et rerum ero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n"
+  },
+  {
+    "before": "Et vitae itaque animi est velum.\nSoluta et rerum ero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n",
+    "change": {
+      "text": "z",
+      "startColumn": 17,
+      "endColumn": 17,
+      "startLine": 2,
+      "endLine": 2
+    },
+    "after": "Et vitae itaque animi est velum.\nSoluta et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n"
+  },
+  {
+    "before": "Et vitae itaque animi est velum.\nSoluta et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n",
+    "change": {
+      "text": "",
+      "startColumn": 32,
+      "endColumn": 7,
+      "startLine": 1,
+      "endLine": 2
+    },
+    "after": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n"
+  },
+  {
+    "before": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n",
+    "change": {
+      "text": "\n",
+      "startColumn": 1,
+      "endColumn": 1,
+      "startLine": 3,
+      "endLine": 3
+    },
+    "after": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n\n"
+  },
+  {
+    "before": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n\n",
+    "change": {
+      "text": "C",
+      "startColumn": 1,
+      "endColumn": 1,
+      "startLine": 4,
+      "endLine": 4
+    },
+    "after": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n\nC"
+  },
+  {
+    "before": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n\nC",
+    "change": {
+      "text": "Y",
+      "startColumn": 2,
+      "endColumn": 2,
+      "startLine": 4,
+      "endLine": 4
+    },
+    "after": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n\nCY"
+  },
+  {
+    "before": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n\nCY",
+    "change": {
+      "text": "B",
+      "startColumn": 3,
+      "endColumn": 3,
+      "startLine": 4,
+      "endLine": 4
+    },
+    "after": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n\nCYB"
+  },
+  {
+    "before": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n\nCYB",
+    "change": {
+      "text": "E",
+      "startColumn": 4,
+      "endColumn": 4,
+      "startLine": 4,
+      "endLine": 4
+    },
+    "after": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n\nCYBE"
+  },
+  {
+    "before": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n\nCYBE",
+    "change": {
+      "text": "R",
+      "startColumn": 5,
+      "endColumn": 5,
+      "startLine": 4,
+      "endLine": 4
+    },
+    "after": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n\nCYBER"
+  },
+  {
+    "before": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n\nCYBER",
+    "change": {
+      "text": "",
+      "startColumn": 67,
+      "endColumn": 6,
+      "startLine": 2,
+      "endLine": 4
+    },
+    "after": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt."
+  },
+  {
+    "before": "Et vitae itaque animi est velum et rerum zero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.",
+    "change": {
+      "text": "\n\nCYBER",
+      "startColumn": 47,
+      "endColumn": 47,
+      "startLine": 1,
+      "endLine": 1
+    },
+    "after": "Et vitae itaque animi est velum et rerum zero.\n\nCYBER\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt."
+  },
+  {
+    "before": "Et vitae itaque animi est vel.\nSoluta et rerum vero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n",
+    "change": {
+      "text": "hui",
+      "startColumn": 27,
+      "endColumn": 30,
+      "startLine": 1,
+      "endLine": 1
+    },
+    "after": "Et vitae itaque animi est hui.\nSoluta et rerum vero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n"
+  },
+  {
+    "before": "Et vitae itaque animi est hui.\nSoluta et rerum vero.\nVoluptates accusantium adipisci vel cumque dolorum totam quo sunt.\n",
+    "change": {
+      "text": "hui",
+      "startColumn": 33,
+      "endColumn": 36,
+      "startLine": 3,
+      "endLine": 3
+    },
+    "after": "Et vitae itaque animi est hui.\nSoluta et rerum vero.\nVoluptates accusantium adipisci hui cumque dolorum totam quo sunt.\n"
+  }
+]

@@ -1,11 +1,22 @@
-use actix_web::web::{Json, Path};
-use actix_web::{delete, post, put, HttpResponse};
-use rorm::{query, update, FieldAccess, Model};
+use actix_web::delete;
+use actix_web::post;
+use actix_web::put;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{PathUuid, UuidResponse};
-use crate::api::handler::global_tags::schema::{CreateGlobalTagRequest, UpdateGlobalTag};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::UuidResponse;
+use crate::api::handler::global_tags::schema::CreateGlobalTagRequest;
+use crate::api::handler::global_tags::schema::UpdateGlobalTag;
 use crate::chan::global::GLOBAL;
+use crate::models::convert::IntoDb;
 use crate::models::GlobalTag;
 
 /// Create a global tag.
@@ -74,7 +85,7 @@ pub async fn update_global_tag(
         .condition(GlobalTag::F.uuid.equals(path.uuid))
         .begin_dyn_set()
         .set_if(GlobalTag::F.name, req.name)
-        .set_if(GlobalTag::F.color, req.color.map(|x| x.into()))
+        .set_if(GlobalTag::F.color, req.color.map(|x| x.into_db()))
         .finish_dyn_set()
         .map_err(|_| ApiError::EmptyJson)?
         .exec()

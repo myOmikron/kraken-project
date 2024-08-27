@@ -2,7 +2,7 @@
     grid-area: 2 / 1 / span 1 / span 1;
     display: grid;
     grid-template-columns: 8fr 3fr;
-    grid-template-rows: 2.75em 3.5em calc(100% - 1em - 2.75em - 1em - 3.5em);
+    grid-template-rows: 2.75em calc(100% - 1em - 2.75em);
     gap: 1em;
     animation: yourAnimation 0.3s step-End 0.4s 1 normal backwards;
 }
@@ -26,28 +26,12 @@
     width: 1.4em;
 }
 
-.workspace-data-selector {
+.workspace-data-table {
     display: grid;
-    width: 100%;
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-    gap: 1em;
+    grid-template-rows: 3em calc(100% - 3em);
 }
 
-.workspace-data-selector > .pane {
-    padding: 1em 2em;
-    cursor: pointer;
-    transition: all 200ms;
-}
-
-.workspace-data-selector > .pane:hover {
-    box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2, 0 0 1em var(--primary-op);
-}
-
-.workspace-data-selector h3 {
-    margin: 0;
-}
-
-.workspace-data-details-selector{
+.workspace-data-details-selector {
     margin: 0.5em 0;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -58,7 +42,7 @@
     border-bottom: 1px solid var(--primary-op);
 }
 
-.workspace-data-details-selector > .heading{
+.workspace-data-details-selector > .heading {
     width: 100%;
     height: 100%;
     display: flex;
@@ -67,22 +51,24 @@
     margin: 0.5em 0;
 }
 
-.workspace-data-details-selector > .heading:hover{
+.workspace-data-details-selector > .heading:hover {
     cursor: pointer;
     --color: var(--primary-op);
     --blur: 0.5em;
     --offset: 0.1em;
-    box-shadow: inset 0 var(--offset) var(--blur) var(--color), inset 0 calc(-1 * var(--offset)) var(--blur) var(--color);
+    box-shadow:
+        inset 0 var(--offset) var(--blur) var(--color),
+        inset 0 calc(-1 * var(--offset)) var(--blur) var(--color);
 }
 
-.workspace-data-details-selected-tab{
+.workspace-data-details-selected-tab {
     z-index: 1;
-    background-color: #00ccff07 ;
+    background-color: #00ccff07;
     filter: drop-shadow(0 0 6px var(--primary));
     border-bottom: 1px solid var(--primary);
 }
 
-.workspace-data-details-selector > h3{
+.workspace-data-details-selector > h3 {
     margin: 0.5em 0;
 }
 
@@ -114,6 +100,12 @@
     resize: vertical;
 }
 
+.workspace-data-details .uuid {
+    text-align: center;
+    opacity: 0.6;
+    font-size: 0.9em;
+}
+
 .workspace-data-create-form {
     display: grid;
     grid-template-columns: 1fr 2fr;
@@ -124,11 +116,27 @@
     grid-column: 1 / span 2;
     margin-bottom: 0.75em;
 }
-.workspace-data-create-form > label {
+.workspace-data-create-form > label,
+.workspace-data-create-form > .label {
     display: contents;
 }
 .workspace-data-create-form > button {
     grid-column: 1 / span 2;
+}
+
+.workspace-data-create-form > div {
+    grid-column: 1 / span 2;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+}
+
+.workspace-data-create-form > .label > .flex {
+    display: flex;
+}
+
+.workspace-data-create-form > .label > .flex > * {
+    flex-grow: 1;
 }
 
 .workspace-data-multi-select-table {
@@ -149,13 +157,13 @@
     flex-grow: 1;
 }
 
-.workspace-data-pane{
+.workspace-data-pane {
     display: flex;
     padding: 2em;
     flex-direction: column;
     border-radius: 0.5em;
     border: 1px solid var(--primary-op);
-    background-color: #00ccff10 ;
+    background-color: #00ccff10;
     gap: 1em;
     align-items: center;
 }
@@ -164,7 +172,7 @@
     width: 100%;
 }
 
-.workspace-data-danger-pane{
+.workspace-data-danger-pane {
     display: flex;
     padding: 2em;
     flex-direction: column;
@@ -175,13 +183,38 @@
     gap: 1em;
 }
 
-.workspace-data-danger-pane > button{
+.workspace-data-danger-pane > button {
     width: 100%;
 }
 
-.workspace-data-popup{
+.workspace-data-popup {
     display: flex;
     flex-direction: column;
     gap: 1em;
     background-color: rgba(89, 0, 0, 0.25);
+}
+
+.workspace-data-certainty-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5em;
+}
+
+.workspace-data-certainty-icon > div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.1em;
+}
+
+.workspace-data-certainty-icon svg {
+    width: 1.2em;
+    min-width: 24px;
+}
+
+.workspace-data-certainty-letter {
+    font-size: 1.2em;
+    color: white;
+    filter: drop-shadow(0 0 4px var(--primary));
 }

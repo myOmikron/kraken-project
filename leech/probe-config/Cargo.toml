@@ -6,7 +6,8 @@ authors = ["gammelalf <gammelalf@hopfen.space>", "Niklas Pfister <git@omikron.de
 license = "AGPL-3.0"
 
 [dependencies]
-regex = { version = ">=1.5.5" }
-log = { version = "~0.4" }
-base64 = { version = "~0.21" }
+thiserror = "~1"
+serde = { version = "~1", features = ["derive"] }
+serde_yaml = "~0.9"
+base64 = { version = "~0.22" }
 hex = { version = "~0.4" }

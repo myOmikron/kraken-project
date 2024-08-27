@@ -1,7 +1,7 @@
 service: dns
 prevalence: often
 probes:
-  - protocol: TCP
+  - tcp: yes
     # for complete message structure see: https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.1
     # 2 bytes => message length
     # 16 bit ID => ffff

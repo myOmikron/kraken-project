@@ -1,11 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Api, UUID } from "../../api/api";
-import { toast } from "react-toastify";
+import { FullWorkspace } from "../../api/generated";
 import "../../styling/workspace.css";
+import { handleApiError } from "../../utils/helper";
 import WorkspaceHeading from "./components/workspace-heading";
 import WorkspaceMenu from "./components/workspace-menu";
-import { FullWorkspace } from "../../api/generated";
-import { handleApiError } from "../../utils/helper";
 
 export type WorkspaceContext = { workspace: FullWorkspace };
 export const WORKSPACE_CONTEXT = React.createContext<WorkspaceContext>({
@@ -16,6 +15,8 @@ export const WORKSPACE_CONTEXT = React.createContext<WorkspaceContext>({
         owner: { uuid: "", username: "", displayName: "" },
         attacks: [],
         members: [],
+        notes: "",
+        archived: false,
         createdAt: new Date(),
     },
 });
@@ -26,45 +27,29 @@ type WorkspaceProps = {
     view: WorkspaceView;
     children: React.ReactNode;
 };
-type WorkspaceState = {
-    workspace: FullWorkspace | null;
-};
 
-export type WorkspaceView = "search" | "attacks" | "data" | "hosts" | "settings";
+export type WorkspaceView = "search" | "attacks" | "findings" | "data" | "hosts" | "settings" | "notes";
 
-export default class Workspace extends React.Component<WorkspaceProps, WorkspaceState> {
-    constructor(props: WorkspaceProps) {
-        super(props);
+export default function Workspace(props: WorkspaceProps) {
+    const [workspace, setWorkspace] = React.useState<FullWorkspace | null>(null);
 
-        this.state = {
-            workspace: null,
-        };
-    }
+    useEffect(() => {
+        Api.workspaces.get(props.uuid).then(handleApiError((workspace) => setWorkspace(workspace)));
+    }, [props.uuid]);
 
-    componentDidMount() {
-        Api.workspaces.get(this.props.uuid).then(handleApiError((workspace) => this.setState({ workspace })));
-    }
-
-    componentDidUpdate(prevProps: Readonly<WorkspaceProps>, prevState: Readonly<WorkspaceState>, snapshot?: any) {
-        if (prevProps.uuid !== this.props.uuid) {
-            Api.workspaces.get(this.props.uuid).then(handleApiError((workspace) => this.setState({ workspace })));
-        }
-    }
-
-    render() {
-        return (
-            <div className={"workspace-container"}>
-                <WorkspaceHeading
-                    uuid={this.props.uuid}
-                    name={this.state.workspace !== null ? this.state.workspace.name : "Loading .."}
-                />
-                <WorkspaceMenu uuid={this.props.uuid} active={this.props.view} />
-                {this.state.workspace && (
-                    <WORKSPACE_CONTEXT.Provider value={{ workspace: this.state.workspace }}>
-                        {this.props.children}
-                    </WORKSPACE_CONTEXT.Provider>
-                )}
-            </div>
-        );
-    }
+    return (
+        <div className={"workspace-container"}>
+            <WorkspaceHeading uuid={props.uuid} name={workspace !== null ? workspace.name : "Loading .."} />
+            <WorkspaceMenu
+                uuid={props.uuid}
+                owner={workspace !== null ? workspace.owner.uuid : ""}
+                active={props.view}
+            />
+            {workspace && (
+                <WORKSPACE_CONTEXT.Provider value={{ workspace: workspace }}>
+                    {props.children}
+                </WORKSPACE_CONTEXT.Provider>
+            )}
+        </div>
+    );
 }

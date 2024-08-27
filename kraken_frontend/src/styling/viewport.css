@@ -1,0 +1,44 @@
+.viewport {
+    height: 100%;
+    --dot-color: var(--primary-op);
+    --dot-size: 1px;
+    --pattern-size: 20px;
+}
+
+.viewport > .pane {
+    height: 100%;
+    --scale: 1;
+    box-sizing: border-box;
+    display: grid;
+    border-radius: 0.5em;
+    box-shadow:
+        0 0 25em var(--primary-op),
+        inset 0 0 10em #0cf2,
+        inset 0 0 0.5em #0ff2;
+    background:
+        radial-gradient(
+                circle at center,
+                var(--dot-color) 0,
+                var(--dot-color) var(--dot-size),
+                transparent var(--dot-size)
+            ) -1px repeat,
+        linear-gradient(0deg, #010b2280, #44444420);
+    background-size:
+        calc(var(--scale, 1) * var(--pattern-size)) calc(var(--scale, 1) * var(--pattern-size)),
+        100% 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.viewport > .pane > .nodes {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform-origin: 0 0;
+    left: 50%;
+    top: 50%;
+}
+
+.viewport svg.connections {
+    position: absolute;
+}

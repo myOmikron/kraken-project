@@ -1,13 +1,16 @@
-use std::fmt::{Display, Formatter};
+use std::fmt::Display;
+use std::fmt::Formatter;
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use rorm::prelude::*;
 use uuid::Uuid;
 
 use crate::models;
 #[cfg(feature = "bin")]
 pub(crate) use crate::models::search::patches::*;
-use crate::models::{User, Workspace};
+use crate::models::User;
+use crate::models::Workspace;
 #[cfg(feature = "bin")]
 mod patches;
 
@@ -79,8 +82,10 @@ pub enum ModelType {
     DnsRecordResult,
     /// [DnsTxtScanResult](models::DnsTxtScanResult) type
     DnsTxtScanResult,
-    /// [TcpPortScanResult](models::TcpPortScanResult) type
+
+    /// Effectively deleted, but postgres can't delete enum variants
     TcpPortScanResult,
+
     /// [DehashedQueryResult](models::DehashedQueryResult) type
     DehashedQueryResult,
     /// [CertificateTransparencyResult](models::CertificateTransparencyResult) type
@@ -114,9 +119,7 @@ impl Display for ModelType {
             ModelType::DnsTxtScanResult => {
                 write!(f, "{}", models::DnsTxtScanAttackResult::TABLE)
             }
-            ModelType::TcpPortScanResult => {
-                write!(f, "{}", models::TcpPortScanResult::TABLE)
-            }
+            ModelType::TcpPortScanResult => Err(std::fmt::Error),
             ModelType::DehashedQueryResult => {
                 write!(f, "{}", models::DehashedQueryResult::TABLE)
             }

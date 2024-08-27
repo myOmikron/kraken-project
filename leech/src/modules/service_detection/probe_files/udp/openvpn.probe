@@ -1,0 +1,6 @@
+service: openvpn
+prevalence: often
+probes:
+  - udp: yes
+    payload_hex: 38dc1d462c8771a7c00000000000
+    regex: ^@(?-u:.{8})\x01\x00\x00\x00\x00\xdc\x1d\x46\x2c\x87\x71\xa7\xc0

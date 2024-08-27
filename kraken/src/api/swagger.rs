@@ -2,16 +2,47 @@
 //!
 //! They got created with [utoipa].
 
-use utoipa::openapi::security::{ApiKey, ApiKeyValue, Http, HttpAuthScheme, SecurityScheme};
-use utoipa::{Modify, OpenApi};
+use utoipa::openapi::security::ApiKey;
+use utoipa::openapi::security::ApiKeyValue;
+use utoipa::openapi::security::Http;
+use utoipa::openapi::security::HttpAuthScheme;
+use utoipa::openapi::security::SecurityScheme;
+use utoipa::Modify;
+use utoipa::OpenApi;
 
-use crate::api::handler::{
-    aggregation_source, api_keys, attack_results, attacks, auth, common, data_export, domains,
-    global_tags, hosts, leeches, oauth, oauth_applications, oauth_decisions, ports, services,
-    settings, users, websocket, wordlists, workspace_invitations, workspace_tags, workspaces,
-};
+use super::service;
+use crate::api::handler::aggregation_source;
+use crate::api::handler::api_keys;
+use crate::api::handler::attack_results;
+use crate::api::handler::attacks;
+use crate::api::handler::auth;
+use crate::api::handler::bearer_tokens;
+use crate::api::handler::common;
+use crate::api::handler::data_export;
+use crate::api::handler::domains;
+use crate::api::handler::files;
+use crate::api::handler::finding_affected;
+use crate::api::handler::finding_categories;
+use crate::api::handler::finding_definitions;
+use crate::api::handler::findings;
+use crate::api::handler::global_tags;
+use crate::api::handler::hosts;
+use crate::api::handler::http_services;
+use crate::api::handler::leeches;
+use crate::api::handler::oauth;
+use crate::api::handler::oauth_applications;
+use crate::api::handler::oauth_decisions;
+use crate::api::handler::ports;
+use crate::api::handler::services;
+use crate::api::handler::settings;
+use crate::api::handler::users;
+use crate::api::handler::websocket;
+use crate::api::handler::wordlists;
+use crate::api::handler::workspace_invitations;
+use crate::api::handler::workspace_tags;
+use crate::api::handler::workspaces;
+use crate::chan;
 use crate::modules::oauth::schemas as oauth_schemas;
-use crate::{chan, models};
 
 struct SecurityAddon;
 impl Modify for SecurityAddon {
@@ -47,6 +78,9 @@ impl Modify for SecurityAddon2 {
         auth::handler::finish_auth,
         auth::handler::start_register,
         auth::handler::finish_register,
+        bearer_tokens::handler_admin::create_bearer_token,
+        bearer_tokens::handler_admin::list_all_bearer_tokens,
+        bearer_tokens::handler_admin::delete_bearer_token,
         leeches::handler_admin::create_leech,
         leeches::handler_admin::delete_leech,
         leeches::handler_admin::get_all_leeches,
@@ -76,8 +110,16 @@ impl Modify for SecurityAddon2 {
         workspaces::handler::search,
         workspaces::handler::get_searches,
         workspaces::handler::get_search_results,
+        workspaces::handler::archive_workspace,
+        workspaces::handler::unarchive_workspace,
+        files::handler::upload_file,
+        files::handler::upload_image,
+        files::handler::download_thumbnail,
+        files::handler::download_file,
+        files::handler_admin::get_all_files_admin,
+        files::handler_admin::download_file_admin,
+        files::handler_admin::delete_file_admin,
         attacks::handler::bruteforce_subdomains,
-        attacks::handler::scan_tcp_ports,
         attacks::handler::query_certificate_transparency,
         attacks::handler::delete_attack,
         attacks::handler::get_attack,
@@ -89,9 +131,9 @@ impl Modify for SecurityAddon2 {
         attacks::handler::udp_service_detection,
         attacks::handler::dns_resolution,
         attacks::handler::dns_txt_scan,
+        attacks::handler::os_detection,
         attacks::handler::testssl,
         attack_results::handler::get_bruteforce_subdomains_results,
-        attack_results::handler::get_tcp_port_scan_results,
         attack_results::handler::get_query_certificate_transparency_results,
         attack_results::handler::get_query_unhashed_results,
         attack_results::handler::get_host_alive_results,
@@ -99,6 +141,7 @@ impl Modify for SecurityAddon2 {
         attack_results::handler::get_udp_service_detection_results,
         attack_results::handler::get_dns_resolution_results,
         attack_results::handler::get_dns_txt_scan_results,
+        attack_results::handler::get_os_detection_results,
         attack_results::handler::get_testssl_results,
         oauth_applications::handler_admin::create_oauth_app,
         oauth_applications::handler_admin::get_all_oauth_apps,
@@ -131,6 +174,7 @@ impl Modify for SecurityAddon2 {
         hosts::handler::delete_host,
         hosts::handler::get_host_sources,
         hosts::handler::get_host_relations,
+        hosts::handler::get_host_findings,
         ports::handler::get_all_ports,
         ports::handler::get_port,
         ports::handler::create_port,
@@ -138,6 +182,7 @@ impl Modify for SecurityAddon2 {
         ports::handler::delete_port,
         ports::handler::get_port_sources,
         ports::handler::get_port_relations,
+        ports::handler::get_port_findings,
         services::handler::get_all_services,
         services::handler::get_service,
         services::handler::create_service,
@@ -145,6 +190,7 @@ impl Modify for SecurityAddon2 {
         services::handler::delete_service,
         services::handler::get_service_sources,
         services::handler::get_service_relations,
+        services::handler::get_service_findings,
         domains::handler::get_all_domains,
         domains::handler::get_domain,
         domains::handler::create_domain,
@@ -152,6 +198,15 @@ impl Modify for SecurityAddon2 {
         domains::handler::delete_domain,
         domains::handler::get_domain_sources,
         domains::handler::get_domain_relations,
+        domains::handler::get_domain_findings,
+        http_services::handler::get_all_http_services,
+        http_services::handler::get_http_service,
+        http_services::handler::create_http_service,
+        http_services::handler::update_http_service,
+        http_services::handler::delete_http_service,
+        http_services::handler::get_http_service_sources,
+        http_services::handler::get_http_service_relations,
+        http_services::handler::get_http_service_findings,
         wordlists::handler::get_all_wordlists,
         wordlists::handler_admin::create_wordlist_admin,
         wordlists::handler_admin::get_all_wordlists_admin,
@@ -160,15 +215,34 @@ impl Modify for SecurityAddon2 {
         workspace_invitations::handler::get_all_invitations,
         workspace_invitations::handler::accept_invitation,
         workspace_invitations::handler::decline_invitation,
+        findings::handler::create_finding,
+        findings::handler::get_all_findings,
+        findings::handler::get_finding,
+        findings::handler::update_finding,
+        findings::handler::delete_finding,
+        finding_affected::handler::create_finding_affected,
+        finding_affected::handler::get_finding_affected,
+        finding_affected::handler::update_finding_affected,
+        finding_affected::handler::delete_finding_affected,
+        finding_categories::handler::get_all_finding_categories,
+        finding_categories::handler_admin::create_finding_category,
+        finding_categories::handler_admin::update_finding_category,
+        finding_categories::handler_admin::delete_finding_category,
+        finding_definitions::handler::create_finding_definition,
+        finding_definitions::handler::get_finding_definition,
+        finding_definitions::handler::get_all_finding_definitions,
+        finding_definitions::handler::update_finding_definition,
+        finding_definitions::handler_admin::get_finding_definition_usage,
+        finding_definitions::handler_admin::delete_finding_definition,
     ),
     components(schemas(
         common::schema::ApiErrorResponse,
         common::schema::ApiStatusCode,
         common::schema::UuidResponse,
+        common::schema::UuidsResponse,
         common::schema::SimpleTag,
         common::schema::TagType,
         common::schema::PageParams,
-        common::schema::TcpPortScanResultsPage,
         aggregation_source::schema::SimpleAggregationSource,
         aggregation_source::schema::FullAggregationSource,
         aggregation_source::schema::ManualInsert,
@@ -176,6 +250,9 @@ impl Modify for SecurityAddon2 {
         aggregation_source::schema::SourceAttackResult,
         auth::schema::LoginRequest,
         auth::schema::FinishRegisterRequest,
+        bearer_tokens::schema::CreateBearerTokenRequest,
+        bearer_tokens::schema::FullBearerToken,
+        bearer_tokens::schema::ListBearerTokens,
         leeches::schema::CreateLeechRequest,
         leeches::schema::SimpleLeech,
         leeches::schema::ListLeeches,
@@ -190,6 +267,7 @@ impl Modify for SecurityAddon2 {
         users::schema::SetPasswordRequest,
         users::schema::SimpleUser,
         users::schema::ListUsers,
+        users::schema::UserPermission,
         workspaces::schema::CreateWorkspaceRequest,
         workspaces::schema::SimpleWorkspace,
         workspaces::schema::FullWorkspace,
@@ -200,22 +278,23 @@ impl Modify for SecurityAddon2 {
         workspaces::schema::SearchWorkspaceRequest,
         workspaces::schema::SearchEntry,
         workspaces::schema::SearchResultEntry,
+        files::schema::FullFile,
         attacks::schema::SimpleAttack,
         attacks::schema::ListAttacks,
         attacks::schema::BruteforceSubdomainsRequest,
         attacks::schema::HostsAliveRequest,
-        attacks::schema::ScanTcpPortsRequest,
         attacks::schema::QueryCertificateTransparencyRequest,
         attacks::schema::PortOrRange,
         attacks::schema::ServiceDetectionRequest,
         attacks::schema::UdpServiceDetectionRequest,
         attacks::schema::DnsResolutionRequest,
         attacks::schema::DnsTxtScanRequest,
+        attacks::schema::OsDetectionRequest,
         attacks::schema::TestSSLRequest,
         attacks::schema::DomainOrNetwork,
+        attacks::schema::AttackType,
         attacks::schema::StartTLSProtocol,
         attack_results::schema::SimpleBruteforceSubdomainsResult,
-        attack_results::schema::SimpleTcpPortScanResult,
         attack_results::schema::FullQueryCertificateTransparencyResult,
         attack_results::schema::SimpleQueryUnhashedResult,
         attack_results::schema::SimpleHostAliveResult,
@@ -225,12 +304,17 @@ impl Modify for SecurityAddon2 {
         attack_results::schema::DnsTxtScanEntry,
         attack_results::schema::SimpleDnsTxtScanResult,
         attack_results::schema::FullDnsTxtScanResult,
+        attack_results::schema::FullOsDetectionResult,
+        attack_results::schema::DnsTxtScanSpfType,
+        attack_results::schema::DnsTxtScanServiceHintType,
+        attack_results::schema::DnsTxtScanSummaryType,
         attack_results::schema::FullTestSSLResult,
         attack_results::schema::TestSSLFinding,
+        attack_results::schema::TestSSLSection,
+        attack_results::schema::TestSSLSeverity,
         dehashed_rs::Query,
         dehashed_rs::SearchType,
         attacks::schema::QueryDehashedRequest,
-        models::AttackType,
         oauth_applications::schema::CreateAppRequest,
         oauth_applications::schema::SimpleOauthClient,
         oauth_applications::schema::FullOauthClient,
@@ -251,49 +335,51 @@ impl Modify for SecurityAddon2 {
         hosts::schema::CreateHostRequest,
         hosts::schema::GetAllHostsQuery,
         hosts::schema::HostRelations,
+        hosts::schema::OsType,
+        hosts::schema::HostCertainty,
+        hosts::schema::ManualHostCertainty,
         ports::schema::SimplePort,
         ports::schema::FullPort,
         ports::schema::UpdatePortRequest,
         ports::schema::CreatePortRequest,
         ports::schema::GetAllPortsQuery,
         ports::schema::PortRelations,
+        ports::schema::PortCertainty,
+        ports::schema::ManualPortCertainty,
+        ports::schema::PortProtocol,
         services::schema::SimpleService,
         services::schema::FullService,
         services::schema::UpdateServiceRequest,
         services::schema::CreateServiceRequest,
         services::schema::GetAllServicesQuery,
         services::schema::ServiceRelations,
+        services::schema::ServiceProtocols,
+        services::schema::ServiceCertainty,
+        services::schema::ManualServiceCertainty,
         domains::schema::SimpleDomain,
         domains::schema::FullDomain,
         domains::schema::UpdateDomainRequest,
-        domains::schema::GetAllDomainsQuery,
         domains::schema::CreateDomainRequest,
         domains::schema::GetAllDomainsQuery,
         domains::schema::DomainRelations,
+        domains::schema::DomainCertainty,
+        http_services::schema::SimpleHttpService,
+        http_services::schema::FullHttpService,
+        http_services::schema::UpdateHttpServiceRequest,
+        http_services::schema::CreateHttpServiceRequest,
+        http_services::schema::GetAllHttpServicesQuery,
+        http_services::schema::HttpServiceRelations,
+        http_services::schema::HttpServiceCertainty,
+        http_services::schema::ManualHttpServiceCertainty,
         common::schema::HostResultsPage,
         common::schema::DomainResultsPage,
         common::schema::PortResultsPage,
         common::schema::ServiceResultsPage,
-        models::OsType,
-        models::Color,
-        models::DomainCertainty,
-        models::HostCertainty,
-        models::PortCertainty,
-        models::ServiceCertainty,
-        models::UserPermission,
-        models::ManualHostCertainty,
-        models::ManualPortCertainty,
-        models::ManualServiceCertainty,
-        models::DnsTxtScanSpfType,
-        models::DnsTxtScanServiceHintType,
-        models::DnsTxtScanSummaryType,
-        models::TestSSLSection,
-        models::TestSSLSeverity,
+        common::schema::Color,
         global_tags::schema::CreateGlobalTagRequest,
         global_tags::schema::FullGlobalTag,
         global_tags::schema::ListGlobalTags,
         global_tags::schema::UpdateGlobalTag,
-        models::PortProtocol,
         workspace_tags::schema::FullWorkspaceTag,
         workspace_tags::schema::ListWorkspaceTags,
         workspace_tags::schema::UpdateWorkspaceTag,
@@ -307,8 +393,36 @@ impl Modify for SecurityAddon2 {
         workspace_invitations::schema::FullWorkspaceInvitation,
         workspace_invitations::schema::WorkspaceInvitationList,
         chan::ws_manager::schema::WsMessage,
+        chan::ws_manager::schema::WsClientMessage,
         chan::ws_manager::schema::AggregationType,
         chan::ws_manager::schema::CertificateTransparencyEntry,
+        chan::ws_manager::schema::Change,
+        chan::ws_manager::schema::FindingSection,
+        chan::ws_manager::schema::FindingDetails,
+        chan::ws_manager::schema::EditorTarget,
+        chan::ws_manager::schema::CursorPosition,
+        findings::schema::CreateFindingRequest,
+        findings::schema::UpdateFindingRequest,
+        findings::schema::SimpleFinding,
+        findings::schema::FullFinding,
+        findings::schema::SimpleFindingAffected,
+        findings::schema::ListFindings,
+        findings::schema::FindingSeverity,
+        finding_affected::schema::CreateFindingAffectedRequest,
+        finding_affected::schema::UpdateFindingAffectedRequest,
+        finding_affected::schema::FullFindingAffected,
+        finding_affected::schema::FindingAffectedObject,
+        finding_categories::schema::CreateFindingCategoryRequest,
+        finding_categories::schema::UpdateFindingCategoryRequest,
+        finding_categories::schema::ListFindingCategories,
+        finding_categories::schema::SimpleFindingCategory,
+        finding_definitions::schema::CreateFindingDefinitionRequest,
+        finding_definitions::schema::FullFindingDefinition,
+        finding_definitions::schema::SimpleFindingDefinition,
+        finding_definitions::schema::ListFindingDefinitions,
+        finding_definitions::schema::UpdateFindingDefinitionRequest,
+        finding_definitions::schema::ListFindingDefinitionUsages,
+        finding_definitions::schema::FindingDefinitionUsage,
     )),
     modifiers(&SecurityAddon)
 )]
@@ -322,26 +436,46 @@ pub(crate) struct FrontendApi;
         data_export::handler::export_workspace,
     ),
     components(schemas(
-        models::OsType,
-        models::PortProtocol,
-        models::DomainCertainty,
-        models::HostCertainty,
-        models::PortCertainty,
-        models::ServiceCertainty,
+        domains::schema::DomainCertainty,
+        hosts::schema::OsType,
+        hosts::schema::HostCertainty,
+        ports::schema::PortProtocol,
+        ports::schema::PortCertainty,
+        services::schema::ServiceCertainty,
+        services::schema::ServiceProtocols,
+        http_services::schema::HttpServiceCertainty,
+        findings::schema::FindingSeverity,
         common::schema::ApiErrorResponse,
         common::schema::ApiStatusCode,
         oauth_schemas::TokenRequest,
         oauth_schemas::TokenResponse,
         oauth_schemas::TokenError,
         oauth_schemas::TokenErrorType,
+        chan::ws_manager::schema::AggregationType,
         data_export::schema::AggregatedWorkspace,
         data_export::schema::AggregatedHost,
         data_export::schema::AggregatedPort,
         data_export::schema::AggregatedService,
+        data_export::schema::AggregatedHttpService,
         data_export::schema::AggregatedDomain,
         data_export::schema::AggregatedTags,
         data_export::schema::AggregatedRelation,
+        data_export::schema::AggregatedFinding,
+        data_export::schema::AggregatedFindingAffected,
     )),
     modifiers(&SecurityAddon2)
 )]
 pub(crate) struct ExternalApi;
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(service::workspaces::handler::create_workspace),
+    components(schemas(
+        service::workspaces::schema::CreateWorkspaceRequest,
+        common::schema::UuidResponse,
+        common::schema::ApiErrorResponse,
+        common::schema::ApiStatusCode,
+    )),
+    modifiers(&SecurityAddon2)
+)]
+pub(crate) struct ServiceApi;

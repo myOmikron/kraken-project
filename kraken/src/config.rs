@@ -1,7 +1,11 @@
 //! Definitions of the configuration file
 
 use actix_toolbox::logging::LoggingConfig;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
+
+/// Directory the kraken should store his files in
+pub const VAR_DIR: &str = "/var/lib/kraken";
 
 /// Server related configuration.
 #[derive(Deserialize, Serialize)]

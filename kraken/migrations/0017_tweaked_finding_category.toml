@@ -1,0 +1,39 @@
+[Migration]
+Hash = "6511807024003656166"
+Initial = false
+Dependency = 16
+Replaces = []
+
+[[Migration.Operations]]
+Type = "RenameModel"
+Old = "findingdefinitionfindingcategoryrelation"
+New = "findingdefinitioncategoryrelation"
+
+[[Migration.Operations]]
+Type = "RenameField"
+TableName = "findingdefinitioncategoryrelation"
+Old = "finding_definition"
+New = "definition"
+
+[[Migration.Operations]]
+Type = "RenameField"
+TableName = "findingdefinitioncategoryrelation"
+Old = "finding_category"
+New = "category"
+
+[[Migration.Operations]]
+Type = "RenameField"
+TableName = "findingfindingcategoryrelation"
+Old = "finding_category"
+New = "category"
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "findingcategory"
+
+[Migration.Operations.Field]
+Name = "color"
+Type = "int32"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"

@@ -5,7 +5,8 @@ use std::collections::HashMap;
 use actix_toolbox::ws;
 use actix_toolbox::ws::Message;
 use bytestring::ByteString;
-use log::{debug, error};
+use log::debug;
+use log::error;
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
@@ -36,7 +37,7 @@ impl WsManagerChan {
     /// Send a message to a workspace
     pub async fn message_workspace(&self, workspace: Uuid, msg: WsMessage) {
         match GLOBAL
-            .workspace_cache
+            .workspace_users_cache
             .get_users(workspace, &GLOBAL.db)
             .await
         {
@@ -47,6 +48,14 @@ impl WsManagerChan {
             }
             Ok(None) => debug!("No users in cache, nothing to do"),
             Err(err) => error!("Cache error: {err}"),
+        }
+    }
+
+    /// Send a message to a workspace
+    pub async fn message_all(&self, msg: WsMessage) {
+        match serde_json::to_string(&msg) {
+            Ok(string) => self.send(WsManagerEvent::MessageAll(string.into())).await,
+            Err(err) => error!("Error serializing WsMessage: {err}"),
         }
     }
 
@@ -73,6 +82,8 @@ enum WsManagerEvent {
     Add(Uuid, ws::Sender),
     /// The [`ByteString`] contains the serialized form of [`WsMessage`]
     Message(Uuid, ByteString),
+    /// The [`ByteString`] contains the serialized form of [`WsMessage`]
+    MessageAll(ByteString),
     CloseAll(Uuid),
 }
 
@@ -91,6 +102,22 @@ async fn run_ws_manager(mut receiver: mpsc::Receiver<WsManagerEvent>) {
             }
             WsManagerEvent::Message(uuid, msg) => {
                 if let Some(sockets) = sockets.get_mut(&uuid) {
+                    let mut closed = Vec::new();
+                    for (index, socket) in sockets.iter().enumerate() {
+                        // Try send
+                        if socket.send(msg.clone()).await.is_err() {
+                            // Note the closed ones
+                            closed.push(index);
+                        }
+                    }
+                    // Remove the closed ones
+                    for index in closed.into_iter().rev() {
+                        sockets.swap_remove(index);
+                    }
+                }
+            }
+            WsManagerEvent::MessageAll(msg) => {
+                for sockets in sockets.values_mut() {
                     let mut closed = Vec::new();
                     for (index, socket) in sockets.iter().enumerate() {
                         // Try send

@@ -1,18 +1,26 @@
 //! The websocket to the frontend client is defined in this module
 
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+use std::time::Instant;
 
 use actix_toolbox::ws;
-use actix_toolbox::ws::{MailboxError, Message};
+use actix_toolbox::ws::MailboxError;
+use actix_toolbox::ws::Message;
+use actix_web::get;
 use actix_web::web::Payload;
-use actix_web::{get, HttpRequest, HttpResponse};
+use actix_web::HttpRequest;
+use actix_web::HttpResponse;
 use bytes::Bytes;
-use log::{debug, error};
+use log::debug;
+use log::error;
 use tokio::sync::Mutex;
+use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
 use crate::chan::global::GLOBAL;
+use crate::chan::ws_manager::schema::EditorTarget;
+use crate::chan::ws_manager::schema::WsClientMessage;
 use crate::chan::ws_manager::schema::WsMessage;
 
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
@@ -84,10 +92,8 @@ pub async fn websocket(
 
                     match msg {
                         Message::Text(data) => {
-                            match serde_json::from_str::<WsMessage>(data.as_ref()) {
-                                Ok(_) => {
-                                    // TODO
-                                }
+                            match serde_json::from_str::<WsClientMessage>(data.as_ref()) {
+                                Ok(msg) => process_msg(msg, user_uuid).await,
                                 Err(err) => {
                                     debug!("Error deserializing data: {err}");
 
@@ -132,4 +138,101 @@ pub async fn websocket(
     GLOBAL.ws.add(user_uuid, tx.clone()).await;
 
     Ok(response)
+}
+
+async fn process_msg(msg: WsClientMessage, user_uuid: Uuid) {
+    match msg {
+        WsClientMessage::EditorChangedContent { change, target } => match target {
+            EditorTarget::FindingDefinition {
+                finding_definition,
+                finding_section,
+            } => {
+                GLOBAL
+                    .editor_sync
+                    .send_finding_definition(user_uuid, finding_definition, finding_section, change)
+                    .await
+            }
+            EditorTarget::WorkspaceNotes { workspace } => {
+                GLOBAL
+                    .editor_sync
+                    .send_ws_notes(user_uuid, workspace, change)
+                    .await
+            }
+            EditorTarget::Finding {
+                finding,
+                finding_details,
+            } => {
+                GLOBAL
+                    .editor_sync
+                    .send_finding(user_uuid, finding, finding_details, change)
+                    .await;
+            }
+            EditorTarget::FindingAffected {
+                finding,
+                affected,
+                finding_details,
+            } => {
+                GLOBAL
+                    .editor_sync
+                    .send_finding_affected(user_uuid, finding, affected, finding_details, change)
+                    .await;
+            }
+        },
+        WsClientMessage::EditorChangedCursor { cursor, target } => {
+            tokio::spawn(async move {
+                match target {
+                    EditorTarget::FindingDefinition {
+                        finding_definition,
+                        finding_section,
+                    } => {
+                        GLOBAL
+                            .editor_sync
+                            .process_client_cursor_update_finding_definition(
+                                user_uuid,
+                                finding_definition,
+                                finding_section,
+                                cursor,
+                            )
+                            .await;
+                    }
+                    EditorTarget::WorkspaceNotes { workspace } => {
+                        GLOBAL
+                            .editor_sync
+                            .process_client_cursor_update_ws_notes(user_uuid, workspace, cursor)
+                            .await;
+                    }
+                    EditorTarget::Finding {
+                        finding,
+                        finding_details,
+                    } => {
+                        GLOBAL
+                            .editor_sync
+                            .process_client_cursor_update_finding_details(
+                                user_uuid,
+                                finding,
+                                finding_details,
+                                cursor,
+                            )
+                            .await;
+                    }
+                    EditorTarget::FindingAffected {
+                        finding,
+                        affected,
+                        finding_details,
+                    } => {
+                        GLOBAL
+                            .editor_sync
+                            .process_client_cursor_update_finding_affected_details(
+                                user_uuid,
+                                finding,
+                                affected,
+                                finding_details,
+                                cursor,
+                            )
+                            .await;
+                    }
+                }
+            });
+        }
+    }
 }

@@ -1,35 +1,65 @@
 use std::collections::HashMap;
 
 use actix_web::get;
-use actix_web::web::{Json, Path, Query};
-use futures::{StreamExt, TryStreamExt};
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::web::Query;
+use futures::StreamExt;
+use futures::TryStreamExt;
 use log::error;
-use rorm::{query, FieldAccess, Model};
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::attack_results::schema::{
-    DnsTxtScanEntry, FullDnsTxtScanResult, FullQueryCertificateTransparencyResult,
-    FullServiceDetectionResult, FullTestSSLResult, FullUdpServiceDetectionResult,
-    SimpleBruteforceSubdomainsResult, SimpleDnsResolutionResult, SimpleHostAliveResult,
-    SimpleQueryUnhashedResult, SimpleTcpPortScanResult, TestSSLFinding,
-};
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{
-    BruteforceSubdomainsResultsPage, DnsResolutionResultsPage, DnsTxtScanResultsPage,
-    HostAliveResultsPage, Page, PageParams, PathUuid, QueryCertificateTransparencyResultsPage,
-    QueryUnhashedResultsPage, ServiceDetectionResultsPage, TcpPortScanResultsPage,
-    UdpServiceDetectionResultsPage,
-};
+use crate::api::handler::attack_results::schema::DnsTxtScanEntry;
+use crate::api::handler::attack_results::schema::FullDnsTxtScanResult;
+use crate::api::handler::attack_results::schema::FullOsDetectionResult;
+use crate::api::handler::attack_results::schema::FullQueryCertificateTransparencyResult;
+use crate::api::handler::attack_results::schema::FullServiceDetectionResult;
+use crate::api::handler::attack_results::schema::FullTestSSLResult;
+use crate::api::handler::attack_results::schema::FullUdpServiceDetectionResult;
+use crate::api::handler::attack_results::schema::SimpleBruteforceSubdomainsResult;
+use crate::api::handler::attack_results::schema::SimpleDnsResolutionResult;
+use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
+use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
+use crate::api::handler::attack_results::schema::TestSSLFinding;
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::BruteforceSubdomainsResultsPage;
+use crate::api::handler::common::schema::DnsResolutionResultsPage;
+use crate::api::handler::common::schema::DnsTxtScanResultsPage;
+use crate::api::handler::common::schema::HostAliveResultsPage;
+use crate::api::handler::common::schema::OsDetectionResultsPage;
+use crate::api::handler::common::schema::Page;
+use crate::api::handler::common::schema::PageParams;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::QueryCertificateTransparencyResultsPage;
+use crate::api::handler::common::schema::QueryUnhashedResultsPage;
+use crate::api::handler::common::schema::ServiceDetectionResultsPage;
+use crate::api::handler::common::schema::UdpServiceDetectionResultsPage;
 use crate::api::handler::common::utils::get_page_params;
 use crate::chan::global::GLOBAL;
-use crate::models::{
-    Attack, BruteforceSubdomainsResult, CertificateTransparencyResult,
-    CertificateTransparencyValueName, DehashedQueryResult, DnsResolutionResult,
-    DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry, DnsTxtScanSpfEntry, HostAliveResult,
-    ServiceCertainty, ServiceDetectionName, ServiceDetectionResult, TcpPortScanResult,
-    TestSSLResultFinding, TestSSLResultHeader, UdpServiceDetectionName, UdpServiceDetectionResult,
-};
+use crate::models::convert::FromDb;
+use crate::models::Attack;
+use crate::models::BruteforceSubdomainsResult;
+use crate::models::CertificateTransparencyResult;
+use crate::models::CertificateTransparencyValueName;
+use crate::models::DehashedQueryResult;
+use crate::models::DnsResolutionResult;
+use crate::models::DnsTxtScanAttackResult;
+use crate::models::DnsTxtScanServiceHintEntry;
+use crate::models::DnsTxtScanSpfEntry;
+use crate::models::HostAliveResult;
+use crate::models::OsDetectionResult;
+use crate::models::ServiceCertainty;
+use crate::models::ServiceDetectionName;
+use crate::models::ServiceDetectionResult;
+use crate::models::TestSSLResultFinding;
+use crate::models::TestSSLResultHeader;
+use crate::models::UdpServiceDetectionName;
+use crate::models::UdpServiceDetectionResult;
 
 /// Retrieve a bruteforce subdomains' results by the attack's id
 #[utoipa::path(
@@ -73,65 +103,8 @@ pub async fn get_bruteforce_subdomains_results(
             attack: *x.attack.key(),
             source: x.source,
             destination: x.destination,
-            dns_record_type: x.dns_record_type,
+            dns_record_type: FromDb::from_db(x.dns_record_type),
             created_at: x.created_at,
-        })
-        .try_collect()
-        .await?;
-
-    tx.commit().await?;
-
-    Ok(Json(Page {
-        items,
-        limit,
-        offset,
-        total: total as u64,
-    }))
-}
-
-/// Retrieve a tcp port scan's results by the attack's id
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 200, description = "Returns attack's results", body = TcpPortScanResultsPage),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse),
-    ),
-    params(PathUuid, PageParams),
-    security(("api_key" = []))
-)]
-#[get("/attacks/{uuid}/tcpPortScanResults")]
-pub async fn get_tcp_port_scan_results(
-    path: Path<PathUuid>,
-    page_params: Query<PageParams>,
-    SessionUser(user_uuid): SessionUser,
-) -> ApiResult<Json<TcpPortScanResultsPage>> {
-    let mut tx = GLOBAL.db.start_transaction().await?;
-
-    let uuid = path.uuid;
-    let (limit, offset) = get_page_params(page_params.0).await?;
-
-    if !Attack::has_access(&mut tx, uuid, user_uuid).await? {
-        return Err(ApiError::MissingPrivileges);
-    }
-
-    let (total,) = query!(&mut tx, (TcpPortScanResult::F.uuid.count(),))
-        .condition(TcpPortScanResult::F.attack.equals(uuid))
-        .one()
-        .await?;
-
-    let items = query!(&mut tx, TcpPortScanResult)
-        .condition(TcpPortScanResult::F.attack.equals(uuid))
-        .limit(limit)
-        .offset(offset)
-        .stream()
-        .map_ok(|result| SimpleTcpPortScanResult {
-            uuid: result.uuid,
-            attack: *result.attack.key(),
-            created_at: result.created_at,
-            address: result.address,
-            port: result.port as u16,
         })
         .try_collect()
         .await?;
@@ -406,7 +379,7 @@ pub async fn get_service_detection_results(
                 uuid: x.uuid,
                 attack: *x.attack.key(),
                 created_at: x.created_at,
-                certainty: x.certainty,
+                certainty: FromDb::from_db(x.certainty),
                 service_names: match x.certainty {
                     ServiceCertainty::MaybeVerified => names.remove(&x.uuid).ok_or_else(|| {
                         error!(
@@ -516,7 +489,7 @@ pub async fn get_udp_service_detection_results(
                 uuid: x.uuid,
                 attack: *x.attack.key(),
                 created_at: x.created_at,
-                certainty: x.certainty,
+                certainty: FromDb::from_db(x.certainty),
                 service_names: match x.certainty {
                     ServiceCertainty::MaybeVerified => names.remove(&x.uuid).ok_or_else(|| {
                         error!(
@@ -609,7 +582,7 @@ pub async fn get_dns_resolution_results(
             attack: *x.attack.key(),
             source: x.source,
             destination: x.destination,
-            dns_record_type: x.dns_record_type,
+            dns_record_type: FromDb::from_db(x.dns_record_type),
             created_at: x.created_at,
         })
         .try_collect()
@@ -668,7 +641,7 @@ pub async fn get_dns_txt_scan_results(
             attack: *x.attack.key(),
             domain: x.domain,
             created_at: x.created_at,
-            collection_type: x.collection_type,
+            collection_type: FromDb::from_db(x.collection_type),
             entries: vec![],
         })
         .try_collect()
@@ -685,7 +658,7 @@ pub async fn get_dns_txt_scan_results(
                 uuid: s.uuid,
                 created_at: s.created_at,
                 rule: s.rule,
-                txt_type: s.txt_type,
+                txt_type: FromDb::from_db(s.txt_type),
             })
             .try_collect()
             .await?;
@@ -696,7 +669,7 @@ pub async fn get_dns_txt_scan_results(
                 uuid: s.uuid,
                 created_at: s.created_at,
                 rule: s.rule,
-                spf_type: s.spf_type,
+                spf_type: FromDb::from_db(s.spf_type),
                 spf_ip: s.spf_ip,
                 spf_domain: s.spf_domain,
                 spf_domain_ipv4_cidr: s.spf_domain_ipv4_cidr,
@@ -707,6 +680,65 @@ pub async fn get_dns_txt_scan_results(
 
         item.entries = [entries1, entries2].concat();
     }
+
+    tx.commit().await?;
+
+    Ok(Json(Page {
+        items,
+        limit,
+        offset,
+        total: total as u64,
+    }))
+}
+
+/// Retrieve a host alive's results by the attack's id
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Returns attack's results", body = OsDetectionResultsPage),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid, PageParams),
+    security(("api_key" = []))
+)]
+#[get("/attacks/{uuid}/osDetectionResults")]
+pub async fn get_os_detection_results(
+    path: Path<PathUuid>,
+    page_params: Query<PageParams>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<Json<OsDetectionResultsPage>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    let attack_uuid = path.uuid;
+    let (limit, offset) = get_page_params(page_params.0).await?;
+
+    if !Attack::has_access(&mut tx, attack_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let (total,) = query!(&mut tx, (OsDetectionResult::F.uuid.count(),))
+        .condition(OsDetectionResult::F.attack.equals(attack_uuid))
+        .one()
+        .await?;
+
+    let items = query!(&mut tx, OsDetectionResult)
+        .condition(OsDetectionResult::F.attack.equals(attack_uuid))
+        .limit(limit)
+        .offset(offset)
+        .stream()
+        .map_ok(|x| FullOsDetectionResult {
+            uuid: x.uuid,
+            attack: *x.attack.key(),
+            created_at: x.created_at,
+            host: x.host,
+            version: x.version,
+            os: FromDb::from_db(x.os),
+            hints: x.hints,
+        })
+        .try_collect()
+        .await?;
 
     tx.commit().await?;
 
@@ -761,10 +793,10 @@ pub async fn get_testssl_results(
             .condition(TestSSLResultFinding::F.attack.equals(attack_uuid))
             .stream()
             .map_ok(|x| TestSSLFinding {
-                section: x.section,
+                section: FromDb::from_db(x.section),
                 id: x.key,
                 value: x.value,
-                severity: x.testssl_severity,
+                severity: FromDb::from_db(x.testssl_severity),
                 cve: x.cve,
                 cwe: x.cwe,
                 issue: (),

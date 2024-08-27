@@ -1,18 +1,31 @@
 use actix_toolbox::tb_middleware::Session;
+use actix_web::get;
+use actix_web::post;
+use actix_web::put;
 use actix_web::web::Json;
-use actix_web::{get, post, put, HttpResponse};
+use actix_web::HttpResponse;
 use argon2::password_hash::SaltString;
-use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use argon2::Argon2;
+use argon2::PasswordHash;
+use argon2::PasswordHasher;
+use argon2::PasswordVerifier;
 use rand::thread_rng;
-use rorm::{query, update, FieldAccess, Model};
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::users::schema::{
-    FullUser, ListUsers, SetPasswordRequest, SimpleUser, UpdateMeRequest,
-};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::users::schema::FullUser;
+use crate::api::handler::users::schema::ListUsers;
+use crate::api::handler::users::schema::SetPasswordRequest;
+use crate::api::handler::users::schema::SimpleUser;
+use crate::api::handler::users::schema::UpdateMeRequest;
 use crate::chan::global::GLOBAL;
-use crate::models::{LocalUser, User};
+use crate::models::LocalUser;
+use crate::models::User;
 
 /// Retrieve the own user
 #[utoipa::path(
@@ -27,20 +40,13 @@ use crate::models::{LocalUser, User};
 )]
 #[get("/users/me")]
 pub async fn get_me(SessionUser(user_uuid): SessionUser) -> ApiResult<Json<FullUser>> {
-    let user = query!(&GLOBAL.db, User)
-        .condition(User::F.uuid.equals(user_uuid))
-        .optional()
-        .await?
-        .ok_or(ApiError::SessionCorrupt)?;
-
-    Ok(Json(FullUser {
-        uuid: user.uuid,
-        username: user.username,
-        display_name: user.display_name,
-        permission: user.permission,
-        created_at: user.created_at,
-        last_login: user.last_login,
-    }))
+    Ok(Json(
+        GLOBAL
+            .user_cache
+            .get_full_user(user_uuid)
+            .await?
+            .ok_or(ApiError::SessionCorrupt)?,
+    ))
 }
 
 /// Set a new password
@@ -145,6 +151,8 @@ pub async fn update_me(
         .await?;
 
     tx.commit().await?;
+
+    GLOBAL.user_cache.refresh().await?;
 
     Ok(HttpResponse::Ok().finish())
 }

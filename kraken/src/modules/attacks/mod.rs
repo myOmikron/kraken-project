@@ -5,32 +5,44 @@ use std::error::Error as StdError;
 use std::future::Future;
 use std::net::IpAddr;
 
-use chrono::{DateTime, Utc};
-use dehashed_rs::{Query, ScheduledRequest};
+use chrono::DateTime;
+use chrono::Utc;
+use dehashed_rs::Query;
+use dehashed_rs::ScheduledRequest;
 use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
 use kraken_proto::InvalidArgumentError;
 use log::error;
+use rorm::and;
 use rorm::prelude::*;
-use rorm::{and, query, update};
+use rorm::query;
+use rorm::update;
 use thiserror::Error;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
-use tonic::{Response, Status, Streaming};
+use tonic::Response;
+use tonic::Status;
+use tonic::Streaming;
 use uuid::Uuid;
 
-use crate::api::handler::attacks::schema::{
-    DomainOrNetwork, PortOrRange, SimpleAttack, StartTLSProtocol,
-};
+use crate::api::handler::attacks::schema::DomainOrNetwork;
+use crate::api::handler::attacks::schema::PortOrRange;
+use crate::api::handler::attacks::schema::SimpleAttack;
+use crate::api::handler::attacks::schema::StartTLSProtocol;
 use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::{
-    Attack, AttackType, Domain, DomainCertainty, DomainHostRelation, InsertAttackError, User,
-    Workspace,
-};
+use crate::models::convert::FromDb;
+use crate::models::Attack;
+use crate::models::AttackType;
+use crate::models::Domain;
+use crate::models::DomainCertainty;
+use crate::models::DomainHostRelation;
+use crate::models::InsertAttackError;
+use crate::models::User;
+use crate::models::Workspace;
 
 mod bruteforce_subdomains;
 mod certificate_transparency;
@@ -38,8 +50,8 @@ mod dehashed_query;
 mod dns_resolution;
 mod dns_txt_scan;
 mod host_alive;
+mod os_detection;
 mod service_detection;
-mod tcp_port_scan;
 mod testssl;
 mod udp_service_detection;
 
@@ -152,6 +164,45 @@ pub async fn start_host_alive(
     ))
 }
 
+/// The parameters of a "OS detection" attack
+pub struct OsDetectionParams {
+    /// The ip addresses / networks to scan
+    pub targets: Vec<DomainOrNetwork>,
+    /// set to skip open port detection and use this port for TCP fingerprinting
+    pub fingerprint_port: Option<u32>,
+    /// set to perform OS detection through SSH header
+    pub ssh_port: Option<u32>,
+    /// timeout for TCP fingerprint detection task, in ms
+    pub fingerprint_timeout: u64,
+    /// timeout for establishing an SSH connection, if ssh_port is set, in ms
+    pub ssh_connect_timeout: u64,
+    /// timeout for the full SSH os detection task, in ms
+    pub ssh_timeout: u64,
+    /// If fingerprint_port is not set, timeout for each port how long to wait for ACKs
+    pub port_ack_timeout: u64,
+    /// If fingerprint_port is not set, maximum parallel TCP SYN requests
+    pub port_parallel_syns: u32,
+    /// The concurrent host scan limit
+    pub concurrent_limit: u32,
+}
+/// Start a "OS detection" attack
+pub async fn start_os_detection(
+    workspace: Uuid,
+    user: Uuid,
+    leech: LeechClient,
+    params: crate::modules::attacks::OsDetectionParams,
+) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
+    let ctx = AttackContext::new(workspace, user, AttackType::OSDetection).await?;
+    Ok((
+        ctx.attack_uuid,
+        tokio::spawn(async move {
+            ctx.set_started().await;
+            let result = ctx.os_detection(leech, params).await;
+            ctx.set_finished(result).await;
+        }),
+    ))
+}
+
 /// The parameters of a "certificate transparency" attack
 pub struct CertificateTransparencyParams {
     /// Domain to query certificates for
@@ -211,17 +262,38 @@ pub async fn start_dehashed_query(
 
 /// The parameters of a "service detection" attack
 pub struct ServiceDetectionParams {
-    /// The ip address the service listens on
-    pub target: IpAddr,
+    /// The ip addresses / networks to scan
+    pub targets: Vec<DomainOrNetwork>,
 
-    /// The port the service listens on
-    pub port: u16,
+    /// List of single ports and port ranges
+    pub ports: Vec<PortOrRange>,
+
+    /// The time to wait until a connection is considered failed.
+    ///
+    /// The timeout is specified in milliseconds.
+    pub connect_timeout: u64,
 
     /// Time to wait for a response after sending the payload
     /// (or after establishing a connection, if not payload is to be sent)
     ///
     /// The timeout is specified in milliseconds.
-    pub timeout: u64,
+    pub receive_timeout: u64,
+
+    /// The number of times the connection should be retried if it failed.
+    pub max_retries: u32,
+
+    /// The interval that should be wait between retries on a port.
+    ///
+    /// The interval is specified in milliseconds.
+    pub retry_interval: u64,
+
+    /// The concurrent task limit
+    pub concurrent_limit: u32,
+
+    /// Skips the initial icmp check.
+    ///
+    /// All hosts are assumed to be reachable
+    pub skip_icmp_check: bool,
 }
 /// Start a "service detection" attack
 pub async fn start_service_detection(
@@ -243,8 +315,8 @@ pub async fn start_service_detection(
 
 /// The parameters of a "service detection" attack
 pub struct UdpServiceDetectionParams {
-    /// The ip address the service listens on
-    pub target: IpAddr,
+    /// The ip addresses / networks to scan
+    pub targets: Vec<DomainOrNetwork>,
 
     /// List of single ports and port ranges
     pub ports: Vec<PortOrRange>,
@@ -279,53 +351,6 @@ pub async fn start_udp_service_detection(
         tokio::spawn(async move {
             ctx.set_started().await;
             let result = ctx.udp_service_detection(leech, params).await;
-            ctx.set_finished(result).await;
-        }),
-    ))
-}
-
-/// The parameters of a "tcp port scan" attack
-pub struct TcpPortScanParams {
-    /// The ip addresses / networks to scan
-    pub targets: Vec<DomainOrNetwork>,
-
-    /// List of single ports and port ranges
-    pub ports: Vec<PortOrRange>,
-
-    /// The time to wait until a connection is considered failed.
-    ///
-    /// The timeout is specified in milliseconds.
-    pub timeout: u64,
-
-    /// The concurrent task limit
-    pub concurrent_limit: u32,
-
-    /// The number of times the connection should be retried if it failed.
-    pub max_retries: u32,
-
-    /// The interval that should be wait between retries on a port.
-    ///
-    /// The interval is specified in milliseconds.
-    pub retry_interval: u64,
-
-    /// Skips the initial icmp check.
-    ///
-    /// All hosts are assumed to be reachable
-    pub skip_icmp_check: bool,
-}
-/// Start a "tcp port scan" attack
-pub async fn start_tcp_port_scan(
-    workspace: Uuid,
-    user: Uuid,
-    leech: LeechClient,
-    params: TcpPortScanParams,
-) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
-    let ctx = AttackContext::new(workspace, user, AttackType::TcpPortScan).await?;
-    Ok((
-        ctx.attack_uuid,
-        tokio::spawn(async move {
-            ctx.set_started().await;
-            let result = ctx.tcp_port_scan(leech, params).await;
             ctx.set_finished(result).await;
         }),
     ))
@@ -405,13 +430,14 @@ impl AttackContext {
             .optional()
             .await?
             .ok_or(InsertAttackError::UserInvalid)?;
-        let (name, description, created_at, owner) = query!(
+        let (name, description, created_at, owner, archived) = query!(
             &mut tx,
             (
                 Workspace::F.name,
                 Workspace::F.description,
                 Workspace::F.created_at,
-                Workspace::F.owner as SimpleUser
+                Workspace::F.owner as SimpleUser,
+                Workspace::F.archived,
             )
         )
         .condition(Workspace::F.uuid.equals(workspace_uuid))
@@ -427,6 +453,7 @@ impl AttackContext {
             description,
             created_at,
             owner,
+            archived,
         };
 
         let attack = Attack::insert(&GLOBAL.db, attack_type, user_uuid, workspace_uuid).await?;
@@ -442,23 +469,33 @@ impl AttackContext {
 
     /// Query the context for an existing attack
     pub(crate) async fn existing(attack_uuid: Uuid) -> Result<Option<Self>, rorm::Error> {
-        let Some((attack_type, started_at, user, uuid, name, description, created_at, owner)) =
-            query!(
-                &GLOBAL.db,
-                (
-                    Attack::F.attack_type,
-                    Attack::F.created_at,
-                    Attack::F.started_by as SimpleUser,
-                    Attack::F.workspace.uuid,
-                    Attack::F.workspace.name,
-                    Attack::F.workspace.description,
-                    Attack::F.workspace.created_at,
-                    Attack::F.workspace.owner as SimpleUser
-                )
+        let Some((
+            attack_type,
+            started_at,
+            user,
+            uuid,
+            name,
+            description,
+            created_at,
+            owner,
+            archived,
+        )) = query!(
+            &GLOBAL.db,
+            (
+                Attack::F.attack_type,
+                Attack::F.created_at,
+                Attack::F.started_by as SimpleUser,
+                Attack::F.workspace.uuid,
+                Attack::F.workspace.name,
+                Attack::F.workspace.description,
+                Attack::F.workspace.created_at,
+                Attack::F.workspace.owner as SimpleUser,
+                Attack::F.workspace.archived,
             )
-            .condition(Attack::F.uuid.equals(attack_uuid))
-            .optional()
-            .await?
+        )
+        .condition(Attack::F.uuid.equals(attack_uuid))
+        .optional()
+        .await?
         else {
             return Ok(None);
         };
@@ -471,6 +508,7 @@ impl AttackContext {
                 description,
                 created_at,
                 owner,
+                archived,
             },
             attack_uuid,
             created_at: started_at,
@@ -492,7 +530,7 @@ impl AttackContext {
             attack: SimpleAttack {
                 uuid: self.attack_uuid,
                 workspace: self.workspace.clone(),
-                attack_type: self.attack_type,
+                attack_type: FromDb::from_db(self.attack_type),
                 started_by: self.user.clone(),
                 created_at: self.created_at,
                 error: None,
@@ -512,7 +550,7 @@ impl AttackContext {
             attack: SimpleAttack {
                 uuid: self.attack_uuid,
                 workspace: self.workspace.clone(),
-                attack_type: self.attack_type,
+                attack_type: FromDb::from_db(self.attack_type),
                 created_at: self.created_at,
                 finished_at: Some(now),
                 error: result.as_ref().err().map(|x| x.to_string()),

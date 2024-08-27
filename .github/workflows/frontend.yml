@@ -1,0 +1,40 @@
+name: frontend checks
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "kraken_frontend/**"
+  pull_request:
+    paths:
+      - "kraken_frontend/**"
+
+
+jobs:
+  frontend:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    strategy:
+      matrix:
+        node-version: [ 18.x, 20.x ]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Prettier
+        working-directory: kraken_frontend
+        run: |
+          npm install
+          npm run ci
+      - name: Build
+        working-directory: kraken_frontend
+        run: |
+          npm install
+          npm run build

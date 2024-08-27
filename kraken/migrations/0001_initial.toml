@@ -950,7 +950,7 @@ Type = "varchar"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
-Value = 255
+Value = 1024
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
@@ -1061,7 +1061,7 @@ Type = "varchar"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
-Value = 255
+Value = 1024
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
@@ -1156,7 +1156,7 @@ Type = "varchar"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
-Value = 255
+Value = 1024
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
@@ -1238,7 +1238,7 @@ Type = "varchar"
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "max_length"
-Value = 255
+Value = 1024
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
@@ -1341,6 +1341,7 @@ Value = [
     "ManualHost",
     "ManualPort",
     "ManualService",
+    "ManualHttpService",
 ]
 
 [[Migration.Operations.Fields.Annotations]]
@@ -1364,6 +1365,7 @@ Value = [
     "Port",
     "Service",
     "Domain",
+    "HttpService",
 ]
 
 [[Migration.Operations.Fields.Annotations]]
@@ -2661,8 +2663,8 @@ Type = "foreign_key"
 [Migration.Operations.Field.Annotations.Value]
 TableName = "domain"
 ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"
@@ -2681,8 +2683,8 @@ Type = "foreign_key"
 [Migration.Operations.Field.Annotations.Value]
 TableName = "host"
 ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"
@@ -3498,8 +3500,8 @@ Type = "foreign_key"
 [Migration.Operations.Field.Annotations.Value]
 TableName = "domain"
 ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"
@@ -3518,8 +3520,8 @@ Type = "foreign_key"
 [Migration.Operations.Field.Annotations.Value]
 TableName = "domain"
 ColumnName = "uuid"
-OnDelete = "Restrict"
-OnUpdate = "Restrict"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "not_null"

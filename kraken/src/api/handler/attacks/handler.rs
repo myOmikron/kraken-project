@@ -1,30 +1,64 @@
-use actix_web::web::{Json, Path};
-use actix_web::{delete, get, post, HttpResponse};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::post;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
 use futures::TryStreamExt;
 use log::debug;
-use rorm::conditions::{Condition, DynamicCollection};
-use rorm::{query, FieldAccess, Model};
+use rorm::conditions::Condition;
+use rorm::conditions::DynamicCollection;
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::attacks::schema::{
-    BruteforceSubdomainsRequest, DnsResolutionRequest, DnsTxtScanRequest, HostsAliveRequest,
-    ListAttacks, QueryCertificateTransparencyRequest, QueryDehashedRequest, ScanTcpPortsRequest,
-    ServiceDetectionRequest, SimpleAttack, TestSSLRequest, UdpServiceDetectionRequest,
-};
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{PathUuid, UuidResponse};
+use crate::api::handler::attacks::schema::BruteforceSubdomainsRequest;
+use crate::api::handler::attacks::schema::DnsResolutionRequest;
+use crate::api::handler::attacks::schema::DnsTxtScanRequest;
+use crate::api::handler::attacks::schema::HostsAliveRequest;
+use crate::api::handler::attacks::schema::ListAttacks;
+use crate::api::handler::attacks::schema::OsDetectionRequest;
+use crate::api::handler::attacks::schema::QueryCertificateTransparencyRequest;
+use crate::api::handler::attacks::schema::QueryDehashedRequest;
+use crate::api::handler::attacks::schema::ServiceDetectionRequest;
+use crate::api::handler::attacks::schema::SimpleAttack;
+use crate::api::handler::attacks::schema::TestSSLRequest;
+use crate::api::handler::attacks::schema::UdpServiceDetectionRequest;
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::users::schema::SimpleUser;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::chan::global::GLOBAL;
-use crate::models::{Attack, User, UserPermission, WordList, Workspace, WorkspaceMember};
-use crate::modules::attacks::{
-    start_bruteforce_subdomains, start_certificate_transparency, start_dehashed_query,
-    start_dns_resolution, start_dns_txt_scan, start_host_alive, start_service_detection,
-    start_tcp_port_scan, start_testssl, start_udp_service_detection, BruteforceSubdomainsParams,
-    CertificateTransparencyParams, DehashedQueryParams, DnsResolutionParams, DnsTxtScanParams,
-    HostAliveParams, ServiceDetectionParams, TcpPortScanParams, TestSSLParams,
-    UdpServiceDetectionParams,
-};
+use crate::models::convert::FromDb;
+use crate::models::Attack;
+use crate::models::User;
+use crate::models::UserPermission;
+use crate::models::WordList;
+use crate::models::Workspace;
+use crate::models::WorkspaceMember;
+use crate::modules::attacks::start_bruteforce_subdomains;
+use crate::modules::attacks::start_certificate_transparency;
+use crate::modules::attacks::start_dehashed_query;
+use crate::modules::attacks::start_dns_resolution;
+use crate::modules::attacks::start_dns_txt_scan;
+use crate::modules::attacks::start_host_alive;
+use crate::modules::attacks::start_os_detection;
+use crate::modules::attacks::start_service_detection;
+use crate::modules::attacks::start_testssl;
+use crate::modules::attacks::start_udp_service_detection;
+use crate::modules::attacks::BruteforceSubdomainsParams;
+use crate::modules::attacks::CertificateTransparencyParams;
+use crate::modules::attacks::DehashedQueryParams;
+use crate::modules::attacks::DnsResolutionParams;
+use crate::modules::attacks::DnsTxtScanParams;
+use crate::modules::attacks::HostAliveParams;
+use crate::modules::attacks::OsDetectionParams;
+use crate::modules::attacks::ServiceDetectionParams;
+use crate::modules::attacks::TestSSLParams;
+use crate::modules::attacks::UdpServiceDetectionParams;
 
 /// Bruteforce subdomains through a DNS wordlist attack
 ///
@@ -81,66 +115,6 @@ pub async fn bruteforce_subdomains(
     Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
 }
 
-/// Start a tcp port scan
-///
-/// `exclude` accepts a list of ip networks in CIDR notation.
-///
-/// All intervals are interpreted in milliseconds. E.g. a `timeout` of 3000 means 3 seconds.
-///
-/// Set `max_retries` to 0 if you don't want to try a port more than 1 time.
-#[utoipa::path(
-    tag = "Attacks",
-    context_path = "/api/v1",
-    responses(
-        (status = 202, description = "Attack scheduled", body = UuidResponse),
-        (status = 400, description = "Client error", body = ApiErrorResponse),
-        (status = 500, description = "Server error", body = ApiErrorResponse)
-    ),
-    request_body = ScanTcpPortsRequest,
-    security(("api_key" = []))
-)]
-#[post("/attacks/scanTcpPorts")]
-pub async fn scan_tcp_ports(
-    req: Json<ScanTcpPortsRequest>,
-    SessionUser(user_uuid): SessionUser,
-) -> ApiResult<HttpResponse> {
-    let ScanTcpPortsRequest {
-        leech_uuid,
-        targets,
-        ports,
-        retry_interval,
-        max_retries,
-        timeout,
-        concurrent_limit,
-        skip_icmp_check,
-        workspace_uuid,
-    } = req.into_inner();
-
-    let client = if let Some(leech_uuid) = leech_uuid {
-        GLOBAL.leeches.get_leech(&leech_uuid)?
-    } else {
-        GLOBAL.leeches.random_leech()?
-    };
-
-    let (attack_uuid, _) = start_tcp_port_scan(
-        workspace_uuid,
-        user_uuid,
-        client,
-        TcpPortScanParams {
-            targets,
-            ports,
-            timeout,
-            concurrent_limit,
-            max_retries,
-            retry_interval,
-            skip_icmp_check,
-        },
-    )
-    .await?;
-
-    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
-}
-
 /// Check if hosts are reachable
 ///
 /// Just an ICMP scan for now to see which targets respond.
@@ -183,6 +157,64 @@ pub async fn hosts_alive_check(
         HostAliveParams {
             targets,
             timeout,
+            concurrent_limit,
+        },
+    )
+    .await?;
+
+    Ok(HttpResponse::Accepted().json(UuidResponse { uuid: attack_uuid }))
+}
+
+/// Tries to find out the operating system of the remote host.
+#[utoipa::path(
+    tag = "Attacks",
+    context_path = "/api/v1",
+    responses(
+        (status = 202, description = "Attack scheduled", body = UuidResponse),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse)
+    ),
+    request_body = OsDetectionRequest,
+    security(("api_key" = []))
+)]
+#[post("/attacks/osDetection")]
+pub async fn os_detection(
+    req: Json<OsDetectionRequest>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let OsDetectionRequest {
+        leech_uuid,
+        targets,
+        fingerprint_port,
+        ssh_port,
+        fingerprint_timeout,
+        ssh_connect_timeout,
+        ssh_timeout,
+        port_ack_timeout,
+        port_parallel_syns,
+        concurrent_limit,
+        workspace_uuid,
+    } = req.into_inner();
+
+    let leech = if let Some(leech_uuid) = leech_uuid {
+        GLOBAL.leeches.get_leech(&leech_uuid)?
+    } else {
+        GLOBAL.leeches.random_leech()?
+    };
+
+    let (attack_uuid, _) = start_os_detection(
+        workspace_uuid,
+        user_uuid,
+        leech,
+        OsDetectionParams {
+            targets,
+            fingerprint_port,
+            ssh_port,
+            fingerprint_timeout,
+            ssh_connect_timeout,
+            ssh_timeout,
+            port_ack_timeout,
+            port_parallel_syns,
             concurrent_limit,
         },
     )
@@ -303,15 +335,16 @@ pub async fn service_detection(
 ) -> ApiResult<HttpResponse> {
     let ServiceDetectionRequest {
         leech_uuid,
-        address,
-        port,
-        timeout,
+        targets,
+        ports,
+        connect_timeout,
+        receive_timeout,
+        retry_interval,
+        max_retries,
+        concurrent_limit,
+        skip_icmp_check,
         workspace_uuid,
     } = req.into_inner();
-
-    if port == 0 {
-        return Err(ApiError::InvalidPort);
-    }
 
     let client = if let Some(leech_uuid) = leech_uuid {
         GLOBAL.leeches.get_leech(&leech_uuid)?
@@ -324,9 +357,14 @@ pub async fn service_detection(
         user_uuid,
         client,
         ServiceDetectionParams {
-            target: address,
-            port,
-            timeout,
+            targets,
+            ports,
+            connect_timeout,
+            receive_timeout,
+            max_retries,
+            retry_interval,
+            concurrent_limit,
+            skip_icmp_check,
         },
     )
     .await?;
@@ -357,7 +395,7 @@ pub async fn udp_service_detection(
 ) -> ApiResult<HttpResponse> {
     let UdpServiceDetectionRequest {
         leech_uuid,
-        address,
+        targets,
         ports,
         retry_interval,
         max_retries,
@@ -377,7 +415,7 @@ pub async fn udp_service_detection(
         user_uuid,
         client,
         UdpServiceDetectionParams {
-            target: address,
+            targets,
             ports,
             timeout,
             concurrent_limit,
@@ -568,6 +606,7 @@ pub async fn get_attack(
             Attack::F.workspace.description,
             Attack::F.workspace.owner as SimpleUser,
             Attack::F.workspace.created_at,
+            Attack::F.workspace.archived,
             Attack::F.attack_type,
             Attack::F.finished_at,
             Attack::F.created_at,
@@ -588,6 +627,7 @@ pub async fn get_attack(
             w_description,
             w_owner,
             w_created_at,
+            w_archived,
             attack_type,
             finished_at,
             created_at,
@@ -602,8 +642,9 @@ pub async fn get_attack(
                 description: w_description,
                 owner: w_owner,
                 created_at: w_created_at,
+                archived: w_archived,
             },
-            attack_type,
+            attack_type: FromDb::from_db(attack_type),
             started_by,
             finished_at,
             created_at,
@@ -667,7 +708,8 @@ pub async fn get_all_attacks(
                 Attack::F.workspace.name,
                 Attack::F.workspace.description,
                 Attack::F.workspace.created_at,
-                Attack::F.workspace.owner as SimpleUser
+                Attack::F.workspace.owner as SimpleUser,
+                Attack::F.workspace.archived,
             )
         )
         .condition(DynamicCollection::or(workspaces))
@@ -685,9 +727,10 @@ pub async fn get_all_attacks(
                 w_description,
                 w_created_at,
                 w_owner,
+                w_archived,
             )| SimpleAttack {
                 uuid,
-                attack_type,
+                attack_type: FromDb::from_db(attack_type),
                 error,
                 created_at,
                 finished_at,
@@ -698,6 +741,7 @@ pub async fn get_all_attacks(
                     description: w_description,
                     created_at: w_created_at,
                     owner: w_owner,
+                    archived: w_archived,
                 },
             },
         )
@@ -749,7 +793,8 @@ pub async fn get_workspace_attacks(
             Attack::F.workspace.name,
             Attack::F.workspace.description,
             Attack::F.workspace.created_at,
-            Attack::F.workspace.owner as SimpleUser
+            Attack::F.workspace.owner as SimpleUser,
+            Attack::F.workspace.archived,
         )
     )
     .condition(Attack::F.workspace.equals(workspace))
@@ -769,9 +814,10 @@ pub async fn get_workspace_attacks(
             w_description,
             w_created_at,
             w_owner,
+            w_archived,
         )| SimpleAttack {
             uuid,
-            attack_type,
+            attack_type: FromDb::from_db(attack_type),
             started_by,
             created_at,
             finished_at,
@@ -782,6 +828,7 @@ pub async fn get_workspace_attacks(
                 description: w_description,
                 created_at: w_created_at,
                 owner: w_owner,
+                archived: w_archived,
             },
         },
     )

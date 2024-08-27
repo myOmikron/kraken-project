@@ -1,7 +1,7 @@
 service: ldap
 prevalence: often
 probes:
-  - protocol: TCP
+  - tcp: yes
     # https://datatracker.ietf.org/doc/html/rfc4511
     # message format: https://datatracker.ietf.org/doc/html/rfc4511#section-4.2
     # encoding: https://ldap.com/ldapv3-wire-protocol-reference-asn1-ber

@@ -1,5 +1,4 @@
-import { Err, Ok, Result } from "../utils/result";
-import { RequiredError, ResponseError } from "./generated";
+import CONSOLE from "../utils/console";
 
 export enum StatusCode {
     ArbitraryJSError = -2,
@@ -52,7 +51,7 @@ export async function parseError(response: Response): Promise<ApiError> {
     try {
         return await response.json();
     } catch {
-        console.error("Got invalid json", response.body);
+        CONSOLE.error("Got invalid json", response.body);
         return {
             status_code: StatusCode.JsonDecodeError,
             message: "The server's response was invalid json",

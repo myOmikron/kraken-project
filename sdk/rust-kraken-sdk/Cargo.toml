@@ -1,6 +1,6 @@
 [package]
 name = "kraken-sdk"
-version = "0.1.0"
+version = "0.4.2"
 authors = ["git@omikron.dev"]
 description = "The SDK for kraken"
 license = "AGPL-3.0"
@@ -17,11 +17,12 @@ tokio = { version = ">=1.23.1", features = ["sync"] }
 futures = { version = "~0.3" }
 
 # Tokio websockets
-tokio-tungstenite = { version = "~0.21", features = ["native-tls"] }
+tokio-tungstenite = { version = "~0.23", features = ["native-tls"] }
+tungstenite = { version = "~0.23", features = ["url"] }
 tokio-native-tls = { version = "~0.3" }
 
 # HTTP client library
-reqwest = { version = "~0.11", features = ["cookies", "json"] }
+reqwest = { version = "~0.12", features = ["cookies", "json"] }
 
 # Serialization library
 serde = { version = "~1" }
@@ -40,4 +41,4 @@ log = { version = "~0.4" }
 
 [dev-dependencies]
 tokio = { version = ">=1.23.1", features = ["sync", "rt-multi-thread", "macros"] }
-env_logger = { version = "~0.10" }
+env_logger = { version = "~0.11" }

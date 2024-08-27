@@ -1,48 +1,93 @@
-use actix_web::web::{Json, Path, Query};
-use actix_web::{delete, get, post, put, HttpResponse};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::post;
+use actix_web::put;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::web::Query;
+use actix_web::HttpResponse;
 use chrono::Utc;
 use futures::TryStreamExt;
-use log::{debug, error, info};
+use log::debug;
+use log::error;
+use log::info;
+use rorm::and;
+use rorm::db::executor;
 use rorm::db::sql::value::Value;
-use rorm::db::{executor, Executor};
+use rorm::db::Executor;
+use rorm::field;
+use rorm::insert;
 use rorm::internal::field::Field;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, field, insert, query, update, FieldAccess, Model};
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::attack_results::schema::{
-    FullQueryCertificateTransparencyResult, FullServiceDetectionResult,
-    FullUdpServiceDetectionResult, SimpleDnsResolutionResult, SimpleDnsTxtScanResult,
-    SimpleHostAliveResult, SimpleQueryUnhashedResult, SimpleTcpPortScanResult,
-};
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{
-    Page, PageParams, PathUuid, SearchResultPage, SearchesResultPage, UuidResponse,
-};
+use crate::api::handler::attack_results::schema::FullQueryCertificateTransparencyResult;
+use crate::api::handler::attack_results::schema::FullServiceDetectionResult;
+use crate::api::handler::attack_results::schema::FullUdpServiceDetectionResult;
+use crate::api::handler::attack_results::schema::SimpleDnsResolutionResult;
+use crate::api::handler::attack_results::schema::SimpleDnsTxtScanResult;
+use crate::api::handler::attack_results::schema::SimpleHostAliveResult;
+use crate::api::handler::attack_results::schema::SimpleQueryUnhashedResult;
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::Page;
+use crate::api::handler::common::schema::PageParams;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::SearchResultPage;
+use crate::api::handler::common::schema::SearchesResultPage;
+use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::domains::schema::SimpleDomain;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
 use crate::api::handler::users::schema::SimpleUser;
-use crate::api::handler::workspace_invitations::schema::{
-    FullWorkspaceInvitation, WorkspaceInvitationList,
-};
-use crate::api::handler::workspaces::schema::{
-    CreateWorkspaceRequest, FullWorkspace, InviteToWorkspaceRequest, InviteUuid, ListWorkspaces,
-    SearchEntry, SearchResultEntry, SearchUuid, SearchWorkspaceRequest, SimpleWorkspace,
-    TransferWorkspaceRequest, UpdateWorkspaceRequest,
-};
-use crate::api::handler::workspaces::utils::{get_workspace_unchecked, run_search};
+use crate::api::handler::users::schema::UserPermission;
+use crate::api::handler::workspace_invitations::schema::FullWorkspaceInvitation;
+use crate::api::handler::workspace_invitations::schema::WorkspaceInvitationList;
+use crate::api::handler::workspaces::schema::CreateWorkspaceRequest;
+use crate::api::handler::workspaces::schema::FullWorkspace;
+use crate::api::handler::workspaces::schema::InviteToWorkspaceRequest;
+use crate::api::handler::workspaces::schema::InviteUuid;
+use crate::api::handler::workspaces::schema::ListWorkspaces;
+use crate::api::handler::workspaces::schema::SearchEntry;
+use crate::api::handler::workspaces::schema::SearchResultEntry;
+use crate::api::handler::workspaces::schema::SearchUuid;
+use crate::api::handler::workspaces::schema::SearchWorkspaceRequest;
+use crate::api::handler::workspaces::schema::SimpleWorkspace;
+use crate::api::handler::workspaces::schema::TransferWorkspaceRequest;
+use crate::api::handler::workspaces::schema::UpdateWorkspaceRequest;
+use crate::api::handler::workspaces::utils::get_workspace_unchecked;
+use crate::api::handler::workspaces::utils::run_search;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::{
-    Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsResolutionResult, DnsTxtScanAttackResult, Domain, Host, HostAliveResult, ModelType, Port,
-    Search, SearchInsert, SearchResult, Service, ServiceDetectionName, ServiceDetectionResult,
-    TcpPortScanResult, UdpServiceDetectionName, UdpServiceDetectionResult, User, UserPermission,
-    Workspace, WorkspaceInvitation, WorkspaceMember,
-};
+use crate::models::convert::FromDb;
+use crate::models::Attack;
+use crate::models::CertificateTransparencyResult;
+use crate::models::CertificateTransparencyValueName;
+use crate::models::DehashedQueryResult;
+use crate::models::DnsResolutionResult;
+use crate::models::DnsTxtScanAttackResult;
+use crate::models::Domain;
+use crate::models::Host;
+use crate::models::HostAliveResult;
+use crate::models::ModelType;
+use crate::models::Port;
+use crate::models::Search;
+use crate::models::SearchInsert;
+use crate::models::SearchResult;
+use crate::models::Service;
+use crate::models::ServiceDetectionName;
+use crate::models::ServiceDetectionResult;
+use crate::models::UdpServiceDetectionName;
+use crate::models::UdpServiceDetectionResult;
+use crate::models::Workspace;
+use crate::models::WorkspaceInvitation;
+use crate::models::WorkspaceMember;
 
 /// Create a new workspace
 #[utoipa::path(
@@ -87,9 +132,9 @@ pub async fn delete_workspace(
 ) -> ApiResult<HttpResponse> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
-    let executing_user = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(user_uuid))
-        .optional()
+    let executing_user = GLOBAL
+        .user_cache
+        .get_full_user(user_uuid)
         .await?
         .ok_or(ApiError::SessionCorrupt)?;
 
@@ -131,6 +176,9 @@ pub async fn delete_workspace(
     }
 
     tx.commit().await?;
+
+    // Remove entry from the cache
+    GLOBAL.editor_cache.ws_notes.delete(req.uuid);
 
     Ok(HttpResponse::Ok().finish())
 }
@@ -184,25 +232,16 @@ pub async fn get_all_workspaces(
 ) -> ApiResult<Json<ListWorkspaces>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
-    let session_user = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(user_uuid))
-        .optional()
+    let session_user = GLOBAL
+        .user_cache
+        .get_simple_user(user_uuid)
         .await?
         .ok_or(ApiError::SessionCorrupt)?;
 
     let mut workspaces: Vec<(Workspace, SimpleUser)> = query!(&mut tx, Workspace)
         .condition(Workspace::F.owner.equals(session_user.uuid))
         .stream()
-        .map_ok(|x| {
-            (
-                x,
-                SimpleUser {
-                    uuid: session_user.uuid,
-                    username: session_user.username.clone(),
-                    display_name: session_user.display_name.clone(),
-                },
-            )
-        })
+        .map_ok(|x| (x, session_user.clone()))
         .try_collect()
         .await?;
 
@@ -230,6 +269,7 @@ pub async fn get_all_workspaces(
                 description: w.description,
                 owner,
                 created_at: w.created_at,
+                archived: w.archived,
             })
             .collect(),
     }))
@@ -298,7 +338,7 @@ pub async fn update_workspace(
 
 /// Transfer ownership to another account
 ///
-/// You will loose access to the workspace.
+/// You will lose access to the workspace.
 #[utoipa::path(
     tag = "Workspaces",
     context_path = "/api/v1",
@@ -321,21 +361,95 @@ pub async fn transfer_ownership(
 
     let mut tx = GLOBAL.db.start_transaction().await?;
 
-    let Some(workspace) = query!(&mut tx, Workspace)
-        .condition(Workspace::F.uuid.equals(workspace_uuid))
-        .optional()
-        .await?
-    else {
+    if !Workspace::is_owner(&mut tx, workspace_uuid, user_uuid).await? {
         return Err(ApiError::MissingPrivileges);
-    };
+    }
 
-    if *workspace.owner.key() != user_uuid {
-        return Err(ApiError::MissingPrivileges);
+    // Check if the new user exists
+    if GLOBAL
+        .user_cache
+        .get_simple_user(new_owner_uuid)
+        .await?
+        .is_none()
+    {
+        return Err(ApiError::InvalidUuid);
     }
 
     update!(&mut tx, Workspace)
         .condition(Workspace::F.uuid.equals(workspace_uuid))
         .set(Workspace::F.owner, ForeignModelByField::Key(new_owner_uuid))
+        .exec()
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// Mark the workspace as archived
+#[utoipa::path(
+    tag = "Workspaces",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The workspace was archived."),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[post("/workspaces/{uuid}/archive")]
+pub async fn archive_workspace(
+    path: Path<PathUuid>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let workspace_uuid = path.into_inner().uuid;
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    if !Workspace::is_owner(&mut tx, workspace_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    update!(&mut tx, Workspace)
+        .set(Workspace::F.archived, true)
+        .condition(Workspace::F.uuid.equals(workspace_uuid))
+        .exec()
+        .await?;
+
+    tx.commit().await?;
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// Mark an archived workspace as unarchived
+#[utoipa::path(
+    tag = "Workspaces",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The workspace was unarchived."),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathUuid),
+    security(("api_key" = []))
+)]
+#[post("/workspaces/{uuid}/unarchive")]
+pub async fn unarchive_workspace(
+    path: Path<PathUuid>,
+    SessionUser(user_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let workspace_uuid = path.into_inner().uuid;
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    if !Workspace::is_owner(&mut tx, workspace_uuid, user_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    update!(&mut tx, Workspace)
+        .set(Workspace::F.archived, false)
+        .condition(Workspace::F.uuid.equals(workspace_uuid))
         .exec()
         .await?;
 
@@ -369,9 +483,9 @@ pub async fn create_invitation(
     let workspace_uuid = path.into_inner().uuid;
 
     let mut tx = GLOBAL.db.start_transaction().await?;
-    let session_user = query!(&mut tx, User)
-        .condition(User::F.uuid.equals(user_uuid))
-        .optional()
+    let session_user = GLOBAL
+        .user_cache
+        .get_simple_user(user_uuid)
         .await?
         .ok_or(ApiError::SessionCorrupt)?;
 
@@ -397,17 +511,14 @@ pub async fn create_invitation(
             user,
             WsMessage::InvitationToWorkspace {
                 invitation_uuid,
-                from: SimpleUser {
-                    uuid: session_user.uuid,
-                    username: session_user.username,
-                    display_name: session_user.display_name,
-                },
+                from: session_user,
                 workspace: SimpleWorkspace {
                     uuid: workspace_uuid,
                     name: workspace.name,
                     description: workspace.description,
                     created_at: workspace.created_at,
                     owner,
+                    archived: workspace.archived,
                 },
             },
         )
@@ -521,6 +632,7 @@ pub async fn get_all_workspace_invitations(
                 name: workspace.name,
                 description: workspace.description,
                 created_at: workspace.created_at,
+                archived: workspace.archived,
             },
             from,
             target,
@@ -669,7 +781,7 @@ pub async fn get_searches(
     }))
 }
 
-/// Retrieve results for a search by it's uuid
+/// Retrieve results for a search by its uuid
 #[utoipa::path(
     tag = "Workspaces",
     context_path = "/api/v1",
@@ -725,9 +837,9 @@ pub async fn get_search_results(
                     uuid: data.uuid,
                     workspace: *data.workspace.key(),
                     comment: data.comment,
-                    os_type: data.os_type,
+                    os_type: FromDb::from_db(data.os_type),
                     response_time: data.response_time,
-                    certainty: data.certainty,
+                    certainty: FromDb::from_db(data.certainty),
                     ip_addr: data.ip_addr.ip(),
                     created_at: data.created_at,
                 })
@@ -745,7 +857,7 @@ pub async fn get_search_results(
                     name: data.name,
                     version: data.version,
                     host: *data.host.key(),
-                    certainty: data.certainty,
+                    certainty: FromDb::from_db(data.certainty),
                     comment: data.comment,
                     workspace: *data.workspace.key(),
                     created_at: data.created_at,
@@ -763,10 +875,10 @@ pub async fn get_search_results(
                     comment: data.comment,
                     workspace: *data.workspace.key(),
                     port: data.port as u16,
-                    certainty: data.certainty,
+                    certainty: FromDb::from_db(data.certainty),
                     created_at: data.created_at,
                     host: *data.host.key(),
-                    protocol: data.protocol,
+                    protocol: FromDb::from_db(data.protocol),
                 })
             }
             ModelType::Domain => {
@@ -781,7 +893,7 @@ pub async fn get_search_results(
                     workspace: *data.workspace.key(),
                     created_at: data.created_at,
                     domain: data.domain,
-                    certainty: data.certainty,
+                    certainty: FromDb::from_db(data.certainty),
                 })
             }
             ModelType::DnsRecordResult => {
@@ -796,7 +908,7 @@ pub async fn get_search_results(
                     attack: *data.attack.key(),
                     source: data.source,
                     destination: data.destination,
-                    dns_record_type: data.dns_record_type,
+                    dns_record_type: FromDb::from_db(data.dns_record_type),
                 })
             }
             ModelType::DnsTxtScanResult => {
@@ -810,21 +922,7 @@ pub async fn get_search_results(
                     created_at: data.created_at,
                     attack: *data.attack.key(),
                     domain: data.domain,
-                    collection_type: data.collection_type,
-                })
-            }
-            ModelType::TcpPortScanResult => {
-                let data = query!(&mut tx, TcpPortScanResult)
-                    .condition(TcpPortScanResult::F.uuid.equals(item.ref_key))
-                    .one()
-                    .await?;
-
-                SearchResultEntry::TcpPortScanResultEntry(SimpleTcpPortScanResult {
-                    uuid: data.uuid,
-                    created_at: data.created_at,
-                    attack: *data.attack.key(),
-                    address: data.address,
-                    port: data.port as u16,
+                    collection_type: FromDb::from_db(data.collection_type),
                 })
             }
             ModelType::DehashedQueryResult => {
@@ -914,7 +1012,7 @@ pub async fn get_search_results(
                     attack: *data.attack.key(),
                     host: data.host,
                     port: data.port as u16,
-                    certainty: data.certainty,
+                    certainty: FromDb::from_db(data.certainty),
                     service_names,
                 })
             }
@@ -937,10 +1035,11 @@ pub async fn get_search_results(
                     attack: *data.attack.key(),
                     host: data.host,
                     port: data.port as u16,
-                    certainty: data.certainty,
+                    certainty: FromDb::from_db(data.certainty),
                     service_names,
                 })
             }
+            ModelType::TcpPortScanResult => continue,
         })
     }
 

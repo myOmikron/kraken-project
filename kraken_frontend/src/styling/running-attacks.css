@@ -72,7 +72,7 @@
     animation: toggle-text-icon ease-in-out 4s infinite;
 }
 
-.running-attacks-inner.stopped > :nth-child(2){
+.running-attacks-inner.stopped > :nth-child(2) {
     animation: toggle-icon-text ease-in-out 4s infinite;
 }
 

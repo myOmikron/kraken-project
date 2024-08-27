@@ -1,11 +1,11 @@
 import React from "react";
-import { ManualPortCertainty, PortProtocol } from "../../../api/generated";
-import { Api } from "../../../api/api";
-import { handleApiError } from "../../../utils/helper";
-import { toast } from "react-toastify";
-import Input from "../../../components/input";
 import Select from "react-select";
+import { toast } from "react-toastify";
+import { Api } from "../../../api/api";
+import { ManualPortCertainty, PortProtocol } from "../../../api/generated";
+import Input from "../../../components/input";
 import { selectStyles } from "../../../components/select-menu";
+import { handleApiError } from "../../../utils/helper";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
 type CreatePortFormProps = {

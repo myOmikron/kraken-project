@@ -1,0 +1,140 @@
+.cursor-deco::after {
+    display: block;
+    content: "";
+    position: absolute;
+    height: 100%;
+    width: 2px;
+    left: -1px;
+    background-color: #f00;
+}
+.cursor-label {
+}
+
+.knowledge-base-editor-tabs {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.5em;
+    gap: 0.25em;
+}
+
+.knowledge-base-editor-tab {
+    border: 1px solid var(--primary-op);
+    border-radius: 0.5em 0 0 0.5em;
+    background-color: #00ccff10;
+    border-right: none;
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+
+    height: 7em;
+    padding: 0 0.5em 1em;
+
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: space-between;
+}
+
+.knowledge-base-editor-tab .icon {
+    width: 2em;
+}
+.knowledge-base-editor-tab .user-indicator {
+    position: relative;
+    left: -0.7em;
+}
+.knowledge-base-editor-tab .user-indicator .neon {
+    fill: var(--primary);
+    filter: drop-shadow(0 0 4px var(--primary));
+}
+
+.knowledge-base-editor-tab.selected {
+    padding-right: 0.5em;
+    margin-left: -0.5em;
+    background-color: #00ccff30;
+}
+
+.knowledge-base-editor-tab:hover {
+    padding-right: 0.5em;
+    margin-left: -0.5em;
+    background-color: #00ccff40;
+}
+
+.knowledge-base-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    height: 100%;
+}
+
+.knowledge-base-content {
+    height: 100%;
+    mask: url("/favicon.svg"), linear-gradient(#fff 0 0);
+    mask-repeat: no-repeat;
+    mask-composite: exclude;
+    mask-position: center;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-column-gap: 50%;
+}
+
+.knowledge-base-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("/favicon.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: brightness(0) drop-shadow(0 0 0.3em var(--primary));
+    pointer-events: none;
+}
+
+@keyframes rotate-hue {
+    from {
+        filter: hue-rotate(0deg) saturate(5);
+    }
+
+    to {
+        filter: hue-rotate(360deg) saturate(5);
+    }
+}
+
+.knowledge-base-eyes {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    mask-image: url("/kraken_eyes.svg");
+    mask-repeat: no-repeat;
+    mask-position: center;
+    background-color: #ff0000cc;
+    opacity: 60%;
+    animation: rotate-hue 10s infinite linear;
+    pointer-events: none;
+}
+
+.knowledge-base-editor .minimap.slider-mouseover {
+    opacity: 15%;
+}
+
+.knowledge-base-editor .decorationsOverviewRuler {
+    opacity: 20%;
+}
+
+.knowledge-base-editor .monaco-editor {
+    border-radius: 0.5em;
+}
+
+.knowledge-base-editor .monaco-editor > .overflow-guard {
+    border-radius: 0.5em;
+    border: 1px solid var(--primary-op);
+}
+
+.knowledge-base-finding-definition-popup {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    max-height: 90vh;
+    overflow-y: auto;
+}

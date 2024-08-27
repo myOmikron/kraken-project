@@ -1,16 +1,31 @@
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
 use rorm::prelude::*;
 use uuid::Uuid;
 
-use crate::models::{
-    Attack, CertificateTransparencyResult, CertificateTransparencyValueName, DehashedQueryResult,
-    DnsRecordResult, DnsRecordType, DnsTxtScanAttackResult, DnsTxtScanServiceHintEntry,
-    DnsTxtScanServiceHintType, DnsTxtScanSpfEntry, DnsTxtScanSpfType, DnsTxtScanSummaryType,
-    HostAliveResult, ServiceCertainty, ServiceDetectionResult, TcpPortScanResult,
-    TestSSLResultFinding, TestSSLResultHeader, TestSSLSection, TestSSLSeverity,
-    UdpServiceDetectionResult,
-};
+use crate::models::Attack;
+use crate::models::CertificateTransparencyResult;
+use crate::models::CertificateTransparencyValueName;
+use crate::models::DehashedQueryResult;
+use crate::models::DnsRecordResult;
+use crate::models::DnsRecordType;
+use crate::models::DnsTxtScanAttackResult;
+use crate::models::DnsTxtScanServiceHintEntry;
+use crate::models::DnsTxtScanServiceHintType;
+use crate::models::DnsTxtScanSpfEntry;
+use crate::models::DnsTxtScanSpfType;
+use crate::models::DnsTxtScanSummaryType;
+use crate::models::HostAliveResult;
+use crate::models::OsDetectionResult;
+use crate::models::OsType;
+use crate::models::ServiceCertainty;
+use crate::models::ServiceDetectionResult;
+use crate::models::UdpServiceDetectionResult;
+use crate::models::TestSSLResultFinding;
+use crate::models::TestSSLResultHeader;
+use crate::models::TestSSLSection;
+use crate::models::TestSSLSeverity;
 
 pub(crate) type BruteforceSubdomainsResultInsert = DnsRecordResultInsert;
 pub(crate) type DnsResolutionResultInsert = DnsRecordResultInsert;
@@ -54,15 +69,6 @@ pub(crate) struct DnsTxtScanSpfEntryInsert {
     pub(crate) spf_domain: Option<String>,
     pub(crate) spf_domain_ipv4_cidr: Option<i32>,
     pub(crate) spf_domain_ipv6_cidr: Option<i32>,
-}
-
-#[derive(Patch)]
-#[rorm(model = "TcpPortScanResult")]
-pub(crate) struct TcpPortScanResultInsert {
-    pub(crate) uuid: Uuid,
-    pub(crate) attack: ForeignModel<Attack>,
-    pub(crate) address: IpNetwork,
-    pub(crate) port: i32,
 }
 
 #[derive(Patch)]
@@ -129,6 +135,17 @@ pub(crate) struct UdpServiceDetectionResultInsert {
     pub(crate) certainty: ServiceCertainty,
     pub(crate) host: IpNetwork,
     pub(crate) port: i32,
+}
+
+#[derive(Patch)]
+#[rorm(model = "OsDetectionResult")]
+pub(crate) struct OsDetectionResultInsert {
+    pub(crate) uuid: Uuid,
+    pub(crate) attack: ForeignModel<Attack>,
+    pub(crate) host: IpNetwork,
+    pub(crate) os: OsType,
+    pub(crate) hints: String,
+    pub(crate) version: String,
 }
 
 #[derive(Patch)]

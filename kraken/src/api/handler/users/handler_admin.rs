@@ -1,11 +1,23 @@
-use actix_web::web::{Json, Path};
-use actix_web::{delete, get, post, HttpResponse};
-use rorm::{query, FieldAccess, Model};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::post;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
+use rorm::query;
+use rorm::FieldAccess;
+use rorm::Model;
 
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{PathUuid, UuidResponse};
-use crate::api::handler::users::schema::{CreateUserRequest, FullUser, ListFullUsers};
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::UuidResponse;
+use crate::api::handler::users::schema::CreateUserRequest;
+use crate::api::handler::users::schema::FullUser;
+use crate::api::handler::users::schema::ListFullUsers;
 use crate::chan::global::GLOBAL;
+use crate::models::convert::FromDb;
+use crate::models::convert::IntoDb;
 use crate::models::User;
 
 /// Create a user
@@ -29,7 +41,7 @@ pub async fn create_user(req: Json<CreateUserRequest>) -> ApiResult<Json<UuidRes
         req.username,
         req.display_name,
         req.password,
-        req.permission,
+        req.permission.into_db(),
     )
     .await?;
 
@@ -54,6 +66,8 @@ pub async fn delete_user(req: Path<PathUuid>) -> ApiResult<HttpResponse> {
         .condition(User::F.uuid.equals(req.uuid))
         .await?;
 
+    GLOBAL.user_cache.refresh().await?;
+
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -71,20 +85,14 @@ pub async fn delete_user(req: Path<PathUuid>) -> ApiResult<HttpResponse> {
 )]
 #[get("/users/{uuid}")]
 pub async fn get_user(req: Path<PathUuid>) -> ApiResult<Json<FullUser>> {
-    let user = query!(&GLOBAL.db, User)
-        .condition(User::F.uuid.equals(req.uuid))
-        .optional()
-        .await?
-        .ok_or(ApiError::InvalidUsername)?;
-
-    Ok(Json(FullUser {
-        uuid: user.uuid,
-        username: user.username,
-        display_name: user.display_name,
-        permission: user.permission,
-        created_at: user.created_at,
-        last_login: user.last_login,
-    }))
+    let user_uuid = req.into_inner().uuid;
+    Ok(Json(
+        GLOBAL
+            .user_cache
+            .get_full_user(user_uuid)
+            .await?
+            .ok_or(ApiError::InternalServerError)?,
+    ))
 }
 
 /// Retrieve all users
@@ -109,7 +117,7 @@ pub async fn get_all_users_admin() -> ApiResult<Json<ListFullUsers>> {
                 uuid: u.uuid,
                 username: u.username,
                 display_name: u.display_name,
-                permission: u.permission,
+                permission: FromDb::from_db(u.permission),
                 created_at: u.created_at,
                 last_login: u.last_login,
             })

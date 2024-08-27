@@ -1,5 +1,7 @@
-use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use serde::Deserialize;
+use serde::Serialize;
+use utoipa::IntoParams;
+use utoipa::ToSchema;
 
 use crate::api::handler::oauth_applications::schema::SimpleOauthClient;
 use crate::api::handler::workspaces::schema::SimpleWorkspace;

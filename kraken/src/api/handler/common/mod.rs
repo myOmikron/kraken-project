@@ -1,7 +1,8 @@
 //! This module contains common types, such as [ApiError], [PathUuid] and the complete
 //! error implementation
 
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
+use serde::Deserializer;
 
 #[cfg(feature = "bin")]
 pub(crate) mod error;
@@ -16,12 +17,14 @@ pub(crate) mod utils;
 ///
 /// # Example
 /// ```rust
-/// #[derive(Deserialize)]
+/// use kraken::api::handler::common::de_optional;
+///
+/// #[derive(serde::Deserialize)]
 ///  pub(crate) struct UpdateRequest {
 ///     name: Option<String>,
 ///
-///     #[serde(default)]
-///     #[serde(deserialize_with = "crate::api::handler::de_optional")]
+///     // Don't forget the `default`!
+///     #[serde(default, deserialize_with = "de_optional")]
 ///     description: Option<Option<String>>,
 /// }
 /// ```

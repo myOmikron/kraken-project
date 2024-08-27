@@ -1,14 +1,23 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{
-    DomainCertainty, HostCertainty, OsType, PortCertainty, PortProtocol, ServiceCertainty,
-};
+use crate::api::handler::domains::schema::DomainCertainty;
+use crate::api::handler::findings::schema::FindingSeverity;
+use crate::api::handler::hosts::schema::HostCertainty;
+use crate::api::handler::hosts::schema::OsType;
+use crate::api::handler::http_services::schema::HttpServiceCertainty;
+use crate::api::handler::ports::schema::PortCertainty;
+use crate::api::handler::ports::schema::PortProtocol;
+use crate::api::handler::services::schema::ServiceCertainty;
+use crate::api::handler::services::schema::ServiceProtocols;
+use crate::chan::ws_manager::schema::AggregationType;
 
 /// The aggregated results of a workspace
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -25,8 +34,14 @@ pub struct AggregatedWorkspace {
     /// The domains found by this workspace
     pub domains: HashMap<Uuid, AggregatedDomain>,
 
+    /// The http services found by this workspace
+    pub http_services: HashMap<Uuid, AggregatedHttpService>,
+
     /// All m2m relations which are not inlined
     pub relations: HashMap<Uuid, AggregatedRelation>,
+
+    /// The findings found by this workspace
+    pub findings: HashMap<Uuid, AggregatedFinding>,
 }
 
 /// A representation of an host.
@@ -55,6 +70,9 @@ pub struct AggregatedHost {
 
     /// The services of a host
     pub services: Vec<Uuid>,
+
+    /// The http services of a host
+    pub http_services: Vec<Uuid>,
 
     /// Uuids to [`AggregatedRelation::DomainHost`]
     pub domains: Vec<Uuid>,
@@ -88,6 +106,9 @@ pub struct AggregatedPort {
     /// The services that link to this port
     pub services: Vec<Uuid>,
 
+    /// The http services of a port
+    pub http_services: Vec<Uuid>,
+
     /// The certainty of the port
     pub certainty: PortCertainty,
 
@@ -120,6 +141,9 @@ pub struct AggregatedService {
     /// The port this service is attached to
     pub port: Option<Uuid>,
 
+    /// The protocols used above the port's protocol
+    pub protocols: Option<ServiceProtocols>,
+
     /// A comment to the service
     pub comment: String,
 
@@ -143,6 +167,9 @@ pub struct AggregatedDomain {
     /// The domain that was found
     pub domain: String,
 
+    /// The http services of a domain
+    pub http_services: Vec<Uuid>,
+
     /// Uuids to [`AggregatedRelation::DomainHost`]
     pub hosts: Vec<Uuid>,
 
@@ -164,6 +191,93 @@ pub struct AggregatedDomain {
 
     /// The first time this domain was encountered
     pub created_at: DateTime<Utc>,
+}
+
+/// A detected http service on a host
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct AggregatedHttpService {
+    /// The http service's uuid
+    pub uuid: Uuid,
+
+    /// Name of the http service
+    pub name: String,
+
+    /// Optional version of the http service
+    pub version: Option<String>,
+
+    /// The domain this http service is attached to
+    pub domain: Option<Uuid>,
+
+    /// The host this http service is attached to
+    pub host: Uuid,
+
+    /// The port this http service is attached to
+    pub port: Uuid,
+
+    /// The base path the http service is routed on
+    pub base_path: String,
+
+    /// Is this a https service?
+    pub tls: bool,
+
+    /// Does this http service require sni?
+    pub sni_required: bool,
+
+    /// A comment to the service
+    pub comment: String,
+
+    /// The certainty of this http service
+    pub certainty: HttpServiceCertainty,
+
+    /// Set of global and local tags
+    #[serde(flatten)]
+    pub tags: AggregatedTags,
+
+    /// The first time this service was encountered
+    pub created_at: DateTime<Utc>,
+}
+
+/// A finding
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct AggregatedFinding {
+    /// The uuid of the finding
+    pub uuid: Uuid,
+
+    /// The finding's name (taken from its definition)
+    pub name: String,
+
+    /// The finding's cve (taken from its definition)
+    pub cve: Option<String>,
+
+    /// The finding's severity
+    pub severity: FindingSeverity,
+
+    /// The details of this finding
+    pub details: String,
+
+    /// List of all affected objects
+    pub affected: HashMap<Uuid, AggregatedFindingAffected>,
+
+    /// The point in time this finding was created
+    pub created_at: DateTime<Utc>,
+
+    /// The list of categories this finding falls into
+    pub categories: Vec<String>,
+}
+
+/// A finding affected
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct AggregatedFindingAffected {
+    /// The uuid of the finding affected
+    pub uuid: Uuid,
+
+    /// The affected's type
+    ///
+    /// Determines how the uuid is to be used
+    pub r#type: AggregationType,
+
+    /// The details of this affected
+    pub details: String,
 }
 
 /// Set of global and local tags

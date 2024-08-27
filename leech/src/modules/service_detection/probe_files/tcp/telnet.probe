@@ -1,7 +1,7 @@
 service: telnet
 prevalence: often
 probes:
-  - protocol: TCP
+  - tcp: true
     # pattern should be:
     # IAC => 0xff
     # COMMAND => DO (0xfd) | DON'T (0xfe) | WILL (0xfb) | WON'T (0xfc)

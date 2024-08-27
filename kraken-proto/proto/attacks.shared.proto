@@ -111,10 +111,24 @@ message DNSRecord {
   }
 }
 
+// Wrapper around repeated DnsTxtKnownService, for use in `oneOf`.
+message DnsTxtKnownServiceList {
+  // List of service hints that the domain could use or be in control of.
+  repeated DnsTxtKnownService hints = 1;
+}
+
+// Describes a single service hint that a domain could use or be in control of.
+message DnsTxtKnownService {
+  // matched DNS TXT rule
+  string rule = 1;
+  // Describes which service kind this TXT entry may hint to
+  DnsTxtServiceHint service = 2;
+}
+
 // basic DNS TXT records that generally indicate third party accounts or
 // authentication refer to leech/src/modules/dns/txt.rs TxtScanInfo for more
 // infos.
-enum DnsTxtKnownEntry {
+enum DnsTxtServiceHint {
   // see leech/src/modules/dns/txt.rs TxtScanInfo
   HasGoogleAccount = 0;
   // see leech/src/modules/dns/txt.rs TxtScanInfo
@@ -264,17 +278,17 @@ message SpfUnknownModifier {
   string value = 2;
 }
 
-// Interpreted DNS entry for TXT records, includes parsing SPF.
+// Interpreted DNS entry(s) for TXT records, includes parsing SPF.
 message DnsTxtScan {
   // domain for which this entry was found
   string domain = 1;
-  // the full or part of the DNS record that was used for this entry
-  string rule = 2;
+  /* `= 2` used to exist */
+
   // detailed information for the result
   oneof info {
     // some well-known strings or patterns such as
     // `google-site-verification=...`
-    DnsTxtKnownEntry well_known = 3;
+    DnsTxtKnownServiceList well_known = 3;
     // parsed SPF entries, possibly including more domains and IPs
     SpfInfo spf = 4;
   }
@@ -294,4 +308,22 @@ message CertEntry {
   google.protobuf.Timestamp not_after = 5;
   // The serial number of the certificate
   string serial_number = 6;
+}
+
+// Generic operating system type as responded by the OS detection attack.
+enum OperatingSystem {
+  // Unknown or uncertain OS, might contain hints
+  unknown = 0;
+  // Linux (all)
+  linux = 1;
+  // OpenBSD, FreeBSD, NetBSD or other BSDs
+  bsd = 2;
+  // Android (if it can be decided more specifically than linux)
+  android = 3;
+  // Apple OSX
+  osx = 4;
+  // Apple iOS
+  ios = 5;
+  // Microsoft Windows
+  windows = 6;
 }

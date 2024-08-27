@@ -5,21 +5,104 @@ use rorm::db::sql::value::Value;
 use rorm::internal::field::Field;
 use rorm::prelude::*;
 
-use crate::models::{Port, Service};
+use crate::models::Domain;
+use crate::models::Host;
+use crate::models::HttpService;
+use crate::models::Port;
+use crate::models::Service;
 use crate::modules::raw_query::RawJoin;
 
-/// Joins ports to the services table
-pub struct JoinPorts;
+macro_rules! sql_name {
+    ($model:ident) => {
+        <$model as Model>::TABLE as &'static str
+    };
+    ($model:ident::F.$field:ident) => {
+        <field!($model::F.$field)>::NAME as &'static str
+    };
+}
 
-impl<'a> RawJoin<'a> for JoinPorts {
-    fn append(self, sql: &mut String, _values: &mut Vec<Value<'a>>) -> fmt::Result {
-        const SERVICE: &str = Service::TABLE;
-        const SERVICE_PORT: &str = <field!(Service::F.port)>::NAME;
-        const PORT: &str = Port::TABLE;
-        const PORT_UUID: &str = <field!(Port::F.uuid)>::NAME;
+pub fn from_port_join_host() -> impl for<'a> RawJoin<'a> {
+    |sql: &mut String, _: &mut Vec<Value>| {
+        let port = sql_name!(Port);
+        let port_host = sql_name!(Port::F.host);
+
+        let host = sql_name!(Host);
+        let host_uuid = sql_name!(Host::F.uuid);
+
         write!(
             sql,
-            r#"LEFT JOIN "{PORT}" ON "{SERVICE}"."{SERVICE_PORT}" = "{PORT}"."{PORT_UUID}""#
+            r#"LEFT JOIN "{host}" ON "{port}"."{port_host}" = "{host}"."{host_uuid}""#
+        )
+    }
+}
+pub fn from_service_join_port() -> impl for<'a> RawJoin<'a> {
+    |sql: &mut String, _: &mut Vec<Value>| {
+        let service = sql_name!(Service);
+        let service_port = sql_name!(Service::F.port);
+
+        let port = sql_name!(Port);
+        let port_uuid = sql_name!(Port::F.uuid);
+
+        write!(
+            sql,
+            r#"LEFT JOIN "{port}" ON "{service}"."{service_port}" = "{port}"."{port_uuid}""#
+        )
+    }
+}
+pub fn from_service_join_host() -> impl for<'a> RawJoin<'a> {
+    |sql: &mut String, _: &mut Vec<Value>| {
+        let service = sql_name!(Service);
+        let service_host = sql_name!(Service::F.host);
+
+        let host = sql_name!(Host);
+        let host_uuid = sql_name!(Host::F.uuid);
+
+        write!(
+            sql,
+            r#"JOIN "{host}" ON "{service}"."{service_host}" = "{host}"."{host_uuid}""#
+        )
+    }
+}
+
+pub fn from_http_service_join_port() -> impl for<'a> RawJoin<'a> {
+    |sql: &mut String, _: &mut Vec<Value>| {
+        let service = sql_name!(HttpService);
+        let service_port = sql_name!(HttpService::F.port);
+
+        let port = sql_name!(Port);
+        let port_uuid = sql_name!(Port::F.uuid);
+
+        write!(
+            sql,
+            r#"LEFT JOIN "{port}" ON "{service}"."{service_port}" = "{port}"."{port_uuid}""#
+        )
+    }
+}
+pub fn from_http_service_join_host() -> impl for<'a> RawJoin<'a> {
+    |sql: &mut String, _: &mut Vec<Value>| {
+        let service = sql_name!(HttpService);
+        let service_host = sql_name!(HttpService::F.host);
+
+        let host = sql_name!(Host);
+        let host_uuid = sql_name!(Host::F.uuid);
+
+        write!(
+            sql,
+            r#"JOIN "{host}" ON "{service}"."{service_host}" = "{host}"."{host_uuid}""#
+        )
+    }
+}
+pub fn from_http_service_join_domain() -> impl for<'a> RawJoin<'a> {
+    |sql: &mut String, _: &mut Vec<Value>| {
+        let http_service = sql_name!(HttpService);
+        let http_service_domain = sql_name!(HttpService::F.domain);
+
+        let domain = sql_name!(Domain);
+        let domain_uuid = sql_name!(Domain::F.uuid);
+
+        write!(
+            sql,
+            r#"JOIN "{domain}" ON "{http_service}"."{http_service_domain}" = "{domain}"."{domain_uuid}""#
         )
     }
 }
@@ -32,6 +115,8 @@ impl<'a> RawJoin<'a> for JoinPorts {
 /// to select the base table this join is applied to.
 #[derive(Copy, Clone)]
 pub struct JoinTags {
+    table_alias: &'static str,
+
     target: &'static str,
     target_uuid: &'static str,
 
@@ -54,13 +139,18 @@ pub struct JoinTags {
 
 macro_rules! join_tags {
     ($TargetModel:ident, w: $WorkspaceModel:ident::F.$workspace_field:ident, g: $GlobalModel:ident::F.$global_field:ident) => {{
+        use rorm::field;
         use rorm::internal::field::Field;
-        use rorm::{field, Model};
-        use $crate::models::{
-            $GlobalModel, $TargetModel, $WorkspaceModel, GlobalTag, WorkspaceTag,
-        };
+        use rorm::Model;
+        use $crate::models::$GlobalModel;
+        use $crate::models::$TargetModel;
+        use $crate::models::$WorkspaceModel;
+        use $crate::models::GlobalTag;
+        use $crate::models::WorkspaceTag;
 
         $crate::modules::filter::sqler::joins::JoinTags {
+            table_alias: "tags",
+
             target: $TargetModel::TABLE,
             target_uuid: <field!($TargetModel::F.uuid)>::NAME,
 
@@ -103,11 +193,23 @@ impl JoinTags {
     pub fn service() -> Self {
         join_tags!(Service, w: ServiceWorkspaceTag::F.service, g: ServiceGlobalTag::F.service)
     }
+
+    /// Get a join which retrieves a http service's tags in a postgres array.
+    pub fn http_service() -> Self {
+        join_tags!(HttpService, w: HttpServiceWorkspaceTag::F.http_service, g: HttpServiceGlobalTag::F.http_service)
+    }
+
+    /// Change the alias used for the sub query
+    pub fn alias(mut self, table_alias: &'static str) -> Self {
+        self.table_alias = table_alias;
+        self
+    }
 }
 
 impl<'a> RawJoin<'a> for JoinTags {
     fn append(self, sql: &mut String, _values: &mut Vec<Value<'a>>) -> fmt::Result {
         let Self {
+            table_alias,
             target,
             target_uuid,
             workspacetag,
@@ -137,7 +239,7 @@ impl<'a> RawJoin<'a> for JoinTags {
                         LEFT JOIN "{globaltag}" ON "{m2m_globaltag}"."{m2m_globaltag_globaltag}" = "{globaltag}"."{globaltag_uuid}"
                 GROUP BY
                     "{target}"."{target_uuid}"
-            ) AS "tags" ON "{target}"."{target_uuid}" = "tags"."{target_uuid}""#,
+            ) AS "{table_alias}" ON "{target}"."{target_uuid}" = "{table_alias}"."{target_uuid}""#,
         )
     }
 }

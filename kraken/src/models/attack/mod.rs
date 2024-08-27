@@ -1,10 +1,12 @@
 //! This module holds all the information regarding attacks
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
 use rorm::prelude::*;
 use rorm::Model;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -12,8 +14,12 @@ use uuid::Uuid;
 pub(crate) use crate::models::attack::operations::*;
 #[cfg(feature = "bin")]
 pub(crate) use crate::models::attack::patches::*;
-use crate::models::{ServiceCertainty, User, Workspace};
+use crate::models::OsType;
+use crate::models::ServiceCertainty;
+use crate::models::User;
+use crate::models::Workspace;
 
+mod convert;
 #[cfg(feature = "bin")]
 mod operations;
 #[cfg(feature = "bin")]
@@ -26,8 +32,11 @@ pub enum AttackType {
     Undefined,
     /// Bruteforce subdomains via DNS requests
     BruteforceSubdomains,
-    /// Scan tcp ports
+
+    /// Effectively deleted, but postgres can't delete enum variants
+    #[serde(skip)]
     TcpPortScan,
+
     /// Query certificate transparency
     QueryCertificateTransparency,
     /// Query the unhashed API
@@ -60,7 +69,7 @@ pub enum AttackType {
 ///
 /// If the attack is still running, `finished_at` is `None`.
 /// If `error` is not `None`, the attack has finished with errors.
-#[derive(Model)]
+#[derive(Model, Clone)]
 pub struct Attack {
     /// The primary key
     #[rorm(primary_key)]
@@ -301,30 +310,6 @@ pub struct DnsTxtScanSpfEntry {
     /// The point in time, this result was produced
     #[rorm(auto_create_time)]
     pub created_at: DateTime<Utc>,
-}
-
-/// Representation of a [tcp port scan](AttackType::TcpPortScan) attack's result
-#[derive(Model)]
-pub struct TcpPortScanResult {
-    /// The primary key
-    #[rorm(primary_key)]
-    pub uuid: Uuid,
-
-    /// The attack which produced this result
-    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
-    pub attack: ForeignModel<Attack>,
-
-    /// The point in time, this result was produced
-    #[rorm(auto_create_time)]
-    pub created_at: DateTime<Utc>,
-
-    /// The ip address a port was found on
-    pub address: IpNetwork,
-
-    /// The found port
-    ///
-    /// Stored in db as `i32` but ports are actually just an `u16`
-    pub port: i32,
 }
 
 /// Representation of a [dehashed query](AttackType::Dehashed) result
@@ -575,6 +560,7 @@ pub struct TestSSLResultFinding {
     #[rorm(primary_key)]
     pub uuid: Uuid,
 
+    // TODO: shouldn't this be associated with the header?
     /// The [attack](Attack) which produced this result
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
     pub attack: ForeignModel<Attack>,
@@ -649,7 +635,7 @@ pub enum TestSSLSection {
 }
 
 /// A [`TestSSLResultFinding`]'s severity
-#[derive(Copy, Clone, Debug, DbEnum, Deserialize, Serialize, ToSchema)]
+#[derive(Copy, Clone, Debug, DbEnum)]
 pub enum TestSSLSeverity {
     /// A debug level log message
     Debug,
@@ -670,4 +656,41 @@ pub enum TestSSLSeverity {
     High,
     /// The test's result pose a critical priority issue
     Critical,
+}
+
+/// Representation of a [OS Detection](AttackType::OSDetection) attack's result
+#[derive(Model)]
+pub struct OsDetectionResult {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// The [attack](Attack) which produced this result
+    #[rorm(on_delete = "Cascade", on_update = "Cascade")]
+    pub attack: ForeignModel<Attack>,
+
+    /// The point in time, this result was produced
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
+
+    /// A host that was checked
+    pub host: IpNetwork,
+
+    /// The detected operating system or unknown if it wasn't able to precisely detect one.
+    /// May contain additional human-readable information in `hints` or version information for known operating systems
+    /// inside `version`.
+    pub os: OsType,
+
+    /// List of human-readable hints, separated by new-line characters (\n).
+    #[rorm(max_length = 2048)]
+    pub hints: String,
+
+    /// Detected version for known operating systems. In case multiple possible were found, they
+    /// will all be joined here using OR (`" OR "`) as separator.
+    ///
+    /// For linux this is the distro + distro version, if available.
+    ///
+    /// For windows this is the major release + additional version information, if available.
+    #[rorm(max_length = 255)]
+    pub version: String,
 }

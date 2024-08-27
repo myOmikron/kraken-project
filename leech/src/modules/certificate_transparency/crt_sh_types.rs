@@ -1,7 +1,9 @@
 //! The types for deserializing responses from crt.sh
 
 use chrono::NaiveDateTime;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::Deserialize;
+use serde::Deserializer;
+use serde::Serialize;
 
 fn deserialize_name_value<'de, D>(de: D) -> Result<Vec<String>, D::Error>
 where

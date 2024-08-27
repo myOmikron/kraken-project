@@ -1,14 +1,19 @@
-use chrono::{DateTime, Utc};
-use ipnetwork::IpNetwork;
-use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use std::net::IpAddr;
+
+use chrono::DateTime;
+use chrono::Utc;
+use serde::Deserialize;
+use serde::Serialize;
+use utoipa::IntoParams;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
-use crate::api::handler::common::schema::{PageParams, SimpleTag};
+use crate::api::handler::common::schema::PageParams;
+use crate::api::handler::common::schema::SimpleTag;
+use crate::api::handler::findings::schema::FindingSeverity;
 use crate::api::handler::hosts::schema::SimpleHost;
 use crate::api::handler::ports::schema::SimplePort;
-use crate::models::{ManualServiceCertainty, PortProtocol, ServiceCertainty};
 
 /// The request to manually add a service
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -22,15 +27,16 @@ pub struct CreateServiceRequest {
 
     /// The ip address the service runs on
     #[schema(value_type = String, example = "127.0.0.1")]
-    pub host: IpNetwork,
+    pub host: IpAddr,
 
     /// An optional port the service runs on
     ///
     /// If set, you must specify protocol
     #[schema(example = "8080")]
     pub port: Option<u16>,
-    /// The protocol of the port
-    pub protocol: Option<PortProtocol>,
+
+    /// The port's protocol as well as its sub protocols
+    pub protocols: Option<ServiceProtocols>,
 }
 
 /// The request to update a service
@@ -104,6 +110,8 @@ pub struct FullService {
     pub host: SimpleHost,
     /// An optional port this service listens on
     pub port: Option<SimplePort>,
+    /// The protocols used above the port's protocol
+    pub protocols: Option<ServiceProtocols>,
     /// A comment to the service
     #[schema(example = "Holds all relevant information")]
     pub comment: String,
@@ -113,6 +121,8 @@ pub struct FullService {
     pub tags: Vec<SimpleTag>,
     /// The number of attacks which found this host
     pub sources: SimpleAggregationSource,
+    /// The severest finding's severity associated with this host
+    pub severity: Option<FindingSeverity>,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
 }
@@ -134,4 +144,56 @@ pub struct ServiceRelations {
 
     /// The host a service runs on
     pub host: SimpleHost,
+}
+
+/// The certainty of a manually added service
+#[derive(Debug, Copy, Clone, ToSchema, Deserialize, Serialize)]
+pub enum ManualServiceCertainty {
+    /// Historical data
+    Historical,
+    /// Up to date data
+    SupposedTo,
+}
+
+/// The certainty a service is detected
+#[derive(Debug, Copy, Clone, ToSchema, Deserialize, Serialize, PartialOrd, PartialEq)]
+pub enum ServiceCertainty {
+    /// 3rd party historical data
+    Historical = 0,
+    /// 3rd party data
+    SupposedTo = 1,
+    /// May be a certain service
+    MaybeVerified = 2,
+    /// Service is definitely correct
+    DefinitelyVerified = 3,
+    /// No specific service detected, generic fallback payload got a response though
+    UnknownService = 4,
+}
+
+/// The parsed representation for a [`Service`]'s `protocols` field
+#[derive(ToSchema, Debug, Copy, Clone, Serialize, Deserialize)]
+pub enum ServiceProtocols {
+    /// The port's protocol is [`PortProtocol::Unknown`]
+    Unknown {}, // Not unit struct to make the api generator behave
+
+    /// The port's protocol is [`PortProtocol::Tcp`]
+    Tcp {
+        /// The service responds to raw tcp
+        raw: bool,
+
+        /// The service responds to tls
+        tls: bool,
+    },
+
+    /// The port's protocol is [`PortProtocol::Udp`]
+    Udp {
+        /// The service responds to raw udp
+        raw: bool,
+    },
+
+    /// The port's protocol is [`PortProtocol::Sctp`]
+    Sctp {
+        /// The service responds to raw sctp
+        raw: bool,
+    },
 }

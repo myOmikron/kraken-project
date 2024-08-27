@@ -1,0 +1,18 @@
+.workspace-create-category {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    justify-items: left;
+}
+
+.workspace-create-category > h2 {
+    margin: 0;
+}
+
+.workspace-create-category > .finding-category {
+    font-size: 1.5em;
+}
+
+.workspace-create-category > button[type="submit"] {
+    justify-self: stretch;
+}

@@ -1,12 +1,17 @@
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use chrono::DateTime;
+use chrono::Utc;
+use serde::Deserialize;
+use serde::Serialize;
+use utoipa::IntoParams;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
-use crate::api::handler::common::schema::{PageParams, SimpleTag};
+use crate::api::handler::common::schema::PageParams;
+use crate::api::handler::common::schema::SimpleTag;
+use crate::api::handler::findings::schema::FindingSeverity;
 use crate::api::handler::hosts::schema::SimpleHost;
-use crate::models::DomainCertainty;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 
 /// The request to manually add a domain
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -81,6 +86,8 @@ pub struct FullDomain {
     pub sources: SimpleAggregationSource,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
+    /// The severest finding's severity associated with this host
+    pub severity: Option<FindingSeverity>,
     /// The certainty of this domain entry
     pub certainty: DomainCertainty,
 }
@@ -108,4 +115,16 @@ pub struct DomainRelations {
 
     /// All hosts any `target_domains` resolves to
     pub indirect_hosts: Vec<SimpleHost>,
+
+    /// This domain's http services
+    pub http_services: Vec<SimpleHttpService>,
+}
+
+/// The certainty of a domain
+#[derive(Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
+pub enum DomainCertainty {
+    /// The domain was not found through DNS
+    Unverified = 0,
+    /// Domain was verified through DNS
+    Verified = 1,
 }

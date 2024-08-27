@@ -1,11 +1,15 @@
 use actix_web::get;
-use actix_web::web::{Json, Path};
-use rorm::{query, Model};
+use actix_web::web::Json;
+use actix_web::web::Path;
+use rorm::query;
+use rorm::Model;
 
 use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::PathUuid;
 use crate::api::handler::users::schema::SimpleUser;
-use crate::api::handler::workspaces::schema::{FullWorkspace, ListWorkspaces, SimpleWorkspace};
+use crate::api::handler::workspaces::schema::FullWorkspace;
+use crate::api::handler::workspaces::schema::ListWorkspaces;
+use crate::api::handler::workspaces::schema::SimpleWorkspace;
 use crate::api::handler::workspaces::utils::get_workspace_unchecked;
 use crate::chan::global::GLOBAL;
 use crate::models::Workspace;
@@ -55,6 +59,7 @@ pub async fn get_all_workspaces_admin() -> ApiResult<Json<ListWorkspaces>> {
             Workspace::F.name,
             Workspace::F.description,
             Workspace::F.created_at,
+            Workspace::F.archived,
             Workspace::F.owner.uuid,
             Workspace::F.owner.username,
             Workspace::F.owner.display_name
@@ -69,7 +74,16 @@ pub async fn get_all_workspaces_admin() -> ApiResult<Json<ListWorkspaces>> {
         workspaces: workspaces
             .into_iter()
             .map(
-                |(uuid, name, description, created_at, by_uuid, username, display_name)| {
+                |(
+                    uuid,
+                    name,
+                    description,
+                    created_at,
+                    archived,
+                    by_uuid,
+                    username,
+                    display_name,
+                )| {
                     SimpleWorkspace {
                         uuid,
                         name,
@@ -80,6 +94,7 @@ pub async fn get_all_workspaces_admin() -> ApiResult<Json<ListWorkspaces>> {
                             display_name,
                         },
                         created_at,
+                        archived,
                     }
                 },
             )

@@ -3,23 +3,37 @@
 //! It requests A and AAAA records of the constructed domain of a DNS server.
 
 use std::collections::HashSet;
-use std::net::{Ipv4Addr, Ipv6Addr};
+use std::fs;
+use std::net::Ipv4Addr;
+use std::net::Ipv6Addr;
+use std::panic;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
-use std::{fs, panic};
 
 use itertools::Itertools;
-use log::{debug, error, info, trace, warn};
-use rand::distributions::{Alphanumeric, DistString};
+use log::debug;
+use log::error;
+use log::info;
+use log::trace;
+use log::warn;
+use rand::distributions::Alphanumeric;
+use rand::distributions::DistString;
 use rand::thread_rng;
 use tokio::sync::mpsc;
 use tokio::task::JoinSet;
 use tokio::time::sleep;
-use trust_dns_resolver::config::{LookupIpStrategy, ResolverConfig, ResolverOpts};
-use trust_dns_resolver::error::{ResolveError, ResolveErrorKind};
-use trust_dns_resolver::proto::rr::rdata::{A, AAAA, CNAME};
-use trust_dns_resolver::proto::rr::{RData, Record, RecordType};
+use trust_dns_resolver::config::LookupIpStrategy;
+use trust_dns_resolver::config::ResolverConfig;
+use trust_dns_resolver::config::ResolverOpts;
+use trust_dns_resolver::error::ResolveError;
+use trust_dns_resolver::error::ResolveErrorKind;
+use trust_dns_resolver::proto::rr::rdata::A;
+use trust_dns_resolver::proto::rr::rdata::AAAA;
+use trust_dns_resolver::proto::rr::rdata::CNAME;
+use trust_dns_resolver::proto::rr::RData;
+use trust_dns_resolver::proto::rr::Record;
+use trust_dns_resolver::proto::rr::RecordType;
 use trust_dns_resolver::TokioAsyncResolver;
 
 use crate::modules::bruteforce_subdomains::error::BruteforceSubdomainError;

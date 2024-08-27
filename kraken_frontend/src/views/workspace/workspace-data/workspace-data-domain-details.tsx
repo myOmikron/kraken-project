@@ -1,22 +1,22 @@
-import { Api } from "../../../api/api";
 import React, { useState } from "react";
-import { DomainRelations, FullAggregationSource, FullDomain, TagType } from "../../../api/generated";
-import { handleApiError } from "../../../utils/helper";
-import Textarea from "../../../components/textarea";
 import { toast } from "react-toastify";
+import { Api } from "../../../api/api";
+import { DomainRelations, FullAggregationSource, FullDomain, ListFindings, TagType } from "../../../api/generated";
+import SelectableText from "../../../components/selectable-text";
+import Textarea from "../../../components/textarea";
+import { handleApiError } from "../../../utils/helper";
+import CertaintyIcon from "../components/certainty-icon";
 import EditableTags from "../components/editable-tags";
+import { DomainRelationsList } from "../components/relations-list";
+import SeverityIcon from "../components/severity-icon";
 import { WORKSPACE_CONTEXT } from "../workspace";
+import WorkspaceDataDetailsFindings from "./workspace-data-details-findings";
 import WorkspaceDataDetailsResults from "./workspace-data-details-results";
-import ArrowLeftIcon from "../../../svg/arrow-left";
-import ArrowRightIcon from "../../../svg/arrow-right";
-import RelationRightIcon from "../../../svg/relation-right";
-import RelationIndirectIcon from "../../../svg/relation-indirect";
-import RelationLeftIcon from "../../../svg/relation-left";
 
 export type WorkspaceDataDomainDetailsProps = {
     domain: string;
     updateDomain?: (uuid: string, update: Partial<FullDomain>) => void;
-    tab: "general" | "results" | "relations";
+    tab: "general" | "results" | "relations" | "findings";
 };
 
 export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProps) {
@@ -25,23 +25,15 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
     const [attacks, setAttacks] = useState({} as FullAggregationSource);
-    const [limit, setLimit] = useState(0);
-    const [page, setPage] = useState(0);
     const [domain, setDomain] = React.useState<FullDomain | null>(null);
     const [relations, setRelations] = React.useState<DomainRelations | null>(null);
+    const [findings, setFindings] = React.useState<ListFindings | null>(null);
     React.useEffect(() => {
         Api.workspaces.domains.get(workspace, uuid).then(handleApiError(setDomain));
         Api.workspaces.domains.relations(workspace, uuid).then(handleApiError(setRelations));
-        Api.workspaces.domains.sources(workspace, uuid).then(
-            handleApiError((x) => {
-                setAttacks(x);
-                setLimit(x.attacks.length - 1);
-            })
-        );
+        Api.workspaces.domains.findings(workspace, uuid).then(handleApiError(setFindings));
+        Api.workspaces.domains.sources(workspace, uuid).then(handleApiError(setAttacks));
     }, [workspace, uuid]);
-    React.useEffect(() => {
-        setPage(0);
-    }, [uuid]);
 
     function update(uuid: string, update: Partial<FullDomain>, msg?: string) {
         const { tags, comment } = update;
@@ -56,19 +48,38 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
                 handleApiError(() => {
                     if (msg !== undefined) toast.success(msg);
                     if (signalUpdate !== undefined) signalUpdate(uuid, update);
-                })
+                }),
             );
     }
 
     if (domain === null) return null;
-    return (
-        <>
-            {tab === "general" ? (
+    switch (tab) {
+        case "general":
+            return (
                 <>
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Domain</h3>
                         {domain.domain}
                     </div>
+                    <div className="workspace-data-details-pane">
+                        <h3 className="sub-heading">Certainty</h3>
+                        <div className="workspace-data-certainty-list">
+                            <CertaintyIcon certainty={domain.certainty} />
+                        </div>
+                    </div>
+                    {domain.severity && (
+                        <div className="workspace-data-details-pane">
+                            <h3 className="sub-heading">Severity</h3>
+                            <div className="workspace-data-certainty-list">
+                                <SeverityIcon
+                                    tooltip={false}
+                                    className={"icon workspace-data-certainty-icon"}
+                                    severity={domain.severity}
+                                />
+                                {domain.severity}
+                            </div>
+                        </div>
+                    )}
                     <div className={"workspace-data-details-pane"}>
                         <h3 className={"sub-heading"}>Comment</h3>
                         <Textarea value={domain.comment} onChange={(comment) => setDomain({ ...domain, comment })} />
@@ -92,99 +103,26 @@ export function WorkspaceDataDomainDetails(props: WorkspaceDataDomainDetailsProp
                             }}
                         />
                     </div>
+                    <SelectableText className="uuid">{uuid}</SelectableText>
                 </>
-            ) : (
-                <>
-                    {tab === "results" ? (
-                        <div className="workspace-data-details-flex">
-                            <WorkspaceDataDetailsResults attack={attacks.attacks[page]} uuid={domain.uuid} />
-                            <div className="workspace-data-details-table-controls">
-                                <div className="workspace-data-details-controls-container">
-                                    <button
-                                        className={"workspace-table-button"}
-                                        disabled={page === 0}
-                                        onClick={() => {
-                                            setPage(page - 1);
-                                        }}
-                                    >
-                                        <ArrowLeftIcon />
-                                    </button>
-                                    <div className="workspace-table-controls-page-container">
-                                        <span>
-                                            {page + 1} of {limit + 1}
-                                        </span>
-                                    </div>
-                                    <button
-                                        className={"workspace-table-button"}
-                                        disabled={page === limit}
-                                        onClick={() => {
-                                            setPage(page + 1);
-                                        }}
-                                    >
-                                        <ArrowRightIcon />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="workspace-data-details-overflow">
-                            <div className="workspace-data-details-relations-container">
-                                <div className="workspace-data-details-relations-header">
-                                    <div className="workspace-data-details-relations-heading">Connection</div>
-                                    <div className="workspace-data-details-relations-heading">Type</div>
-                                    <div className="workspace-data-details-relations-heading">To</div>
-                                </div>
-                                <div className="workspace-data-details-relations-body">
-                                    {relations?.sourceDomains.map((d) => {
-                                        return (
-                                            <>
-                                                <div title={"Direct source"}>
-                                                    <RelationLeftIcon />
-                                                </div>
-                                                <span>Domain</span>
-                                                <span>{d.domain} </span>
-                                            </>
-                                        );
-                                    })}
-                                    {relations?.targetDomains.map((d) => {
-                                        return (
-                                            <>
-                                                <div title={"Direct target"}>
-                                                    <RelationRightIcon />
-                                                </div>
-                                                <span>Domain</span>
-                                                <span>{d.domain} </span>
-                                            </>
-                                        );
-                                    })}
-                                    {relations?.directHosts.map((h) => {
-                                        return (
-                                            <>
-                                                <div title={"Direct"}>
-                                                    <RelationRightIcon />
-                                                </div>
-                                                <span>Host</span>
-                                                <span>{h.ipAddr} </span>
-                                            </>
-                                        );
-                                    })}
-                                    {relations?.indirectHosts.map((h) => {
-                                        return (
-                                            <>
-                                                <div className="indirect" title={"Indirect"}>
-                                                    <RelationIndirectIcon />
-                                                </div>
-                                                <span>Host</span>
-                                                <span>{h.ipAddr} </span>
-                                            </>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </>
-            )}
-        </>
-    );
+            );
+        case "results":
+            return (
+                <div className="workspace-data-details-flex">
+                    <WorkspaceDataDetailsResults attacks={attacks.attacks} />
+                </div>
+            );
+        case "relations":
+            return (
+                <div className="workspace-data-details-overflow">
+                    <DomainRelationsList relations={relations} />
+                </div>
+            );
+        case "findings":
+            return (
+                <div className="workspace-data-details-overflow">
+                    <WorkspaceDataDetailsFindings findings={findings} />
+                </div>
+            );
+    }
 }

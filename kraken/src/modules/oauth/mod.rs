@@ -2,7 +2,8 @@
 
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use std::sync::{Mutex, MutexGuard};
+use std::sync::Mutex;
+use std::sync::MutexGuard;
 
 use log::error;
 use uuid::Uuid;

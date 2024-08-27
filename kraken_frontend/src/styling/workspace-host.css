@@ -10,9 +10,8 @@
 
 .workspace-host-section-selector {
     grid-area: 2 / 2 / span 1 / span 1;
-    display: grid;
+    display: flex;
     width: 100%;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 1em;
 }
 
@@ -20,10 +19,16 @@
     padding: 1em 2em;
     cursor: pointer;
     transition: all 200ms;
+    flex-grow: 1;
+    flex-basis: 0;
 }
 
 .workspace-host-section-selector > .pane:hover {
-    box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2, 0 0 1em var(--primary-op);
+    box-shadow:
+        0 0 25em var(--primary-op),
+        inset 0 0 10em #0cf3,
+        inset 0 0 0.5em #0ff2,
+        0 0 1em var(--primary-op);
 }
 
 .workspace-host-section-selector h3 {
@@ -55,6 +60,7 @@
 .workspace-host-details {
     display: flex;
     flex-direction: column;
+    gap: 0.5em;
 }
 
 .workspace-host-hosts-list {
@@ -86,23 +92,26 @@
     border: none;
 }
 
-.workspace-host-hosts-search > .icon{
+.workspace-host-hosts-search > .icon {
     width: 2em;
     height: 2em;
     padding: 0;
     cursor: pointer;
 }
-.workspace-host-hosts-search > .icon:hover{
+.workspace-host-hosts-search > .icon:hover {
     filter: brightness(0) invert() drop-shadow(0 0 8px var(--primary));
 }
 
-.workspace-host-search-bar{
+.workspace-host-search-bar {
     background-color: var(--level-0);
     color: var(--text);
     padding: 0.5em 1em;
     border: none;
     border-radius: 0.5em;
-    box-shadow: inset 0 -3px 2em -3px var(--primary-op), 0 0 10em #0cf3, 0 0 .5em #0ff2;
+    box-shadow:
+        inset 0 -3px 2em -3px var(--primary-op),
+        0 0 10em #0cf3,
+        0 0 0.5em #0ff2;
     width: 10em;
 }
 
@@ -118,10 +127,18 @@
     text-align: left;
 }
 
-.workspace-host-hosts-item:hover, .workspace-host-hosts-back:hover {
-    box-shadow: 0 0 25em var(--primary-op), inset 0 0 10em #0cf3, inset 0 0 0.5em #0ff2, 0 0 1em var(--primary-op);
+.workspace-host-hosts-item:hover,
+.workspace-host-hosts-back:hover {
+    box-shadow:
+        0 0 25em var(--primary-op),
+        inset 0 0 10em #0cf3,
+        inset 0 0 0.5em #0ff2,
+        0 0 1em var(--primary-op);
 }
 
+.workspace-host-hosts-item.selected {
+    background-color: var(--primary);
+}
 
 .workspace-host-hosts-info {
     display: flex;
@@ -129,4 +146,10 @@
     gap: 0.25em;
     font-size: small;
     height: 4em;
+    width: 12em;
+}
+
+.workspace-host-comment-overflow {
+    white-space: nowrap;
+    overflow: clip;
 }

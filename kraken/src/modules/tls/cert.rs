@@ -2,22 +2,28 @@
 
 use std::net::IpAddr;
 
-use rcgen::{
-    BasicConstraints, Certificate, CertificateParams, DnType, ExtendedKeyUsagePurpose, IsCa,
-    KeyUsagePurpose, SanType, PKCS_ECDSA_P256_SHA256,
-};
-use url::{Host, Url};
+use rcgen::BasicConstraints;
+use rcgen::CertificateParams;
+use rcgen::DnType;
+use rcgen::ExtendedKeyUsagePurpose;
+use rcgen::Ia5String;
+use rcgen::IsCa;
+use rcgen::KeyUsagePurpose;
+use rcgen::SanType;
+use url::Host;
+use url::Url;
 
 /// [`CertificateBuilder`] which builds the kraken's CA
 pub struct CA;
 impl CertificateBuilder for CA {
-    fn params(self, params: &mut CertificateParams) {
-        params.alg = &PKCS_ECDSA_P256_SHA256;
+    fn params(self, params: &mut CertificateParams) -> Result<(), rcgen::Error> {
         params
             .distinguished_name
             .push(DnType::CommonName, "kraken CA");
         params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
         params.key_usages.push(KeyUsagePurpose::KeyCertSign);
+
+        Ok(())
     }
 }
 
@@ -27,8 +33,7 @@ pub struct Kraken {
     pub domain: String,
 }
 impl CertificateBuilder for Kraken {
-    fn params(self, params: &mut CertificateParams) {
-        params.alg = &PKCS_ECDSA_P256_SHA256;
+    fn params(self, params: &mut CertificateParams) -> Result<(), rcgen::Error> {
         params
             .distinguished_name
             .push(DnType::CommonName, "kraken cert");
@@ -42,8 +47,10 @@ impl CertificateBuilder for Kraken {
             .extend([ExtendedKeyUsagePurpose::ServerAuth]);
         params
             .subject_alt_names
-            .extend([SanType::DnsName(self.domain)]);
+            .extend([SanType::DnsName(Ia5String::try_from(self.domain)?)]);
         params.use_authority_key_identifier_extension = true;
+
+        Ok(())
     }
 }
 
@@ -53,8 +60,7 @@ pub struct Leech {
     pub url: Url,
 }
 impl CertificateBuilder for Leech {
-    fn params(self, params: &mut CertificateParams) {
-        params.alg = &PKCS_ECDSA_P256_SHA256;
+    fn params(self, params: &mut CertificateParams) -> Result<(), rcgen::Error> {
         params
             .distinguished_name
             .push(DnType::CommonName, "leech cert");
@@ -68,7 +74,7 @@ impl CertificateBuilder for Leech {
             .extend([ExtendedKeyUsagePurpose::ServerAuth]);
         if let Some(host) = self.url.host() {
             params.subject_alt_names.extend([match host {
-                Host::Domain(domain) => SanType::DnsName(domain.to_string()),
+                Host::Domain(domain) => SanType::DnsName(Ia5String::try_from(domain)?),
                 Host::Ipv4(v4) => SanType::IpAddress(IpAddr::V4(v4)),
                 Host::Ipv6(v6) => SanType::IpAddress(IpAddr::V6(v6)),
             }]);
@@ -77,22 +83,20 @@ impl CertificateBuilder for Leech {
         .subject_alt_names
         .extend([SanType::URI(self.uri.to_string())]);*/
         params.use_authority_key_identifier_extension = true;
+
+        Ok(())
     }
 }
 
-/// Small trait to encapsulate building a [`Certificate`] from some parameters
-///
-/// Implementors:
-/// - [`CA`] creates the kraken's main certificate
-/// - [`Leech`] creates a leech's server and client certificate
+/// Small trait to encapsulate building [`CertificateParams`] from some parameters
 pub trait CertificateBuilder: Sized {
     /// Modify an instance of [`CertificateParams::default`] to match the builder's intent.
-    fn params(self, params: &mut CertificateParams);
+    fn params(self, params: &mut CertificateParams) -> Result<(), rcgen::Error>;
 
     /// Consume the builder and create a [`Certificate`]
-    fn build(self) -> Result<Certificate, rcgen::Error> {
+    fn build(self) -> Result<CertificateParams, rcgen::Error> {
         let mut params = CertificateParams::default();
-        self.params(&mut params);
-        Certificate::from_params(params)
+        self.params(&mut params)?;
+        Ok(params)
     }
 }

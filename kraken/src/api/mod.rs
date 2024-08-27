@@ -7,5 +7,6 @@ pub mod handler;
 pub mod middleware;
 #[cfg(feature = "bin")]
 pub mod server;
+pub mod service;
 #[cfg(feature = "bin")]
 pub mod swagger;

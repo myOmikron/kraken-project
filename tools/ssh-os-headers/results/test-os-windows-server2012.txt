@@ -1,0 +1,4 @@
+SSH: debug1: Remote protocol version 2.0, remote software version OpenSSH_for_Windows_9.4
+TCP fingerprint: Fingerprint: 8:3:28:2:2000:8:5b4:64312
+TCP fingerprint: Fingerprint: 8:3:28:2:2000:8:5b4:64312
+TCP fingerprint: Fingerprint: 8:3:28:2:2000:8:5b4:64312

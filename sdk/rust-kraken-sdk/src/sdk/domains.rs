@@ -1,27 +1,24 @@
-use kraken::api::handler::common::schema::{DomainResultsPage, PageParams, UuidResponse};
-use kraken::api::handler::domains::schema::{
-    CreateDomainRequest, DomainRelations, FullDomain, GetAllDomainsQuery, UpdateDomainRequest,
-};
+use kraken::api::handler::common::schema::DomainResultsPage;
+use kraken::api::handler::common::schema::UuidResponse;
+use kraken::api::handler::domains::schema::CreateDomainRequest;
+use kraken::api::handler::domains::schema::DomainRelations;
+use kraken::api::handler::domains::schema::FullDomain;
+use kraken::api::handler::domains::schema::GetAllDomainsQuery;
+use kraken::api::handler::domains::schema::UpdateDomainRequest;
+use kraken::api::handler::findings::schema::ListFindings;
+use kraken::api::handler::findings::schema::SimpleFinding;
 use uuid::Uuid;
 
-use crate::sdk::utils::KrakenRequest;
-use crate::{KrakenClient, KrakenResult};
+use crate::KrakenClient;
+use crate::KrakenResult;
 
 impl KrakenClient {
     /// Manually add a domain
     pub async fn add_domain(&self, workspace: Uuid, domain: String) -> KrakenResult<Uuid> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/domains"))
-            .expect("Valid url");
-
         let uuid: UuidResponse = self
-            .make_request(
-                KrakenRequest::post(url)
-                    .body(CreateDomainRequest { domain })
-                    .build(),
-            )
+            .post(&format!("api/v1/workspaces/{workspace}/domains"))
+            .body(CreateDomainRequest { domain })
+            .send()
             .await?;
 
         Ok(uuid.uuid)
@@ -31,39 +28,19 @@ impl KrakenClient {
     pub async fn get_all_domains(
         &self,
         workspace: Uuid,
-        page: PageParams,
+        query: GetAllDomainsQuery,
     ) -> KrakenResult<DomainResultsPage> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/domains/all"))
-            .expect("valid url");
-
-        let domains = self
-            .make_request(
-                KrakenRequest::post(url)
-                    .body(GetAllDomainsQuery {
-                        page,
-                        host: None,
-                        domain_filter: None,
-                        global_filter: None,
-                    })
-                    .build(),
-            )
-            .await?;
-
-        Ok(domains)
+        self.post(&format!("api/v1/workspaces/{workspace}/domains/all"))
+            .body(query)
+            .send()
+            .await
     }
 
     /// Retrieve a specific domain
     pub async fn get_domain(&self, workspace: Uuid, domain: Uuid) -> KrakenResult<FullDomain> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces{workspace}/domains/{domain}"))
-            .expect("Valid url");
-
-        self.make_request(KrakenRequest::get(url).build()).await
+        self.get(&format!("api/v1/workspaces/{workspace}/domains/{domain}"))
+            .send()
+            .await
     }
 
     /// Update a domain
@@ -73,27 +50,16 @@ impl KrakenClient {
         domain: Uuid,
         update: UpdateDomainRequest,
     ) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/domains/{domain}"))
-            .expect("Valid url");
-
-        self.make_request(KrakenRequest::put(url).body(update).build())
-            .await?;
-
-        Ok(())
+        self.put(&format!("api/v1/workspaces/{workspace}/domains/{domain}"))
+            .body(update)
+            .send()
+            .await
     }
 
     /// Delete a domain
     pub async fn delete_domain(&self, workspace: Uuid, domain: Uuid) -> KrakenResult<()> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!("api/v1/workspaces/{workspace}/domains/{domain}"))
-            .expect("Valid url");
-
-        self.make_request(KrakenRequest::delete(url).build())
+        self.delete(&format!("api/v1/workspaces/{workspace}/domains/{domain}"))
+            .send()
             .await?;
 
         Ok(())
@@ -105,14 +71,25 @@ impl KrakenClient {
         workspace: Uuid,
         domain: Uuid,
     ) -> KrakenResult<DomainRelations> {
-        #[allow(clippy::expect_used)]
-        let url = self
-            .base_url
-            .join(&format!(
-                "api/v1/workspaces/{workspace}/domain/{domain}/relations"
-            ))
-            .expect("Valid url");
+        self.get(&format!(
+            "api/v1/workspaces/{workspace}/domains/{domain}/relations"
+        ))
+        .send()
+        .await
+    }
 
-        self.make_request(KrakenRequest::get(url).build()).await
+    /// List all findings affecting the domain
+    pub async fn get_domain_findings(
+        &self,
+        workspace: Uuid,
+        domain: Uuid,
+    ) -> KrakenResult<Vec<SimpleFinding>> {
+        let list: ListFindings = self
+            .get(&format!(
+                "api/v1/workspaces/{workspace}/domains/{domain}/findings"
+            ))
+            .send()
+            .await?;
+        Ok(list.findings)
     }
 }

@@ -1,22 +1,29 @@
 use std::net::IpAddr;
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
-use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use serde::Deserialize;
+use serde::Serialize;
+use utoipa::IntoParams;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
-use crate::api::handler::common::schema::{PageParams, SimpleTag};
+use crate::api::handler::common::schema::PageParams;
+use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::domains::schema::SimpleDomain;
+use crate::api::handler::findings::schema::FindingSeverity;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
-use crate::models::{HostCertainty, ManualHostCertainty, OsType};
 
 /// The request to manually add a host
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct CreateHostRequest {
     /// The host's ip address
+    ///
+    /// Also accepts a network and adds all its addresses
     #[schema(value_type = String, example = "127.0.0.1")]
     pub ip_addr: IpNetwork,
 
@@ -93,6 +100,8 @@ pub struct FullHost {
     pub sources: SimpleAggregationSource,
     /// The point in time, the record was created
     pub created_at: DateTime<Utc>,
+    /// The severest finding's severity associated with this host
+    pub severity: Option<FindingSeverity>,
     /// The certainty of this host
     pub certainty: HostCertainty,
 }
@@ -120,4 +129,44 @@ pub struct HostRelations {
 
     /// Domains pointing to this host via a `CNAME` record which eventually resolves to the host
     pub indirect_domains: Vec<SimpleDomain>,
+
+    /// This host's http services
+    pub http_services: Vec<SimpleHttpService>,
+}
+
+/// The certainty of a host
+#[derive(Copy, Clone, Deserialize, Serialize, ToSchema, Debug, PartialOrd, PartialEq)]
+pub enum HostCertainty {
+    /// 3rd party historical data
+    Historical = 0,
+    /// 3rd party data
+    SupposedTo = 1,
+    /// The host has responded either by HostAlive, Port or Service Detection or something similar
+    Verified = 2,
+}
+
+/// A representation of an OS type
+#[derive(Copy, Clone, Debug, ToSchema, Serialize, Deserialize)]
+pub enum OsType {
+    /// The OS type is currently unknown
+    Unknown,
+    /// Linux based OS
+    Linux,
+    /// Windows based OS
+    Windows,
+    /// Apple based OS
+    Apple,
+    /// Android based OS
+    Android,
+    /// FreeBSD based OS
+    FreeBSD,
+}
+
+/// The certainty of a manually added host
+#[derive(Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+pub enum ManualHostCertainty {
+    /// Historical data
+    Historical,
+    /// Up to date data
+    SupposedTo,
 }

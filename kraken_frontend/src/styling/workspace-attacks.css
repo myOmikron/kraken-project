@@ -1,6 +1,6 @@
 .workspace-attacks-container {
     display: grid;
-    grid-template-columns: 1.5fr 4fr 2fr;
+    grid-template-columns: 50ch 4fr 2fr;
     gap: 1em;
 }
 
@@ -8,6 +8,7 @@
     display: flex;
     flex-direction: column;
     gap: 1em;
+    max-height: 100%;
 }
 
 .workspace-attacks-target {
@@ -23,12 +24,33 @@
     flex-grow: 1;
 }
 
-.kraken-attacks-hex-selected {
-    fill: var(--primary) !important;
-    stroke-dasharray: 1em !important;
-    transition: all ease 200ms;
-    animation: rotate linear infinite 1s;
-    filter: brightness(0) invert() drop-shadow(0 0 4px var(--primary));
+.workspace-attacks svg {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+}
+
+.kraken-attacks {
+    --mouse-x: 0;
+    --mouse-y: 0;
+}
+
+.kraken-attacks path.kraken-attacks-hex {
+    --dist: calc(hypot(var(--mouse-x) - var(--cx), var(--mouse-y) - var(--cy)));
+    --d: calc((var(--dist) - 100) / 100);
+    --t: clamp(0, var(--d), 1);
+    --strength: calc(cos(var(--t)));
+    opacity: calc(1 - var(--t) * 0.25);
+    transform: scale(calc(1 - var(--strength) * 0.1));
+}
+
+.kraken-attacks path.kraken-attacks-hex.kraken-attacks-hex-unavailable {
+    transform: unset;
+}
+
+.kraken-attacks path.kraken-attacks-hex:active {
+    scale: 0.9;
 }
 
 .kraken-attacks-hex-box-selected {
@@ -38,13 +60,30 @@
 @keyframes rotate {
     from {
         stroke-dashoffset: 0;
-        fill-opacity: 20% !important;
-
     }
 
     to {
         stroke-dashoffset: 6em;
-        fill-opacity: 60% !important;
+    }
+}
+
+@keyframes hex-fade-in {
+    from {
+        scale: 0;
+    }
+
+    to {
+        scale: 1;
+    }
+}
+
+@keyframes hex-fade-in-text {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
     }
 }
 
@@ -56,9 +95,32 @@
     stroke-linecap: butt;
     stroke-linejoin: miter;
     stroke-dasharray: none;
-    stroke-opacity:0.666667;
+    stroke-opacity: 0.666667;
     paint-order: markers stroke fill;
-    transition: all ease 400ms;
+    transition:
+        all ease 400ms,
+        transform 0ms,
+        opacity 0ms;
+}
+.kraken-attacks .kraken-attacks-hex {
+    animation: hex-fade-in cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+}
+/* hack to not play entry animation after selection anymore: */
+.kraken-attacks .kraken-attacks-hex.was-clicked:not(.kraken-attacks-hex-selected) {
+    animation: none;
+}
+
+.kraken-attacks .kraken-attacks-hex + g {
+    animation: hex-fade-in-text ease-out 0.2s both;
+}
+
+.kraken-attacks .kraken-attacks-hex-selected {
+    fill: var(--primary);
+    stroke-dasharray: 1em;
+    transition: all ease 200ms;
+    animation: rotate linear infinite 1s;
+    animation-delay: 0ms !important;
+    filter: brightness(0) invert() drop-shadow(0 0 4px var(--primary));
 }
 
 .kraken-attacks-clickable {
@@ -87,23 +149,55 @@
     height: 20%;
 }
 
+.workspace-attacks-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
 .workspace-attacks-info-empty {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 20%;
+    height: 5em;
 }
 
-.kraken-attacks-hex-box-text {
-    font-family: "Roboto-Light", sans-serif;
-    fill: white;
-    font-size: 0.5em;
-    pointer-events: none;
+.workspace-attacks-info > .selection {
+    flex-shrink: 1;
+    flex-grow: 1;
+    overflow: auto;
+    height: 0;
+}
+
+.workspace-attacks-info > .selection table {
+    border-collapse: collapse;
+    margin: 1em -0.75em;
+    margin-bottom: -1em;
+}
+
+.workspace-attacks-info > .selection table th,
+.workspace-attacks-info > .selection table td {
+    padding: 4px 0.75em;
+    border-bottom: 1px solid var(--primary-op);
+}
+
+.workspace-attacks-info > .selection table th {
+    color: white;
+    text-align: left;
+    border-bottom: 1px solid white;
+}
+
+.workspace-attacks-info > .selection table pre {
+    margin: 0;
 }
 
 .kraken-attacks-hex-text {
     font-family: "Roboto-Thin", sans-serif;
     fill: white;
-    font-size: 0.45em;
+    font-size: 1.25rem;
     pointer-events: none;
+}
+
+.category-text .kraken-attacks-hex-text {
+    font-family: "Roboto-Light", sans-serif;
 }

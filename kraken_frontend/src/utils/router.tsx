@@ -1,4 +1,5 @@
 import React from "react";
+import CONSOLE from "./console";
 
 /** Configuration for defining {@link Route routes} */
 export interface RouteConfig<UrlParams extends {}, HiddenParams extends {}> {
@@ -27,7 +28,7 @@ export interface RouteConfig<UrlParams extends {}, HiddenParams extends {}> {
      *
      * @param urlParams parameters parse from an url
      * @param hiddenParams parameters passed through the router
-     * @return react element to show for this route
+     * @returns react element to show for this route
      */
     render: (urlParams: UrlParams, hiddenParams: HiddenParams | undefined) => React.ReactNode;
 }
@@ -36,11 +37,13 @@ export interface RouteConfig<UrlParams extends {}, HiddenParams extends {}> {
 /** Regex for a bind parameter in {@link RouteConfig.url `url`} */
 const BIND_REGEX = /^\{(.*)}$/;
 
+/** A single route for a [`Router`]{@link Router} */
 class Route<UrlParams extends {}, HiddenParams extends {}> {
     /** The route's configuration */
     readonly config: RouteConfig<UrlParams, HiddenParams>;
 
     /** Pre-split and "parsed" version of {@link RouteConfig.url `config.url`} */
+    // eslint-disable-next-line jsdoc/require-jsdoc
     readonly pattern: Array<string | { bind: keyof UrlParams }>;
 
     /** List of errors the constructor found in the config */
@@ -52,6 +55,15 @@ class Route<UrlParams extends {}, HiddenParams extends {}> {
     /** ID the router identifies this route with */
     readonly id: number;
 
+    /**
+     * Constructs a new route for a router
+     *
+     * Don't call this constructor yourself, use [Router.add]{@link Router#add} instead!
+     *
+     * @param router the router instance this route will be part of (required for passing hidden params)
+     * @param id the id this route will be registered under
+     * @param config the route configuration
+     */
     constructor(router: Router, id: number, config: RouteConfig<UrlParams, HiddenParams>) {
         this.router = router;
         this.id = id;
@@ -59,7 +71,7 @@ class Route<UrlParams extends {}, HiddenParams extends {}> {
         if (config.url.length === 0) this.pattern = [];
         else
             this.pattern = config.url.split("/").map((fragment) => {
-                let match = fragment.match(BIND_REGEX);
+                const match = fragment.match(BIND_REGEX);
                 return match === null ? fragment : { bind: match[1] as keyof UrlParams };
             });
         this.errors = [];
@@ -90,6 +102,7 @@ class Route<UrlParams extends {}, HiddenParams extends {}> {
      * Try to match an url to this route and parse its parameters
      *
      * @param url an url string which has been split at `/`
+     * @returns the parsed url params or `undefined` if the route doesn't match
      */
     match(url: Array<string>): { [Param in keyof UrlParams]: UrlParams[Param] } | undefined {
         if (url.length !== this.pattern.length) return;
@@ -111,16 +124,17 @@ class Route<UrlParams extends {}, HiddenParams extends {}> {
             }
         }
 
-        // @ts-ignore
-        return params;
+        return params as { [Param in keyof UrlParams]: UrlParams[Param] };
     }
 
     /**
      * Build an url to this route using concrete parameters
      *
      * @param urlParams parameters to use
-     * @return the constructed url
+     * @returns the constructed url
      */
+    // the signature of `String` takes `any`
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     build(urlParams: { [Param in keyof UrlParams]: any }): string {
         return this.pattern
             .map((pattern) => {
@@ -136,6 +150,8 @@ class Route<UrlParams extends {}, HiddenParams extends {}> {
      * @param urlParams parameters to {@link build `build`} the url with
      * @param hiddenParams parameters to pass to the route's render method through the router instead of the url
      */
+    // See `build`
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     visit(urlParams: { [Param in keyof UrlParams]: any }, hiddenParams: HiddenParams | undefined = undefined) {
         const url = this.build(urlParams);
         this.router.setHiddenParams(this, hiddenParams);
@@ -150,39 +166,57 @@ class Route<UrlParams extends {}, HiddenParams extends {}> {
      *
      * @param urlParams parameters to {@link build `build`} the url with
      */
+    // See `build`
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     open(urlParams: { [Param in keyof UrlParams]: any }) {
         const url = this.build(urlParams);
         window.open(`${window.location.origin}/#/${url}`);
     }
 
     /**
-     * Return a set of react click handler to make an element behave like a link
+     * Return a set of React click handler to make an element behave like a link
      *
      * i.e. left click to open in this tab, middle click to open in new tab
      *
      * @param urlParams parameters to {@link build `build`} the url with
+     * @returns object containing React's `onClick` and `onAuxClick` event handler
      */
-    clickHandler(urlParams: { [Param in keyof UrlParams]: any }) {
+    // See `build`
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    clickHandler<E>(urlParams: { [Param in keyof UrlParams]: any }): Pick<
+        React.HTMLAttributes<E>,
+        "onClick" | "onAuxClick"
+    > {
         return {
+            // eslint-disable-next-line jsdoc/require-jsdoc
             onClick: () => this.visit(urlParams),
+            // eslint-disable-next-line jsdoc/require-jsdoc
             onAuxClick: () => this.open(urlParams),
         };
     }
 }
 
+/** A router matching a string to routes and parsing their params from it */
 export class Router {
     // Changing the array could invalidate the routes' ids
     protected routes: Array<Route<{}, {}>> = [];
-    protected hiddenParam: { id: number; params: {} } | undefined = undefined;
+    protected hiddenParam:
+        | {
+              /** The route's id the current hidden params are for*/
+              id: number;
+              /** The current hidden params (actually of type `HiddenParams` for associated route) */
+              params: {};
+          }
+        | undefined = undefined;
 
     /**
      * Create a new route and add it to this router
      *
      * @param config the route's config
-     * @return the new route
+     * @returns the new route
      */
     add<UrlParams extends {}, HiddenParams extends {}>(
-        config: RouteConfig<UrlParams, HiddenParams>
+        config: RouteConfig<UrlParams, HiddenParams>,
     ): Route<UrlParams, HiddenParams> {
         const route = new Route(this, this.routes.length, config);
         this.routes.push(route as unknown as Route<{}, {}>);
@@ -197,7 +231,7 @@ export class Router {
     finish() {
         for (const route of this.routes) {
             if (route.errors.length > 0) {
-                console.error(`Errors in route "${route.config.url}":`, ...route.errors);
+                CONSOLE.error(`Errors in route "${route.config.url}":`, ...route.errors);
             }
         }
     }
@@ -208,9 +242,11 @@ export class Router {
      * @param route to set parameters for
      * @param hiddenParams parameters to set
      */
+    // See `build`
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setHiddenParams<HiddenParams extends {}>(route: Route<any, HiddenParams>, hiddenParams: HiddenParams | undefined) {
         if (this !== route.router) {
-            console.error("Routes are misconfigured");
+            CONSOLE.error("Routes are misconfigured");
             return;
         }
         this.hiddenParam = hiddenParams && { id: route.id, params: hiddenParams };
@@ -220,7 +256,7 @@ export class Router {
      * Match a given pre-split url
      *
      * @param url url already split at "/"
-     * @return the matched route and its parameters, if any
+     * @returns the matched route and its parameters, if any
      */
     match(url: Array<string>): [Route<{}, {}>, {}, {} | undefined] | undefined {
         // TODO this naive iter and check step by step could be improved by processing the list in `finish()`
@@ -243,7 +279,7 @@ export class Router {
      * Match a given pre-split url and render the routes element
      *
      * @param url url already split at "/"
-     * @return the matched route's {@link RouteConfig.render `render`} result, if any
+     * @returns the matched route's [`render`]{@link RouteConfig#render} result, if any
      */
     matchAndRender(url: Array<string>): React.ReactNode | undefined {
         const match = this.match(url);

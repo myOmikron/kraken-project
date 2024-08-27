@@ -2,16 +2,24 @@
 //! This module holds all database related definitions of workspace related structs
 //!
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use rorm::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{Attack, OauthClient, User};
+#[cfg(feature = "bin")]
+pub(crate) use crate::models::workspace::patches::*;
+use crate::models::Attack;
+use crate::models::OauthClient;
+use crate::models::User;
 
 #[cfg(feature = "bin")]
 mod operations;
+#[cfg(feature = "bin")]
+mod patches;
 
 /// The permission of a member in a workspace
 #[derive(Debug, Copy, Clone, Deserialize, Serialize, ToSchema, DbEnum)]
@@ -29,7 +37,7 @@ pub enum WorkspaceMemberPermission {
 /// A workspace member has the privileges to access and modify a workspace of another user
 ///
 /// The owner of the workspace can add and remove members at any time
-#[derive(Model)]
+#[derive(Model, Clone)]
 pub struct WorkspaceMember {
     /// Unique identifier of the workspace member
     #[rorm(id)]
@@ -54,7 +62,7 @@ pub struct WorkspaceMember {
 /// Representation of a set of connected data.
 ///
 /// Workspaces are owned by a user and can be shared with others.
-#[derive(Model)]
+#[derive(Model, Clone)]
 pub struct Workspace {
     /// Unique identifier of the workspace
     #[rorm(primary_key)]
@@ -85,6 +93,26 @@ pub struct Workspace {
 
     /// All attacks started in this workspace
     pub attacks: BackRef<field!(Attack::F.workspace)>,
+}
+
+/// The notes that are saved in a workspace
+#[derive(Model)]
+pub struct WorkspaceNotes {
+    /// The primary key
+    #[rorm(primary_key)]
+    pub uuid: Uuid,
+
+    /// Optional notes of the workspace
+    #[rorm(max_length = 65535)]
+    pub notes: String,
+
+    /// The linked workspace
+    #[rorm(on_update = "Cascade", on_delete = "Cascade")]
+    pub workspace: ForeignModel<Workspace>,
+
+    /// The point in time the notes are created
+    #[rorm(auto_create_time)]
+    pub created_at: DateTime<Utc>,
 }
 
 /// An oauth `access_token` for a workspace

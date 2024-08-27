@@ -1,0 +1,42 @@
+[Migration]
+Hash = ""
+Initial = false
+Dependency = 6
+Replaces = []
+
+# BEGIN;
+#
+# INSERT INTO servicedetectionresult (uuid, attack, created_at, host, port, certainty) SELECT uuid, attack, created_at, address, port, 'UnknownService' FROM tcpportscanresult;
+# DELETE FROM tcpportscanresult;
+# UPDATE attack SET attack_type = 'ServiceDetection' WHERE attack_type = 'TcpPortScan';
+# UPDATE aggregationsource SET source_type = 'ServiceDetection' WHERE source_type = 'TcpPortScan';
+#
+# END;
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "INSERT INTO servicedetectionresult (uuid, attack, created_at, host, port, certainty) SELECT uuid, attack, created_at, address, port, 'UnknownService' FROM tcpportscanresult;"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "DELETE FROM tcpportscanresult;"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "UPDATE attack SET attack_type = 'ServiceDetection' WHERE attack_type = 'TcpPortScan';"
+
+[[Migration.Operations]]
+Type = "RawSQL"
+StructureSafe = true
+SQLite = "only Postgres databases are supported right now"
+MySQL = "only Postgres databases are supported right now"
+Postgres = "UPDATE aggregationsource SET source_type = 'ServiceDetection' WHERE source_type = 'TcpPortScan';"

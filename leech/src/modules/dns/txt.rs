@@ -1,25 +1,26 @@
 //! leech module for parsing TXT entries in the DNS results specifically.
 
 use std::fmt::Display;
+use std::fmt::Formatter;
 
-use log::{debug, info};
+use log::debug;
+use log::info;
 use once_cell::sync::Lazy;
 use regex::bytes::Regex;
-use tokio::{sync::mpsc::Sender, task::JoinSet};
-use trust_dns_resolver::{
-    name_server::{GenericConnector, TokioRuntimeProvider},
-    proto::rr::Record,
-    AsyncResolver, TokioAsyncResolver,
-};
+use tokio::sync::mpsc::Sender;
+use tokio::task::JoinSet;
+use trust_dns_resolver::name_server::GenericConnector;
+use trust_dns_resolver::name_server::TokioRuntimeProvider;
+use trust_dns_resolver::AsyncResolver;
+use trust_dns_resolver::TokioAsyncResolver;
 
 use crate::modules::dns::resolve;
 
 type ResolverT = AsyncResolver<GenericConnector<TokioRuntimeProvider>>;
 
-use super::{
-    errors::DnsResolutionError,
-    spf::{parse_spf, SPFPart},
-};
+use super::errors::DnsResolutionError;
+use super::spf::parse_spf;
+use super::spf::SPFPart;
 
 /// DNS TXT scanning settings
 pub struct DnsTxtScanSettings {
@@ -30,6 +31,22 @@ pub struct DnsTxtScanSettings {
 /// Represents a single parsed DNS TXT entry.
 #[derive(Debug, Clone)]
 pub enum TxtScanInfo {
+    /// Aggregation of all well-known service hint patterns in all the TXT entries for the domain.
+    ServiceHints {
+        /// List of detected service hints, as tuple (raw TXT record, known service type)
+        hints: Vec<(String, TxtServiceHint)>,
+    },
+    /// /^v=spf1/ and parsed SPF domains & IPs
+    SPF {
+        /// A list of all successfully parsed SPF parts (unparsable parts simply skipped)
+        parts: Vec<SPFPart>,
+    },
+}
+
+/// A simple service hint with no complex information other than it existing. Indicates possible ownership of third
+/// party service accounts or possible control over external services.
+#[derive(Debug, Clone, Copy)]
+pub enum TxtServiceHint {
     /// regex: /^GOOGLE-SITE-VERIFICATION=/i
     /// Google Search Console
     HasGoogleAccount,
@@ -72,32 +89,48 @@ pub enum TxtScanInfo {
     /// regex: /^protonmail-verification=/i
     /// Emails hosted at ProtonMail
     EmailProtonMail,
-    /// /^v=spf1/ and parsed SPF domains & IPs
-    SPF {
-        /// A list of all successfully parsed SPF parts (unparsable parts simply skipped)
-        parts: Vec<SPFPart>,
-    },
 }
 
-static BASIC_TXT_TYPES_WITH_REGEX: [TxtScanInfo; 14] = [
-    TxtScanInfo::HasGoogleAccount,
-    TxtScanInfo::HasGlobalsignAccount,
-    TxtScanInfo::HasGlobalsignSMime,
-    TxtScanInfo::HasDocusignAccount,
-    TxtScanInfo::HasAppleAccount,
-    TxtScanInfo::HasFacebookAccount,
-    TxtScanInfo::HasHubspotAccount,
-    TxtScanInfo::HasMsDynamics365,
-    TxtScanInfo::HasStripeAccount,
-    TxtScanInfo::HasOneTrustSso,
-    TxtScanInfo::HasBrevoAccount,
-    TxtScanInfo::OwnsAtlassianAccounts,
-    TxtScanInfo::OwnsZoomAccounts,
-    TxtScanInfo::EmailProtonMail,
+impl Display for TxtServiceHint {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TxtServiceHint::HasGoogleAccount => write!(f, "HasGoogleAccount"),
+            TxtServiceHint::HasDocusignAccount => write!(f, "HasDocusignAccount"),
+            TxtServiceHint::HasAppleAccount => write!(f, "HasAppleAccount"),
+            TxtServiceHint::HasFacebookAccount => write!(f, "HasFacebookAccount"),
+            TxtServiceHint::HasHubspotAccount => write!(f, "HasHubspotAccount"),
+            TxtServiceHint::HasMsDynamics365 => write!(f, "HasMSDynamics365"),
+            TxtServiceHint::HasStripeAccount => write!(f, "HasStripeAccount"),
+            TxtServiceHint::HasOneTrustSso => write!(f, "HasOneTrustSSO"),
+            TxtServiceHint::HasBrevoAccount => write!(f, "HasBrevoAccount"),
+            TxtServiceHint::HasGlobalsignAccount => write!(f, "HasGlobalsignAccount"),
+            TxtServiceHint::HasGlobalsignSMime => write!(f, "HasGlobalsignSMime"),
+            TxtServiceHint::OwnsAtlassianAccounts => write!(f, "OwnsAtlassianAccounts"),
+            TxtServiceHint::OwnsZoomAccounts => write!(f, "OwnsZoomAccounts"),
+            TxtServiceHint::EmailProtonMail => write!(f, "EmailProtonMail"),
+        }
+    }
+}
+
+static BASIC_TXT_TYPES_WITH_REGEX: [TxtServiceHint; 14] = [
+    TxtServiceHint::HasGoogleAccount,
+    TxtServiceHint::HasGlobalsignAccount,
+    TxtServiceHint::HasGlobalsignSMime,
+    TxtServiceHint::HasDocusignAccount,
+    TxtServiceHint::HasAppleAccount,
+    TxtServiceHint::HasFacebookAccount,
+    TxtServiceHint::HasHubspotAccount,
+    TxtServiceHint::HasMsDynamics365,
+    TxtServiceHint::HasStripeAccount,
+    TxtServiceHint::HasOneTrustSso,
+    TxtServiceHint::HasBrevoAccount,
+    TxtServiceHint::OwnsAtlassianAccounts,
+    TxtServiceHint::OwnsZoomAccounts,
+    TxtServiceHint::EmailProtonMail,
 ];
 
-impl TxtScanInfo {
-    fn matcher_regex(&self) -> Option<&'static Regex> {
+impl TxtServiceHint {
+    fn matcher_regex(&self) -> &'static Regex {
         static RE_HAS_GOOGLE_ACCOUNT: Lazy<Regex> =
             Lazy::new(|| Regex::new(r"(?i-u)^GOOGLE-SITE-VERIFICATION=").unwrap());
         static RE_HAS_GLOBALSIGN_ACCOUNT: Lazy<Regex> =
@@ -128,21 +161,20 @@ impl TxtScanInfo {
             Lazy::new(|| Regex::new(r"(?i-u)^protonmail-verification=").unwrap());
 
         match self {
-            TxtScanInfo::HasGoogleAccount => Some(&RE_HAS_GOOGLE_ACCOUNT),
-            TxtScanInfo::HasGlobalsignAccount => Some(&RE_HAS_GLOBALSIGN_ACCOUNT),
-            TxtScanInfo::HasGlobalsignSMime => Some(&RE_HAS_GLOBALSIGN_SMIME),
-            TxtScanInfo::HasDocusignAccount => Some(&RE_HAS_DOCUSIGN_ACCOUNT),
-            TxtScanInfo::HasAppleAccount => Some(&RE_HAS_APPLE_ACCOUNT),
-            TxtScanInfo::HasFacebookAccount => Some(&RE_HAS_FACEBOOK_ACCOUNT),
-            TxtScanInfo::HasHubspotAccount => Some(&RE_HAS_HUBSPOT_ACCOUNT),
-            TxtScanInfo::HasMsDynamics365 => Some(&RE_HAS_MS_DYNAMICS365),
-            TxtScanInfo::HasStripeAccount => Some(&RE_HAS_STRIPE_ACCOUNT),
-            TxtScanInfo::HasOneTrustSso => Some(&RE_HAS_ONE_TRUST_SSO),
-            TxtScanInfo::HasBrevoAccount => Some(&RE_HAS_BREVO_ACCOUNT),
-            TxtScanInfo::OwnsAtlassianAccounts => Some(&RE_OWNS_ATLASSIAN_ACCOUNTS),
-            TxtScanInfo::OwnsZoomAccounts => Some(&RE_OWNS_ZOOM_ACCOUNTS),
-            TxtScanInfo::EmailProtonMail => Some(&RE_EMAIL_PROTON_MAIL),
-            _ => None,
+            TxtServiceHint::HasGoogleAccount => &RE_HAS_GOOGLE_ACCOUNT,
+            TxtServiceHint::HasGlobalsignAccount => &RE_HAS_GLOBALSIGN_ACCOUNT,
+            TxtServiceHint::HasGlobalsignSMime => &RE_HAS_GLOBALSIGN_SMIME,
+            TxtServiceHint::HasDocusignAccount => &RE_HAS_DOCUSIGN_ACCOUNT,
+            TxtServiceHint::HasAppleAccount => &RE_HAS_APPLE_ACCOUNT,
+            TxtServiceHint::HasFacebookAccount => &RE_HAS_FACEBOOK_ACCOUNT,
+            TxtServiceHint::HasHubspotAccount => &RE_HAS_HUBSPOT_ACCOUNT,
+            TxtServiceHint::HasMsDynamics365 => &RE_HAS_MS_DYNAMICS365,
+            TxtServiceHint::HasStripeAccount => &RE_HAS_STRIPE_ACCOUNT,
+            TxtServiceHint::HasOneTrustSso => &RE_HAS_ONE_TRUST_SSO,
+            TxtServiceHint::HasBrevoAccount => &RE_HAS_BREVO_ACCOUNT,
+            TxtServiceHint::OwnsAtlassianAccounts => &RE_OWNS_ATLASSIAN_ACCOUNTS,
+            TxtServiceHint::OwnsZoomAccounts => &RE_OWNS_ZOOM_ACCOUNTS,
+            TxtServiceHint::EmailProtonMail => &RE_EMAIL_PROTON_MAIL,
         }
     }
 }
@@ -150,20 +182,13 @@ impl TxtScanInfo {
 impl Display for TxtScanInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            TxtScanInfo::HasGoogleAccount => write!(f, "HasGoogleAccount"),
-            TxtScanInfo::HasDocusignAccount => write!(f, "HasDocusignAccount"),
-            TxtScanInfo::HasAppleAccount => write!(f, "HasAppleAccount"),
-            TxtScanInfo::HasFacebookAccount => write!(f, "HasFacebookAccount"),
-            TxtScanInfo::HasHubspotAccount => write!(f, "HasHubspotAccount"),
-            TxtScanInfo::HasMsDynamics365 => write!(f, "HasMSDynamics365"),
-            TxtScanInfo::HasStripeAccount => write!(f, "HasStripeAccount"),
-            TxtScanInfo::HasOneTrustSso => write!(f, "HasOneTrustSSO"),
-            TxtScanInfo::HasBrevoAccount => write!(f, "HasBrevoAccount"),
-            TxtScanInfo::HasGlobalsignAccount => write!(f, "HasGlobalsignAccount"),
-            TxtScanInfo::HasGlobalsignSMime => write!(f, "HasGlobalsignSMime"),
-            TxtScanInfo::OwnsAtlassianAccounts => write!(f, "OwnsAtlassianAccounts"),
-            TxtScanInfo::OwnsZoomAccounts => write!(f, "OwnsZoomAccounts"),
-            TxtScanInfo::EmailProtonMail => write!(f, "EmailProtonMail"),
+            TxtScanInfo::ServiceHints { hints } => {
+                write!(f, "ServiceHints")?;
+                for part in hints {
+                    write!(f, " {}", part.1)?;
+                }
+                Ok(())
+            }
             TxtScanInfo::SPF { parts } => {
                 write!(f, "SPF")?;
                 for part in parts {
@@ -180,8 +205,6 @@ impl Display for TxtScanInfo {
 pub struct DnsTxtScanResult {
     /// The domain this DNS entry was found on
     pub domain: String,
-    /// The record (part) that was matched with this scan result.
-    pub rule: String,
     /// The parsed DNS TXT entry
     pub info: TxtScanInfo,
 }
@@ -235,47 +258,64 @@ fn scan(
     tasks.spawn(domain_impl(resolver.clone(), tx.clone(), domain));
 }
 
-async fn process_txt_record(tx: &Sender<DnsTxtScanResult>, domain: &str, record: &[u8]) {
+fn process_txt_record(record: &[u8]) -> Option<TxtScanInfo> {
     if record.starts_with(b"v=spf1") {
-        tx.send(DnsTxtScanResult {
-            domain: domain.to_owned(),
-            rule: String::from_utf8_lossy(record).to_string(),
-            info: TxtScanInfo::SPF {
-                parts: parse_spf(&record[6..]),
-            },
-        })
-        .await
-        .ok();
+        return Some(TxtScanInfo::SPF {
+            parts: parse_spf(&record[6..]),
+        });
     }
 
     for txt_type in &BASIC_TXT_TYPES_WITH_REGEX {
-        let regex = txt_type.matcher_regex().unwrap();
-        if regex.is_match(record) {
+        if txt_type.matcher_regex().is_match(record) {
+            // take first match for each TXT entry
+            return Some(TxtScanInfo::ServiceHints {
+                hints: vec![(String::from_utf8_lossy(record).to_string(), *txt_type)],
+            });
+        }
+    }
+
+    None
+}
+
+async fn domain_impl(resolver: ResolverT, tx: Sender<DnsTxtScanResult>, domain: String) {
+    if let Ok(Some(res)) = resolve(resolver.txt_lookup(&domain)).await {
+        let records = res.as_lookup().records();
+        let mut services = Vec::new();
+        for record in records {
+            if let Some(rdata) = record.data() {
+                let txt = rdata.as_txt().unwrap(); // only TXT records allowed
+                for data in txt.txt_data() {
+                    let Some(info) = process_txt_record(data) else {
+                        continue;
+                    };
+
+                    match info {
+                        TxtScanInfo::ServiceHints { hints } => {
+                            // aggregate all ServiceHints together into one before sending
+                            // (since service hints are all shown and thought of as an exhaustive list in a single results page)
+                            services.extend(hints);
+                        }
+                        TxtScanInfo::SPF { .. } => {
+                            tx.send(DnsTxtScanResult {
+                                domain: domain.clone(),
+                                info,
+                            })
+                            .await
+                            .ok();
+                        }
+                    }
+                }
+            }
+        }
+
+        if !services.is_empty() {
             tx.send(DnsTxtScanResult {
                 domain: domain.to_owned(),
-                rule: String::from_utf8_lossy(record).to_string(),
-                info: txt_type.clone(),
+                info: TxtScanInfo::ServiceHints { hints: services },
             })
             .await
             .ok();
         }
-    }
-}
-
-async fn recurse_txt(tx: &Sender<DnsTxtScanResult>, domain: &str, records: &[Record]) {
-    for record in records {
-        if let Some(rdata) = record.data() {
-            let txt = rdata.as_txt().unwrap(); // only TXT records allowed
-            for data in txt.txt_data() {
-                process_txt_record(tx, domain, data).await;
-            }
-        }
-    }
-}
-
-async fn domain_impl(resolver: ResolverT, tx: Sender<DnsTxtScanResult>, domain: String) {
-    if let Ok(res) = resolve(resolver.txt_lookup(&domain)).await {
-        recurse_txt(&tx, &domain, res.as_lookup().records()).await;
     }
 
     debug!("Finished dns resolution for {}", domain);

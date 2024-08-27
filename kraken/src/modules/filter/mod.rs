@@ -3,12 +3,15 @@
 use std::error::Error as StdError;
 use std::fmt::Debug;
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
 use thiserror::Error;
 
+use crate::models::OsType;
 use crate::models::PortProtocol;
-use crate::modules::filter::lexer::{Token, UnexpectedCharacter};
+use crate::modules::filter::lexer::Token;
+use crate::modules::filter::lexer::UnexpectedCharacter;
 
 mod lexer;
 mod parser;
@@ -35,6 +38,36 @@ pub struct DomainAST {
 
     /// Filter by domain name
     pub domains: Option<Or<String>>,
+
+    /// Filter domains by their targets
+    pub source_of: Option<Or<String>>,
+
+    /// Filter domains by their targets' tags
+    pub source_of_tags: Option<Or<String>>,
+
+    /// Filter domains by their targets' creation time
+    pub source_of_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter domains by their sources
+    pub target_of: Option<Or<String>>,
+
+    /// Filter domains by their sources' tags
+    pub target_of_tags: Option<Or<String>>,
+
+    /// Filter domains by their sources' creation time
+    pub target_of_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter domains by their hosts
+    pub ips: Option<Or<IpNetwork>>,
+
+    /// Filter domains by their hosts' creation time
+    pub ips_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter domains by their hosts' tags
+    pub ips_tags: Option<Or<String>>,
+
+    /// Filter domains by their hosts' OS
+    pub ips_os: Option<Or<OsType>>,
 }
 
 /// AST for host specific filter
@@ -48,6 +81,48 @@ pub struct HostAST {
 
     /// Filter by ip address
     pub ips: Option<Or<IpNetwork>>,
+
+    /// Filter hosts by their OS
+    pub os: Option<Or<OsType>>,
+
+    /// Filter hosts by their ports
+    pub ports: Option<Or<MaybeRange<u16>>>,
+
+    /// Filter hosts by their ports' protocols
+    pub ports_protocols: Option<Or<PortProtocol>>,
+
+    /// Filter hosts by their ports' tags
+    pub ports_tags: Option<Or<String>>,
+
+    /// Filter hosts by their ports' creation time
+    pub ports_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter hosts by their services
+    pub services: Option<Or<String>>,
+
+    /// Filter hosts by their services' ports
+    pub services_ports: Option<Or<MaybeRange<u16>>>,
+
+    /// Filter hosts by their services' protocols
+    pub services_protocols: Option<Or<PortProtocol>>,
+
+    /// Filter hosts by their services' tags
+    pub services_tags: Option<Or<String>>,
+
+    /// Filter hosts by their services' creation time
+    pub services_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter ports by their services' transport type
+    pub services_transports: Option<Or<ServiceTransport>>,
+
+    /// Filter hosts by their domains' tags
+    pub domains: Option<Or<String>>,
+
+    /// Filter hosts by their domains
+    pub domains_tags: Option<Or<String>>,
+
+    /// Filter hosts by their domains
+    pub domains_created_at: Option<Or<Range<DateTime<Utc>>>>,
 }
 
 /// AST for port specific filter
@@ -65,8 +140,29 @@ pub struct PortAST {
     /// Filter by ip address
     pub ips: Option<Or<IpNetwork>>,
 
+    /// Filter ports by their hosts' creation time
+    pub ips_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter ports by their hosts' tags
+    pub ips_tags: Option<Or<String>>,
+
+    /// Filter ports by their hosts' OS
+    pub ips_os: Option<Or<OsType>>,
+
     /// Filter by protocols
     pub protocols: Option<Or<PortProtocol>>,
+
+    /// Filter ports by their services
+    pub services: Option<Or<String>>,
+
+    /// Filter ports by their services' tags
+    pub services_tags: Option<Or<String>>,
+
+    /// Filter ports by their services' creation time
+    pub services_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter ports by their services' transport type
+    pub services_transports: Option<Or<ServiceTransport>>,
 }
 
 /// AST for service specific filter
@@ -81,11 +177,96 @@ pub struct ServiceAST {
     /// Filter by ip address
     pub ips: Option<Or<IpNetwork>>,
 
+    /// Filter services by their hosts' creation time
+    pub ips_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter services by their hosts' tags
+    pub ips_tags: Option<Or<String>>,
+
+    /// Filter services by their hosts' OS
+    pub ips_os: Option<Or<OsType>>,
+
     /// Filter by ports
     pub ports: Option<Or<MaybeRange<u16>>>,
 
+    /// Filter services by their ports' tags
+    pub ports_tags: Option<Or<String>>,
+
+    /// Filter services by their ports' creation time
+    pub ports_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter services by their ports' protocols
+    pub protocols: Option<Or<PortProtocol>>,
+
     /// Filter by service name
     pub services: Option<Or<String>>,
+
+    /// Filter services by their transport types
+    pub transport: Option<Or<ServiceTransport>>,
+}
+
+/// AST for http service specific filter
+#[derive(Default, Debug)]
+pub struct HttpServiceAST {
+    /// Filter by tags
+    pub tags: Option<Or<String>>,
+
+    /// Filter by creation time
+    pub created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter by ip address
+    pub ips: Option<Or<IpNetwork>>,
+
+    /// Filter http services by their hosts' creation time
+    pub ips_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter http services by their hosts' tags
+    pub ips_tags: Option<Or<String>>,
+
+    /// Filter http services by their hosts' OS
+    pub ips_os: Option<Or<OsType>>,
+
+    /// Filter http services by ports
+    pub ports: Option<Or<MaybeRange<u16>>>,
+
+    /// Filter http services by their ports' tags
+    pub ports_tags: Option<Or<String>>,
+
+    /// Filter http services by their ports' creation time
+    pub ports_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter hosts by their ports' protocols
+    pub ports_protocols: Option<Or<PortProtocol>>,
+
+    /// Filter http services by their domains' tags
+    pub domains: Option<Or<String>>,
+
+    /// Filter http services by their domains
+    pub domains_tags: Option<Or<String>>,
+
+    /// Filter http services by their domains
+    pub domains_created_at: Option<Or<Range<DateTime<Utc>>>>,
+
+    /// Filter by HTTP service name
+    pub http_services: Option<Or<String>>,
+
+    /// Filter by HTTP service base path
+    pub base_paths: Option<Or<String>>,
+
+    /// Filter http services by TLS or non-TLS
+    pub tls: Option<Or<bool>>,
+
+    /// Filter http services by required SNI or non-required SNI
+    pub sni: Option<Or<bool>>,
+}
+
+/// Service transport protocol. See `protocols` field in [crate::models::Service].
+#[derive(Debug)]
+pub enum ServiceTransport {
+    /// Raw unencrypted traffic
+    Raw,
+    /// TLS encrypted traffic
+    Tls,
 }
 
 /// An error encountered while parsing a filter ast

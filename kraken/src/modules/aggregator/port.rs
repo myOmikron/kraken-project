@@ -1,12 +1,25 @@
-use rorm::prelude::{ForeignModel, ForeignModelByField};
-use rorm::{and, insert, query, update, FieldAccess, Model, Patch};
-use tokio::sync::{mpsc, oneshot};
+use rorm::and;
+use rorm::insert;
+use rorm::prelude::ForeignModel;
+use rorm::prelude::ForeignModelByField;
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
+use rorm::Patch;
+use tokio::sync::mpsc;
+use tokio::sync::oneshot;
 use uuid::Uuid;
 
 use crate::api::handler::ports::schema::SimplePort;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::{Host, Port, PortCertainty, PortProtocol, Workspace};
+use crate::models::convert::FromDb;
+use crate::models::Host;
+use crate::models::Port;
+use crate::models::PortCertainty;
+use crate::models::PortProtocol;
+use crate::models::Workspace;
 use crate::modules::aggregator::PortAggregationData;
 
 pub async fn run_port_aggregator(
@@ -75,8 +88,8 @@ async fn aggregate(data: PortAggregationData) -> Result<Uuid, rorm::Error> {
                     port: SimplePort {
                         uuid: port.uuid,
                         port: data.port,
-                        protocol: data.protocol,
-                        certainty: data.certainty,
+                        protocol: FromDb::from_db(data.protocol),
+                        certainty: FromDb::from_db(data.certainty),
                         host: data.host,
                         comment: String::new(),
                         workspace: data.workspace,

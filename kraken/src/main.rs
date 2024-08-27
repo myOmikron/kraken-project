@@ -8,7 +8,7 @@
 //!
 //! ## Leeches
 //! Leeches are the workers of kraken.
-//! Kraken for it self, does not collect any data.
+//! Kraken for itself, does not collect any data.
 #![warn(missing_docs, clippy::unwrap_used, clippy::expect_used)]
 #![cfg_attr(
     feature = "rorm-main",
@@ -18,26 +18,38 @@
 use std::fs::read_to_string;
 use std::io;
 use std::io::Write;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+use std::sync::RwLock;
 
 use actix_toolbox::logging::setup_logging;
 use actix_web::cookie::Key;
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
-use clap::{Parser, Subcommand};
+use clap::Parser;
+use clap::Subcommand;
 use kraken::api::server;
 use kraken::chan::dehashed_manager::start_dehashed_manager;
-use kraken::chan::global::{GlobalChan, GLOBAL};
+use kraken::chan::global::GlobalChan;
+use kraken::chan::global::GLOBAL;
 use kraken::chan::leech_manager::LeechManager;
 use kraken::chan::settings_manager::start_settings_manager;
 use kraken::chan::ws_manager::chan::start_ws_manager;
 use kraken::config::Config;
-use kraken::models::{User, UserPermission};
+use kraken::config::VAR_DIR;
+use kraken::models::User;
+use kraken::models::UserPermission;
 use kraken::modules::aggregator::Aggregator;
-use kraken::modules::cache::WorkspaceCache;
+use kraken::modules::cache::EditorCaches;
+use kraken::modules::cache::UserCache;
+use kraken::modules::cache::WorkspaceUsersCache;
+use kraken::modules::editor::EditorSync;
+use kraken::modules::media_files::start_file_cleanup;
 use kraken::modules::tls::TlsManager;
 use kraken::rpc::server::start_rpc_server;
-use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
+use rorm::cli;
+use rorm::Database;
+use rorm::DatabaseConfiguration;
+use rorm::DatabaseDriver;
 
 /// The subcommands of kraken
 #[derive(Subcommand)]
@@ -108,8 +120,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let dehashed = RwLock::new(start_dehashed_manager(&settings).await?);
 
             let tls = Arc::new(
-                TlsManager::load("/var/lib/kraken")
-                    .map_err(|e| format!("Failed to initialize tls: {e}"))?,
+                TlsManager::load(VAR_DIR).map_err(|e| format!("Failed to initialize tls: {e}"))?,
             );
 
             let leeches = LeechManager::start(db.clone(), tls.clone())
@@ -117,10 +128,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .map_err(|e| format!("Failed to query initial leeches: {e}"))?;
 
             let ws = start_ws_manager().await;
+            start_file_cleanup()
+                .await
+                .map_err(|e| format!("Failed to initialize media file cleanup: {e}"))?;
 
-            let workspace_cache = WorkspaceCache::default();
+            let workspace_users_cache = WorkspaceUsersCache::default();
+            let user_cache = UserCache::default();
+            let editor_cache = EditorCaches::default();
 
             let aggregator = Aggregator::default();
+
+            let editor_sync = EditorSync::start();
 
             GLOBAL.init(GlobalChan {
                 db,
@@ -129,15 +147,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 settings,
                 dehashed,
                 tls,
-                workspace_cache,
+                workspace_users_cache,
+                user_cache,
+                editor_cache,
                 aggregator,
+                editor_sync,
             });
 
-            start_rpc_server(&config).map_err(|e| format!("RPC listen address is invalid: {e}"))?;
+            let rpc_handle = start_rpc_server(&config)
+                .map_err(|e| format!("RPC listen address is invalid: {e}"))?;
 
             server::start_server(&config).await?;
 
-            // TODO: Stop rpc server as it also has access to the database
+            // Stop the RPC server as the webserver has already shut down
+            rpc_handle.abort();
             GLOBAL.db.clone().close().await;
         }
         Command::Keygen => {

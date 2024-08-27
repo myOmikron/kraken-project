@@ -3,21 +3,28 @@
 use std::collections::HashMap;
 use std::convert::Infallible;
 use std::str::FromStr;
-use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::Arc;
+use std::sync::RwLock;
+use std::sync::RwLockReadGuard;
+use std::sync::RwLockWriteGuard;
 use std::time::Duration;
 
 use kraken_proto::req_attack_service_client::ReqAttackServiceClient;
-use log::{debug, error, warn};
+use log::debug;
+use log::error;
+use log::warn;
 use rand::prelude::IteratorRandom;
 use rand::thread_rng;
 use rorm::prelude::*;
-use rorm::{query, Database};
+use rorm::query;
+use rorm::Database;
 use thiserror::Error;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
 use tonic::codegen::http::uri::InvalidUri;
-use tonic::transport::{Channel, Uri};
+use tonic::transport::Channel;
+use tonic::transport::Uri;
 use uuid::Uuid;
 
 pub use self::errors::*;

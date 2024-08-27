@@ -30,66 +30,6 @@ message BruteforceSubdomainResponse {
 }
 
 /*
--- TcpPortScan
- */
-
-// Request for starting a tcp port scan attack
-message TcpPortScanRequest {
-  // A unique id that identifier the attack
-  string attack_uuid = 1;
-  // The ip addresses / networks to scan
-  repeated attacks.shared.NetOrAddress targets = 2;
-  // List of single ports and port ranges
-  //
-  // If no values are supplied, 1-65535 is used as default
-  repeated PortOrRange ports = 3;
-  // The time to wait until a connection is considered failed.
-  //
-  // The timeout is specified in milliseconds.
-  uint64 timeout = 4;
-  // The concurrent task limit
-  uint32 concurrent_limit = 5;
-  // The number of times the connection should be retried if it failed.
-  uint32 max_retries = 6;
-  // The interval that should be wait between retries on a port.
-  //
-  // The interval is specified in milliseconds.
-  uint64 retry_interval = 7;
-  // Skips the initial icmp check.
-  //
-  // All hosts are assumed to be reachable
-  bool skip_icmp_check = 8;
-}
-
-// An (inclusive) range of ports
-message PortRange {
-  // The first port number in this range
-  uint32 start = 1;
-  // The last port number in this range
-  uint32 end = 2;
-}
-
-// Either a single port or a range of them
-message PortOrRange {
-  // Workaround field to store a `oneof`
-  oneof port_or_range {
-    // A single port
-    uint32 single = 1;
-
-    // An (inclusive) range of ports
-    PortRange range = 2;
-  }
-}
-
-// Response streamed by an tcp port scan attack
-message TcpPortScanResponse {
-  // Address
-  attacks.shared.Address address = 1;
-  // Port value
-  uint32 port = 2;
-}
-
-/*
 --- Certificate Transparency
  */
 
@@ -119,29 +59,73 @@ message CertificateTransparencyResponse {
  * Service Detection
  */
 
-// Service detection request
+// Request for stating a tcp service detection
 message ServiceDetectionRequest {
   // A unique id that identifier the attack
   string attack_uuid = 1;
-  // The ip address to connect to
-  attacks.shared.Address address = 2;
-  // The port to connect to
-  uint32 port = 3;
+  // The ip addresses / networks to scan
+  repeated attacks.shared.NetOrAddress targets = 2;
+  // List of single ports and port ranges
+  //
+  // If no values are supplied, 1-65535 is used as default
+  repeated PortOrRange ports = 3;
+  // The time to wait until a connection is considered failed.
+  //
+  // The timeout is specified in milliseconds.
+  uint64 connect_timeout = 4;
   // The interval to wait for a response after connecting and sending an optional payload.
   // Specified in milliseconds.
-  uint64 timeout = 4;
+  uint64 receive_timeout = 5;
+  // The number of times the connection should be retried if it failed.
+  uint32 max_retries = 6;
+  // The interval that should be wait between retries on a port.
+  //
+  // The interval is specified in milliseconds.
+  uint64 retry_interval = 7;
+  // The concurrent task limit
+  uint32 concurrent_limit = 8;
+  // Skips the initial icmp check.
+  //
+  // All hosts are assumed to be reachable
+  bool skip_icmp_check = 9;
+}
+
+// An (inclusive) range of ports
+message PortRange {
+  // The first port number in this range
+  uint32 start = 1;
+  // The last port number in this range
+  uint32 end = 2;
+}
+
+// Either a single port or a range of them
+message PortOrRange {
+  // Workaround field to store a `oneof`
+  oneof port_or_range {
+    // A single port
+    uint32 single = 1;
+
+    // An (inclusive) range of ports
+    PortRange range = 2;
+  }
 }
 
 // Response to a service detection request
 message ServiceDetectionResponse {
   // The ip address the service was found on
-  attacks.shared.Address address = 3;
+  attacks.shared.Address address = 1;
   // The port the service was found on
-  uint32 port = 4;
-  // Indicates how many services are given and how they are to be interpreted
-  ServiceCertainty responseType = 1;
-  // List of services, the interpretation of this field depends on the `responseType`
-  repeated string services = 2;
+  uint32 port = 2;
+  // Indicates how many tcp services are given and how they are to be interpreted
+  ServiceCertainty tcpCertainty = 3;
+  // List of tcp services, the interpretation of this field depends on the `tcpCertainty`
+  repeated string tcpServices = 4;
+  // Does the port speak tls? If this is `false`, `tlsCertainty` and `tlsServices` should be ignored.
+  bool isTls = 5;
+  // Indicates how many tls services are given and how they are to be interpreted
+  ServiceCertainty tlsCertainty = 6;
+  // List of tls services, the interpretation of this field depends on the `tlsCertainty`
+  repeated string tlsServices = 7;
 }
 
 // Indicates how many services are returned in a ServiceCertainty and how they are to be interpreted
@@ -158,8 +142,8 @@ enum ServiceCertainty {
 message UdpServiceDetectionRequest {
   // A unique id that identifier the attack
   string attack_uuid = 1;
-  // The ip address to connect to
-  attacks.shared.Address address = 2;
+  // The ip addresses / networks to scan
+  repeated attacks.shared.NetOrAddress targets = 2;
   // List of single ports and port ranges
   //
   // If no values are supplied, 1-65535 is used as default
@@ -235,7 +219,7 @@ message DnsResolutionResponse {
 /*
  * DNS TXT scan
  */
- message DnsTxtScanRequest {
+message DnsTxtScanRequest {
   // A unique id that identifier the attack
   string attack_uuid = 1;
   // The domains to resolve
@@ -246,6 +230,47 @@ message DnsResolutionResponse {
 message DnsTxtScanResponse {
   // Found record
   shared.DnsTxtScan record = 1;
+}
+
+/*
+ * OS detection
+ */
+message OsDetectionRequest {
+  // A unique id that identifier the attack
+  string attack_uuid = 1;
+  // The ip addresses / networks to scan
+  repeated attacks.shared.NetOrAddress targets = 2;
+  // set to skip open port detection and use this port for TCP fingerprinting
+  optional uint32 fingerprint_port = 3;
+  // set to perform OS detection through SSH header
+  optional uint32 ssh_port = 4;
+  // timeout for TCP fingerprint detection task, in ms
+  uint64 fingerprint_timeout = 5;
+  // timeout for establishing an SSH connection, if ssh_port is set, in ms
+  uint64 ssh_connect_timeout = 6;
+  // timeout for the full SSH os detection task, in ms
+  uint64 ssh_timeout = 7;
+  // If fingerprint_port is not set, timeout for each port how long to wait for ACKs
+  uint64 port_ack_timeout = 8;
+  // If fingerprint_port is not set, maximum parallel TCP SYN requests
+  uint32 port_parallel_syns = 9;
+  // Maximum of concurrent host scans that should be spawned
+  //
+  // 0 means, that there should be no limit.
+  uint32 concurrent_limit = 10;
+}
+
+// OS detection response
+message OsDetectionResponse {
+  // the hosts that we detected the OS on
+  attacks.shared.Address host = 1;
+  // The operating system type that was deduced here
+  shared.OperatingSystem os = 2;
+  // Additional human readable hints
+  repeated string hints = 3;
+  // For operating system types other than unknown, this may contain detected version(s) or names -
+  // can be multiple in case different probes report different results.
+  repeated string versions = 4;
 }
 
 /*
@@ -472,13 +497,13 @@ enum TestSSLSeverity {
 // Implemented by leech; allows kraken to request attack from a leech
 service ReqAttackService {
   rpc BruteforceSubdomains(BruteforceSubdomainRequest) returns (stream BruteforceSubdomainResponse);
-  rpc RunTcpPortScan(TcpPortScanRequest) returns (stream TcpPortScanResponse);
   rpc QueryCertificateTransparency(CertificateTransparencyRequest) returns (CertificateTransparencyResponse);
-  rpc ServiceDetection(ServiceDetectionRequest) returns (ServiceDetectionResponse);
+  rpc ServiceDetection(ServiceDetectionRequest) returns (stream ServiceDetectionResponse);
   rpc UdpServiceDetection(UdpServiceDetectionRequest) returns (stream UdpServiceDetectionResponse);
   rpc HostsAliveCheck(HostsAliveRequest) returns (stream HostsAliveResponse);
   rpc DnsResolution(DnsResolutionRequest) returns (stream DnsResolutionResponse);
   rpc DnsTxtScan(DnsTxtScanRequest) returns (stream DnsTxtScanResponse);
+  rpc OsDetection(OsDetectionRequest) returns (stream OsDetectionResponse);
   rpc TestSSL(TestSSLRequest) returns (TestSSLResponse);
 }
 
@@ -498,12 +523,10 @@ message PushAttackRequest {
   oneof response {
     // Response streamed by an bruteforce subdomain attack
     RepeatedBruteforceSubdomainResponse bruteforce_subdomain = 3;
-    // Response streamed by an tcp port scan attack
-    RepeatedTcpPortScanResponse tcp_port_scan = 4;
     // Response to a certificate transparency request
     CertificateTransparencyResponse certificate_transparency = 5;
     // Response to a service detection request
-    ServiceDetectionResponse service_detection = 6;
+    RepeatedServiceDetectionResponse service_detection = 6;
     // Response for checking which hosts are alive
     RepeatedHostsAliveResponse hosts_alive = 7;
     // Response streamed by a dns resolution attack
@@ -512,8 +535,10 @@ message PushAttackRequest {
     RepeatedUdpServiceDetectionResponse udp_service_detection = 9;
     // Response streamed by a dns txt scan attack
     RepeatedDnsTxtScanResponse dns_txt_scan = 10;
+    // Response to a operating system detection request
+    RepeatedOsDetectionResponse os_detection = 11;
     // Response for running testssl.sh
-    TestSSLResponse testssl = 11;
+    TestSSLResponse testssl = 12;
   }
 }
 
@@ -522,10 +547,10 @@ message RepeatedBruteforceSubdomainResponse {
   // repeated BruteforceSubdomainResponse
   repeated BruteforceSubdomainResponse responses = 1;
 }
-// Thin wrapper to have a `repeated TcpPortScanResponse` in a `oneof`
-message RepeatedTcpPortScanResponse {
-  // repeated TcpPortScanResponse
-  repeated TcpPortScanResponse responses = 1;
+// Thin wrapper to have a `repeated ServiceDetectionResponse` in a `oneof`
+message RepeatedServiceDetectionResponse {
+  // repeated ServiceDetectionResponse
+  repeated ServiceDetectionResponse responses = 1;
 }
 // Thin wrapper to have a `repeated HostsAliveResponse` in a `oneof`
 message RepeatedHostsAliveResponse {
@@ -546,6 +571,11 @@ message RepeatedUdpServiceDetectionResponse {
 message RepeatedDnsTxtScanResponse {
   // repeated DnsTxtScanResponse
   repeated DnsTxtScanResponse responses = 1;
+}
+// Thin wrapper to have a `repeated OsDetectionResponse` in a `oneof`
+message RepeatedOsDetectionResponse {
+  // repeated OsDetectionResponse
+  repeated OsDetectionResponse responses = 1;
 }
 
 // Response to a manually pushed attack
@@ -585,8 +615,6 @@ message AnyAttackResponse {
   oneof response {
     // Response streamed by an bruteforce subdomain attack
     BruteforceSubdomainResponse bruteforce_subdomain = 2;
-    // Response streamed by an tcp port scan attack
-    TcpPortScanResponse tcp_port_scan = 3;
     // Response to a certificate transparency request
     CertificateTransparencyResponse certificate_transparency = 4;
     // Response to a service detection request
@@ -599,8 +627,10 @@ message AnyAttackResponse {
     UdpServiceDetectionResponse udp_service_detection = 8;
     // Response streamed by a dns txt scan attack
     DnsTxtScanResponse dns_txt_scan = 9;
+    // Response to a operating system detection request
+    OsDetectionResponse os_detection = 10;
     // Response for running testssl.sh
-    TestSSLResponse testssl = 10;
+    TestSSLResponse testssl = 11;
   }
 }
 

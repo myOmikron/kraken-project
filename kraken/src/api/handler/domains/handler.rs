@@ -2,38 +2,70 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Write;
 
-use actix_web::web::{Json, Path};
-use actix_web::{delete, get, post, put, HttpResponse};
+use actix_web::delete;
+use actix_web::get;
+use actix_web::post;
+use actix_web::put;
+use actix_web::web::Json;
+use actix_web::web::Path;
+use actix_web::HttpResponse;
 use futures::TryStreamExt;
-use rorm::conditions::DynamicCollection;
+use rorm::and;
 use rorm::db::sql::value::Value;
+use rorm::field;
+use rorm::insert;
 use rorm::internal::field::Field;
 use rorm::model::PatchSelector;
+use rorm::or;
 use rorm::prelude::ForeignModelByField;
-use rorm::{and, field, insert, or, query, update, FieldAccess, Model};
+use rorm::query;
+use rorm::update;
+use rorm::FieldAccess;
+use rorm::Model;
 use uuid::Uuid;
 
 use crate::api::extractors::SessionUser;
-use crate::api::handler::aggregation_source::schema::{
-    FullAggregationSource, SimpleAggregationSource,
-};
-use crate::api::handler::common::error::{ApiError, ApiResult};
-use crate::api::handler::common::schema::{
-    DomainResultsPage, PathUuid, SimpleTag, TagType, UuidResponse,
-};
+use crate::api::handler::aggregation_source::schema::FullAggregationSource;
+use crate::api::handler::aggregation_source::schema::SimpleAggregationSource;
+use crate::api::handler::common::error::ApiError;
+use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::DomainResultsPage;
+use crate::api::handler::common::schema::PathUuid;
+use crate::api::handler::common::schema::SimpleTag;
+use crate::api::handler::common::schema::UuidResponse;
 use crate::api::handler::common::utils::get_page_params;
-use crate::api::handler::domains::schema::{
-    CreateDomainRequest, DomainRelations, FullDomain, GetAllDomainsQuery, PathDomain, SimpleDomain,
-    UpdateDomainRequest,
-};
+use crate::api::handler::common::utils::query_many_severities;
+use crate::api::handler::common::utils::query_single_severity;
+use crate::api::handler::domains::schema::CreateDomainRequest;
+use crate::api::handler::domains::schema::DomainRelations;
+use crate::api::handler::domains::schema::FullDomain;
+use crate::api::handler::domains::schema::GetAllDomainsQuery;
+use crate::api::handler::domains::schema::PathDomain;
+use crate::api::handler::domains::schema::SimpleDomain;
+use crate::api::handler::domains::schema::UpdateDomainRequest;
+use crate::api::handler::findings::schema::ListFindings;
 use crate::api::handler::hosts::schema::SimpleHost;
+use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::chan::global::GLOBAL;
-use crate::chan::ws_manager::schema::{AggregationType, WsMessage};
-use crate::models::{
-    AggregationSource, AggregationTable, Domain, DomainDomainRelation, DomainGlobalTag,
-    DomainHostRelation, DomainWorkspaceTag, GlobalTag, Host, ManualDomain, Workspace, WorkspaceTag,
-};
-use crate::modules::filter::{DomainAST, GlobalAST};
+use crate::chan::ws_manager::schema::AggregationType;
+use crate::chan::ws_manager::schema::WsMessage;
+use crate::models::convert::FromDb;
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::Domain;
+use crate::models::DomainDomainRelation;
+use crate::models::DomainGlobalTag;
+use crate::models::DomainHostRelation;
+use crate::models::DomainWorkspaceTag;
+use crate::models::FindingAffected;
+use crate::models::GlobalTag;
+use crate::models::Host;
+use crate::models::HttpService;
+use crate::models::ManualDomain;
+use crate::models::Workspace;
+use crate::models::WorkspaceTag;
+use crate::modules::filter::DomainAST;
+use crate::modules::filter::GlobalAST;
 use crate::modules::raw_query::RawQueryBuilder;
 use crate::query_tags;
 
@@ -139,21 +171,30 @@ pub async fn get_all_domains(
     )
     .await?;
 
+    let severities = query_many_severities(
+        &mut tx,
+        FindingAffected::F.domain,
+        domains.iter().map(|x| x.uuid),
+    )
+    .await?;
+
+    tx.commit().await?;
+
     let items = domains
         .into_iter()
         .map(|x| FullDomain {
             uuid: x.uuid,
             domain: x.domain,
-            certainty: x.certainty,
+            certainty: FromDb::from_db(x.certainty),
             comment: x.comment,
             workspace: *x.workspace.key(),
             tags: tags.remove(&x.uuid).unwrap_or_default(),
             sources: sources.remove(&x.uuid).unwrap_or_default(),
+            severity: severities.get(&x.uuid).copied().map(FromDb::from_db),
             created_at: x.created_at,
         })
         .collect();
 
-    tx.commit().await?;
     Ok(Json(DomainResultsPage {
         items,
         limit,
@@ -198,12 +239,7 @@ pub async fn get_domain(
     let mut tags: Vec<_> = query!(&mut tx, (DomainGlobalTag::F.global_tag as GlobalTag,))
         .condition(DomainGlobalTag::F.domain.equals(path.d_uuid))
         .stream()
-        .map_ok(|(x,)| SimpleTag {
-            uuid: x.uuid,
-            name: x.name,
-            color: x.color.into(),
-            tag_type: TagType::Global,
-        })
+        .map_ok(|(tag,)| SimpleTag::from(tag))
         .try_collect()
         .await?;
 
@@ -213,12 +249,7 @@ pub async fn get_domain(
     )
     .condition(DomainWorkspaceTag::F.domain.equals(path.d_uuid))
     .stream()
-    .map_ok(|(x,)| SimpleTag {
-        uuid: x.uuid,
-        name: x.name,
-        color: x.color.into(),
-        tag_type: TagType::Workspace,
-    })
+    .map_ok(|(tag,)| SimpleTag::from(tag))
     .try_collect()
     .await?;
 
@@ -231,16 +262,19 @@ pub async fn get_domain(
         .try_collect()
         .await?;
 
+    let severity = query_single_severity(&mut tx, FindingAffected::F.domain, path.d_uuid).await?;
+
     tx.commit().await?;
 
     Ok(Json(FullDomain {
         uuid: path.d_uuid,
         domain: domain.domain,
         comment: domain.comment,
-        certainty: domain.certainty,
+        certainty: FromDb::from_db(domain.certainty),
         workspace: path.w_uuid,
         tags,
         sources,
+        severity: severity.map(FromDb::from_db),
         created_at: domain.created_at,
     }))
 }
@@ -267,9 +301,15 @@ pub async fn create_domain(
 ) -> ApiResult<Json<UuidResponse>> {
     let CreateDomainRequest { domain } = req.into_inner();
     let PathUuid { uuid: workspace } = path.into_inner();
-    Ok(Json(UuidResponse {
-        uuid: ManualDomain::insert(&GLOBAL.db, workspace, user, domain).await?,
-    }))
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, workspace, user).await? {
+        return Err(ApiError::MissingPrivileges)?;
+    }
+    let uuid = ManualDomain::insert(&mut tx, workspace, user, domain).await?;
+    tx.commit().await?;
+
+    Ok(Json(UuidResponse { uuid }))
 }
 
 /// Update a domain
@@ -487,7 +527,7 @@ pub async fn get_domain_sources(
     Ok(Json(source))
 }
 
-/// Get a host's direct relations
+/// Get a domain's direct relations
 #[utoipa::path(
     tag = "Domains",
     context_path = "/api/v1",
@@ -531,7 +571,7 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
             vec.push(SimpleDomain {
                 uuid: d.uuid,
                 domain: d.domain,
-                certainty: d.certainty,
+                certainty: FromDb::from_db(d.certainty),
                 comment: d.comment,
                 workspace: *d.workspace.key(),
                 created_at: d.created_at,
@@ -560,15 +600,36 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
             .push(SimpleHost {
                 uuid: h.uuid,
                 ip_addr: h.ip_addr.ip(),
-                os_type: h.os_type,
+                os_type: FromDb::from_db(h.os_type),
                 comment: h.comment,
                 response_time: h.response_time,
-                certainty: h.certainty,
+                certainty: FromDb::from_db(h.certainty),
                 workspace: *h.workspace.key(),
                 created_at: h.created_at,
             });
         }
     }
+
+    let http_services = query!(&mut tx, HttpService)
+        .condition(HttpService::F.domain.equals(path.d_uuid))
+        .stream()
+        .map_ok(|service| SimpleHttpService {
+            uuid: service.uuid,
+            name: service.name,
+            version: service.version,
+            domain: service.domain.map(|fm| *fm.key()),
+            host: *service.host.key(),
+            port: *service.port.key(),
+            base_path: service.base_path,
+            tls: service.tls,
+            sni_required: service.sni_required,
+            comment: service.comment,
+            certainty: FromDb::from_db(service.certainty),
+            workspace: *service.workspace.key(),
+            created_at: service.created_at,
+        })
+        .try_collect()
+        .await?;
 
     tx.commit().await?;
 
@@ -577,5 +638,38 @@ pub async fn get_domain_relations(path: Path<PathDomain>) -> ApiResult<Json<Doma
         target_domains,
         direct_hosts,
         indirect_hosts,
+        http_services,
     }))
+}
+
+/// Get a domain's findings
+#[utoipa::path(
+    tag = "Domains",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "The domain's findings", body = ListFindings),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathDomain),
+    security(("api_key" = []))
+)]
+#[get("/workspaces/{w_uuid}/domains/{d_uuid}/findings")]
+pub async fn get_domain_findings(
+    path: Path<PathDomain>,
+    SessionUser(u_uuid): SessionUser,
+) -> ApiResult<Json<ListFindings>> {
+    let PathDomain { w_uuid, d_uuid } = path.into_inner();
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, u_uuid).await? {
+        return Err(ApiError::MissingPrivileges);
+    }
+
+    let findings =
+        ListFindings::query_through_affected(&mut tx, w_uuid, FindingAffected::F.domain, d_uuid)
+            .await?;
+
+    tx.commit().await?;
+    Ok(Json(findings))
 }

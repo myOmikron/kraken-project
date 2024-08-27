@@ -2,10 +2,14 @@ use std::str::FromStr;
 
 use serde::de::StdError;
 
+use crate::models::OsType;
 use crate::models::PortProtocol;
 use crate::modules::filter::lexer::Token;
 use crate::modules::filter::parser::cursor::Cursor;
-use crate::modules::filter::{MaybeRange, ParseError, Range};
+use crate::modules::filter::MaybeRange;
+use crate::modules::filter::ParseError;
+use crate::modules::filter::Range;
+use crate::modules::filter::ServiceTransport;
 
 /// Trait alias for `Fn(&mut Cursor) -> Result<T, ParseError>` and `Copy`
 pub trait ValueParser<T>: Fn(&mut Cursor) -> Result<T, ParseError> + Copy {}
@@ -30,9 +34,10 @@ where
 /// Parse a single [`PortProtocol`]
 pub fn parse_port_protocol(tokens: &mut Cursor) -> Result<PortProtocol, ParseError> {
     let string = tokens.next_value()?;
+    // don't forget to update docs/user/filter.md and frontend if you extend this!
     if string.eq_ignore_ascii_case("tcp") {
         Ok(PortProtocol::Tcp)
-    } else if string.eq_ignore_ascii_case("ucp") {
+    } else if string.eq_ignore_ascii_case("udp") {
         Ok(PortProtocol::Udp)
     } else if string.eq_ignore_ascii_case("sctp") {
         Ok(PortProtocol::Sctp)
@@ -41,6 +46,59 @@ pub fn parse_port_protocol(tokens: &mut Cursor) -> Result<PortProtocol, ParseErr
     } else {
         Err(ParseError::ParseValue(
             format!("Unknown port protocol: {string}").into(),
+        ))
+    }
+}
+
+/// Parse a single [`ServiceTransport`]
+pub fn parse_service_transport(tokens: &mut Cursor) -> Result<ServiceTransport, ParseError> {
+    let string = tokens.next_value()?;
+    // don't forget to update docs/user/filter.md and frontend if you extend this!
+    if string.eq_ignore_ascii_case("raw") {
+        Ok(ServiceTransport::Raw)
+    } else if string.eq_ignore_ascii_case("tls") {
+        Ok(ServiceTransport::Tls)
+    } else {
+        Err(ParseError::ParseValue(
+            format!("Unknown service transport: {string}").into(),
+        ))
+    }
+}
+
+/// Parse a single [`OsType`]
+pub fn parse_os_type(tokens: &mut Cursor) -> Result<OsType, ParseError> {
+    let string = tokens.next_value()?;
+    // don't forget to update docs/user/filter.md and frontend if you extend this!
+    if string.eq_ignore_ascii_case("unknown") {
+        Ok(OsType::Unknown)
+    } else if string.eq_ignore_ascii_case("linux") {
+        Ok(OsType::Linux)
+    } else if string.eq_ignore_ascii_case("windows") {
+        Ok(OsType::Windows)
+    } else if string.eq_ignore_ascii_case("apple") {
+        Ok(OsType::Apple)
+    } else if string.eq_ignore_ascii_case("android") {
+        Ok(OsType::Android)
+    } else if string.eq_ignore_ascii_case("freebsd") {
+        Ok(OsType::FreeBSD)
+    } else {
+        Err(ParseError::ParseValue(
+            format!("Unknown OS type: {string}").into(),
+        ))
+    }
+}
+
+/// Parse a boolean (yes/true or no/false)
+pub fn parse_boolean(tokens: &mut Cursor) -> Result<bool, ParseError> {
+    let string = tokens.next_value()?;
+    // don't forget to update docs/user/filter.md and frontend if you extend this!
+    if string.eq_ignore_ascii_case("yes") || string.eq_ignore_ascii_case("true") {
+        Ok(true)
+    } else if string.eq_ignore_ascii_case("no") || string.eq_ignore_ascii_case("false") {
+        Ok(false)
+    } else {
+        Err(ParseError::ParseValue(
+            format!("Expected yes/no/true/false, not: {string}").into(),
         ))
     }
 }

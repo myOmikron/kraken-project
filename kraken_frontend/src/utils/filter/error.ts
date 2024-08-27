@@ -10,8 +10,6 @@ export type ErrorData =
 
 /**
  * An error encountered while parsing a filter ast
- *
- * @member data The different types of {@link ParserError} and their unique data
  */
 export default class ParserError extends Error {
     /** The different types of {@link ParserError} and their unique data */
@@ -29,6 +27,8 @@ export default class ParserError extends Error {
                         return `Unexpected token: ${data.got.type}`;
                     case "unknownColumn":
                         return `Unknown column: ${data.column}`;
+                    case "parseValue":
+                        return `Failed to parse value: ${data.msg}`;
                 }
             })(),
         );

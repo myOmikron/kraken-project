@@ -1,0 +1,80 @@
+.context-menu-wrapper {
+    cursor: context-menu;
+}
+.context-menu-wrapper.unavailabe {
+    cursor: pointer;
+}
+
+.context-menu {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    min-width: 240px;
+    border-radius: 0.5em;
+}
+
+.context-menu li:first-child {
+    border-top-left-radius: 0.5em;
+    border-top-right-radius: 0.5em;
+}
+
+.context-menu li:last-child {
+    border-bottom-left-radius: 0.5em;
+    border-bottom-right-radius: 0.5em;
+}
+
+.context-menu li {
+    margin: 0;
+    padding: 0;
+    height: 3em;
+    line-height: 3em;
+    padding-left: 2.75em;
+    padding-right: 1em;
+    list-style: none;
+    white-space: pre;
+    display: flex;
+    align-items: center;
+    position: relative;
+    cursor: default;
+}
+
+.context-menu li.disabled {
+    color: rgba(255, 255, 255, 0.5);
+    --primary-op: var(--grey-blue-op);
+}
+
+.context-menu li.disabled .icon {
+    opacity: 0.5;
+}
+
+.context-menu li:focus {
+    outline: none;
+}
+
+.context-menu:not(.keyboard-nav) li:hover,
+.context-menu:not(:hover) li:focus,
+.context-menu.keyboard-nav li:focus,
+.context-menu.keyboard-nav li.group.open {
+    background-color: var(--primary-op);
+}
+
+.context-menu li > .icon:first-child {
+    position: absolute;
+    left: 0.5em;
+    width: 2em;
+}
+
+.context-menu li pre {
+    background-color: var(--grey-blue-op);
+    line-height: 1em;
+    padding: 0.25em;
+    border-radius: 0.5em;
+    color: white;
+}
+
+.context-menu li.group:after {
+    content: "🢒";
+    display: block;
+    flex-grow: 1;
+    text-align: right;
+}

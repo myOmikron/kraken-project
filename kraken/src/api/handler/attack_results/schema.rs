@@ -1,15 +1,15 @@
 use std::net::IpAddr;
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use ipnetwork::IpNetwork;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::models::{
-    DnsRecordType, DnsTxtScanServiceHintType, DnsTxtScanSpfType, DnsTxtScanSummaryType,
-    ServiceCertainty, TestSSLSection, TestSSLSeverity,
-};
+use crate::api::handler::hosts::schema::OsType;
+use crate::api::handler::services::schema::ServiceCertainty;
 
 /// A simple representation of a bruteforce subdomains result
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -32,26 +32,6 @@ pub struct SimpleBruteforceSubdomainsResult {
     /// The type of DNS record
     #[schema(inline)]
     pub dns_record_type: DnsRecordType,
-}
-
-/// A simple representation of a tcp port scan result
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
-pub struct SimpleTcpPortScanResult {
-    /// The primary key
-    pub uuid: Uuid,
-
-    /// The attack which produced this result
-    pub attack: Uuid,
-
-    /// The point in time, this result was produced
-    pub created_at: DateTime<Utc>,
-
-    /// The ip address a port was found on
-    #[schema(value_type = String, example = "127.0.0.1")]
-    pub address: IpNetwork,
-
-    /// The found port
-    pub port: u16,
 }
 
 /// A simple representation of a query certificate transparency result
@@ -313,6 +293,127 @@ pub enum DnsTxtScanEntry {
     },
 }
 
+/// Representation of an OS detection result
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct FullOsDetectionResult {
+    /// The primary key
+    pub uuid: Uuid,
+
+    /// The attack which produced this result
+    pub attack: Uuid,
+
+    /// The point in time, this result was produced
+    pub created_at: DateTime<Utc>,
+
+    /// The ip address a port was found on
+    #[schema(value_type = String, example = "127.0.0.1")]
+    pub host: IpNetwork,
+
+    /// The detected operating system
+    pub os: OsType,
+
+    /// Optional human-readable hints, newline separated (\n)
+    pub hints: String,
+
+    /// Optional detected version numbers, separated by OR (`" OR "`)
+    pub version: String,
+}
+
+/// The type of DNS Record
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, ToSchema)]
+pub enum DnsRecordType {
+    /// [A](crate::rpc::rpc_definitions::shared::dns_record::Record::A) record type
+    A,
+    /// [Aaaa](crate::rpc::rpc_definitions::shared::dns_record::Record::Aaaa) record type
+    Aaaa,
+    /// [Caa](crate::rpc::rpc_definitions::shared::dns_record::Record::GenericRecord) record type
+    Caa,
+    /// [Cname](crate::rpc::rpc_definitions::shared::dns_record::Record::GenericRecord) record type
+    Cname,
+    /// [Mx](crate::rpc::rpc_definitions::shared::dns_record::Record::GenericRecord) record type
+    Mx,
+    /// [Tlsa](crate::rpc::rpc_definitions::shared::dns_record::Record::GenericRecord) record type
+    Tlsa,
+    /// [Txt](crate::rpc::rpc_definitions::shared::dns_record::Record::GenericRecord) record type
+    Txt,
+}
+
+/// The type of DNS TXT scan result for service hints
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, ToSchema)]
+pub enum DnsTxtScanServiceHintType {
+    /// Domain owner might have or use a google account
+    HasGoogleAccount,
+    /// Domain owner might have or use a globalsign account
+    HasGlobalsignAccount,
+    /// Domain owner might have or use globalsign smime email service
+    HasGlobalsignSMime,
+    /// Domain owner might have or use a docusign account
+    HasDocusignAccount,
+    /// Domain owner might have or use a apple account
+    HasAppleAccount,
+    /// Domain owner might have or use a facebook account
+    HasFacebookAccount,
+    /// Domain owner might have or use a hubspot account
+    HasHubspotAccount,
+    /// Domain owner might have or use a microsoft account with MS Dyancmis 365
+    HasMSDynamics365,
+    /// Domain owner might have or use a stripe account
+    HasStripeAccount,
+    /// Domain owner might have or use a onetrust sso
+    HasOneTrustSso,
+    /// Domain owner might have or use a brevo account
+    HasBrevoAccount,
+    /// Can manage Atlassian accounts with emails with this domain
+    OwnsAtlassianAccounts,
+    /// Can manage Zoom accounts with emails with this domain
+    OwnsZoomAccounts,
+    /// E-Mail might be managed by ProtonMail
+    EmailProtonMail,
+}
+
+/// The type of DNS TXT scan result for SPF rules
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, ToSchema)]
+pub enum DnsTxtScanSpfType {
+    /// SPF part: 'all' directive, no other fields set.
+    All,
+    /// SPF part: 'include:DOMAIN' directive, sets `DnsTxtScanSpfEntry::spf_domain`.
+    /// Directive to tell SPF parsers to lookup the referenced DNS entry.
+    Include,
+    /// SPF part: 'a[:DOMAIN][/32][//128]' directive, sets `DnsTxtScanSpfEntry::spf_domain`.
+    /// Directive that allows the A/AAAA IPs under the specified domain to send mails.
+    A,
+    /// SPF part: 'mx[:DOMAIN][/32][//128]' directive, sets `DnsTxtScanSpfEntry::spf_domain`.
+    /// Directive that allows the MX IP under the specified domain to send mails.
+    Mx,
+    /// SPF part: 'ptr[:DOMAIN]' directive, sets `DnsTxtScanSpfEntry::spf_domain`.
+    /// Deprecated, but may allow PTR IPs under the specified domain to send mails.
+    Ptr,
+    /// SPF part: 'ip4:IP' and 'ip6:IP' directive, sets `DnsTxtScanSpfEntry::spf_ip`.
+    /// Allows the exact given IPs or networks to send mails.
+    Ip,
+    /// SPF part: 'exists:DOMAIN', sets `DnsTxtScanSpfEntry::spf_domain`.
+    /// Only allows sending mails if the given DOMAIN resolves to any address.
+    Exists,
+    /// SPF modifier: 'redirect=DOMAIN', sets `DnsTxtScanSpfEntry::spf_domain`.
+    /// Query the given DOMAIN in case no match rules.
+    Redirect,
+    /// SPF modifier: 'exp=DOMAIN', sets `DnsTxtScanSpfEntry::spf_domain`.
+    /// Query the given DOMAIN to see human readable text explaining the SPF rules.
+    Explanation,
+    /// SPF modifier: 'KEY=VALUE'.
+    /// Syntax for future modifiers. Doesn't set domain or ip.
+    Modifier,
+}
+
+/// Indicates what children the DnsTxtScanAttackResult has
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, ToSchema)]
+pub enum DnsTxtScanSummaryType {
+    /// Site verifications, domain keys, etc. that indicate possibly used services
+    ServiceHints,
+    /// SPF records controlling how email is supposed to be handled.
+    Spf,
+}
+
 /// The results of a `testssl.sh` scan
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct FullTestSSLResult {
@@ -372,4 +473,68 @@ pub struct TestSSLFinding {
 
     /// An issue categorized by kraken TODO
     pub issue: (),
+}
+
+/// A [`TestSSLResultFinding`]'s severity
+#[derive(Deserialize, Serialize, ToSchema, Copy, Clone, Debug)]
+pub enum TestSSLSeverity {
+    /// A debug level log message
+    Debug,
+    /// An info level log message
+    Info,
+    /// A warning level log message
+    Warn,
+    /// An error level log message
+    Fatal,
+
+    /// The test's result doesn't pose an issue
+    Ok,
+    /// The test's result pose a low priority issue
+    Low,
+    /// The test's result pose a medium priority issue
+    Medium,
+    /// The test's result pose a high priority issue
+    High,
+    /// The test's result pose a critical priority issue
+    Critical,
+}
+
+/// A [`TestSSLResultFinding`]'s section
+#[derive(Deserialize, Serialize, ToSchema, Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
+pub enum TestSSLSection {
+    /// Some sanity checks which can't be disabled
+    Pretest = 0,
+
+    /// Which tls protocols are supported
+    Protocols = 1,
+
+    /// Server implementation bugs and [GREASE](https://www.ietf.org/archive/id/draft-ietf-tls-grease-01.txt)
+    Grease = 2,
+
+    /// Which cipher suites are supported
+    Ciphers = 3,
+
+    /// Checks robust (perfect) forward secrecy key exchange
+    Pfs = 4,
+
+    /// The server's preferences
+    ServerPreferences = 5,
+
+    /// The server's defaults
+    ServerDefaults = 6,
+
+    /// The http header set by the server
+    HeaderResponse = 7,
+
+    /// List of several vulnerabilities
+    Vulnerabilities = 8,
+
+    /// Which concrete ciphers are supported
+    ///
+    /// Depending on the option `testssl` is invoked with,
+    /// this is either a list of all ciphers or a list of all cipher per tls protocol.
+    CipherTests = 9,
+
+    /// Which browser is able to establish a connection
+    BrowserSimulations = 10,
 }

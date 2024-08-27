@@ -1,11 +1,14 @@
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
+use chrono::Utc;
 use rorm::fields::types::Json;
 use rorm::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 use webauthn_rs::prelude::Passkey;
 
+mod convert;
 #[cfg(feature = "bin")]
 mod operations;
 
@@ -68,7 +71,7 @@ pub struct LocalUserKey {
 }
 
 /// The definition of a user
-#[derive(Model)]
+#[derive(Model, Clone)]
 pub struct User {
     /// Primary key of the user, a uuid v4
     #[rorm(primary_key)]

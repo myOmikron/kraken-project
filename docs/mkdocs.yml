@@ -34,9 +34,6 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
-  - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
 extra:
   version:
     provider: mike
@@ -44,12 +41,14 @@ nav:
   - Home: index.md
   - Installation: installation/index.md
   - Administration: administration/index.md
-  - User guide: user/index.md
+  - User guide:
+      - Filter: user/filter.md
   - Contribution:
       - General information: contribution/index.md
       - Development Environment: contribution/dev_setup.md
       - Style guidelines:
           - Rust: contribution/rust.md
           - Typescript: contribution/typescript.md
+          - CSS: contribution/css.md
       - Guides:
           - New attack: contribution/new_attack.md

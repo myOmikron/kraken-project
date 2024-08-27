@@ -1,14 +1,16 @@
 import React from "react";
-import USER_CONTEXT from "../context/user";
-import { ROUTES } from "../routes";
 import { toast } from "react-toastify";
 import { UserPermission } from "../api/generated";
+import USER_CONTEXT from "../context/user";
+import { ROUTES } from "../routes";
 
+/** React props for [`<AdminGuard />`]{@link AdminGuard} */
 export type AdminGuardProps = {
+    /** View only accessible by admins */
     children: React.ReactNode;
 };
 
-/** Wrapper for views to make them only visible for admins */
+/** Guard "protecting" views by redirecting non admins to "/" */
 export default function AdminGuard(props: AdminGuardProps) {
     const { user } = React.useContext(USER_CONTEXT);
     if (user.permission === UserPermission.Admin) return <>{props.children}</>;

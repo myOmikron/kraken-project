@@ -1,21 +1,32 @@
 use std::net::IpAddr;
 
 use ipnetwork::IpNetwork;
-use kraken_proto::{shared, PortOrRange, UdpServiceDetectionRequest, UdpServiceDetectionResponse};
+use kraken_proto::shared;
+use kraken_proto::PortOrRange;
+use kraken_proto::UdpServiceDetectionRequest;
+use kraken_proto::UdpServiceDetectionResponse;
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use uuid::Uuid;
 
+use crate::api::handler::attacks::schema::DomainOrNetwork;
+use crate::api::handler::services::schema::ServiceProtocols;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
 use crate::chan::ws_manager::schema::WsMessage;
-use crate::models::{
-    AggregationSource, AggregationTable, HostCertainty, PortCertainty, PortProtocol,
-    ServiceCertainty, SourceType, UdpServiceDetectionName, UdpServiceDetectionResultInsert,
-};
-use crate::modules::attacks::{
-    AttackContext, AttackError, HandleAttackResponse, UdpServiceDetectionParams,
-};
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::HostCertainty;
+use crate::models::PortCertainty;
+use crate::models::PortProtocol;
+use crate::models::ServiceCertainty;
+use crate::models::SourceType;
+use crate::models::UdpServiceDetectionName;
+use crate::models::UdpServiceDetectionResultInsert;
+use crate::modules::attacks::AttackContext;
+use crate::modules::attacks::AttackError;
+use crate::modules::attacks::HandleAttackResponse;
+use crate::modules::attacks::UdpServiceDetectionParams;
 
 impl AttackContext {
     /// Executes the "service detection" attack
@@ -24,9 +35,15 @@ impl AttackContext {
         mut leech: LeechClient,
         params: UdpServiceDetectionParams,
     ) -> Result<(), AttackError> {
+        let targets =
+            DomainOrNetwork::resolve(self.workspace.uuid, self.user.uuid, &leech, &params.targets)
+                .await?;
         let request = UdpServiceDetectionRequest {
             attack_uuid: self.attack_uuid.to_string(),
-            address: Some(shared::Address::from(params.target)),
+            targets: targets
+                .into_iter()
+                .map(shared::NetOrAddress::from)
+                .collect(),
             ports: params.ports.into_iter().map(PortOrRange::from).collect(),
             timeout: params.timeout,
             concurrent_limit: params.concurrent_limit,
@@ -37,6 +54,7 @@ impl AttackContext {
             .await
     }
 }
+
 impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
     async fn handle_response(
         &self,
@@ -88,11 +106,16 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
         if !services.is_empty() {
             insert!(&mut tx, UdpServiceDetectionName)
                 .return_nothing()
-                .bulk(services.iter().map(|x| UdpServiceDetectionName {
-                    uuid: Uuid::new_v4(),
-                    name: x.to_string(),
-                    result: ForeignModelByField::Key(result_uuid),
-                }))
+                .bulk(
+                    services
+                        .iter()
+                        .cloned()
+                        .map(|name| UdpServiceDetectionName {
+                            uuid: Uuid::new_v4(),
+                            name,
+                            result: ForeignModelByField::Key(result_uuid),
+                        }),
+                )
                 .await?;
         }
 
@@ -112,7 +135,7 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
             .await?;
 
         let mut service_uuids = Vec::new();
-        for service in services {
+        for name in services {
             service_uuids.push(
                 GLOBAL
                     .aggregator
@@ -120,7 +143,8 @@ impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
                         self.workspace.uuid,
                         host_uuid,
                         Some(port_uuid),
-                        &service,
+                        Some(ServiceProtocols::Udp { raw: true }),
+                        &name,
                         certainty,
                     )
                     .await?,

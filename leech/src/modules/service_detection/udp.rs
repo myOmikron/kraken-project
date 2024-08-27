@@ -1,24 +1,31 @@
-use std::net::{IpAddr, SocketAddr};
+use std::collections::BTreeSet;
+use std::net::IpAddr;
+use std::net::SocketAddr;
 use std::ops::RangeInclusive;
 use std::time::Duration;
 
-use futures::{stream, TryStreamExt};
-use log::{debug, info};
-use probe_config::generated::Match;
+use futures::stream;
+use futures::TryStreamExt;
+use ipnetwork::IpNetwork;
+use itertools::Itertools;
+use log::debug;
+use log::info;
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinSet;
-use tokio::time::{sleep, timeout};
+use tokio::time::sleep;
+use tokio::time::timeout;
 
 use super::error::UdpServiceScanError;
 use super::Service;
 use crate::modules::service_detection::generated;
+use crate::modules::service_detection::generated::Match;
 
 /// Settings for a service detection
 #[derive(Clone)]
 pub struct UdpServiceDetectionSettings {
-    /// IP address to scan
-    pub ip: IpAddr,
+    /// Ip addresses / networks to scan
+    pub addresses: Vec<IpNetwork>,
 
     /// Ports to scan
     pub ports: Vec<RangeInclusive<u16>>,
@@ -45,10 +52,11 @@ pub struct UdpServiceDetectionSettings {
 impl UdpServiceDetectionSettings {
     async fn probe_udp(
         &self,
+        address: IpAddr,
         port: u16,
         payload: &[u8],
     ) -> Result<Option<Vec<u8>>, UdpServiceScanError> {
-        let addr = SocketAddr::new(self.ip, port);
+        let addr = SocketAddr::new(address, port);
 
         let mut set = JoinSet::new();
 
@@ -107,6 +115,8 @@ async fn single_probe_udp(
 #[derive(Debug, Clone)]
 /// A found open or detected UDP service on a specific port.
 pub struct UdpServiceDetectionResult {
+    /// The address that the open port was found on.
+    pub address: IpAddr,
     /// The port that was found open with the given service.
     pub port: u16,
     /// The service that was found possibly running on this port.
@@ -119,63 +129,76 @@ pub async fn start_udp_service_detection(
     settings: &UdpServiceDetectionSettings,
     tx: Sender<UdpServiceDetectionResult>,
 ) -> Result<(), UdpServiceScanError> {
+    let iter_addresses = settings
+        .addresses
+        .iter()
+        .cloned()
+        .flat_map(|network| network.into_iter());
+    let iter_ports = settings.ports.iter().cloned().flatten();
     stream::iter(
-        settings
-            .ports
-            .iter()
-            .cloned()
-            .flatten()
-            .map(Ok::<u16, UdpServiceScanError>),
+        iter_ports
+            .cartesian_product(iter_addresses)
+            .map(Ok::<(u16, IpAddr), UdpServiceScanError>),
     )
-    .try_for_each_concurrent(settings.concurrent_limit as usize, move |port| {
-        let tx = tx.clone();
-        async move {
-            let mut partial_matches = Vec::new();
-            for prev in 0..3 {
-                debug!("Starting udp scans prevalence={prev}");
-                for probe in &generated::PROBES.udp_probes[prev] {
-                    if let Some(data) = settings.probe_udp(port, probe.payload).await? {
-                        match probe.is_match(&data) {
-                            Match::No => {}
-                            Match::Partial => {
-                                partial_matches.push(probe.service);
-                            }
-                            Match::Exact => {
-                                debug!("Found exact UDP service {} on port {port}", probe.service);
-                                tx.send(UdpServiceDetectionResult {
-                                    port,
-                                    service: Service::Definitely(probe.service),
-                                })
-                                .await?;
-                                return Ok(());
+    .try_for_each_concurrent(
+        settings.concurrent_limit as usize,
+        move |(port, address)| {
+            let tx = tx.clone();
+            async move {
+                let mut partial_matches = BTreeSet::new();
+                for prev in 0..3 {
+                    debug!("Starting udp scans prevalence={prev}");
+                    for probe in &generated::PROBES.udp_probes[prev] {
+                        if let Some(data) = settings.probe_udp(address, port, probe.payload).await?
+                        {
+                            match probe.is_match(&data) {
+                                Match::No => {}
+                                Match::Partial => {
+                                    partial_matches.insert(probe.service);
+                                }
+                                Match::Exact => {
+                                    debug!(
+                                        "Found exact UDP service {} on {address} port {port}",
+                                        probe.service
+                                    );
+                                    tx.send(UdpServiceDetectionResult {
+                                        address,
+                                        port,
+                                        service: Service::Definitely(probe.service),
+                                    })
+                                    .await?;
+                                    return Ok(());
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            if partial_matches.is_empty() {
-                let payload = b"\r\n\r\n";
-                if let Some(_data) = settings.probe_udp(port, payload).await? {
-                    debug!("Generic CRLF probe on port {port} matched");
+                if partial_matches.is_empty() {
+                    let payload = b"\r\n\r\n";
+                    if let Some(_data) = settings.probe_udp(address, port, payload).await? {
+                        debug!("Generic CRLF probe on port {port} matched");
+                        tx.send(UdpServiceDetectionResult {
+                            address,
+                            port,
+                            service: Service::Unknown,
+                        })
+                        .await?;
+                    }
+                } else {
+                    debug!("Found maybe UDP services {partial_matches:?} on port {port}");
                     tx.send(UdpServiceDetectionResult {
+                        address,
                         port,
-                        service: Service::Unknown,
+                        service: Service::Maybe(partial_matches),
                     })
                     .await?;
                 }
-            } else {
-                debug!("Found maybe UDP services {partial_matches:?} on port {port}");
-                tx.send(UdpServiceDetectionResult {
-                    port,
-                    service: Service::Maybe(partial_matches),
-                })
-                .await?;
-            }
 
-            Ok(())
-        }
-    })
+                Ok(())
+            }
+        },
+    )
     .await?;
 
     info!("Finished UDP service detection");

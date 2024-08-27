@@ -2,7 +2,8 @@ use std::sync::Arc;
 
 use kraken::chan::ws_manager::schema::WsMessage;
 use reqwest::cookie::Jar;
-use reqwest::{ClientBuilder, Url};
+use reqwest::ClientBuilder;
+use reqwest::Url;
 use tokio::sync::mpsc::Sender;
 
 use crate::error::KrakenError;
@@ -10,13 +11,18 @@ use crate::error::KrakenError;
 mod attacks;
 mod auth;
 mod domains;
+mod finding_affected;
+mod finding_definitions;
+mod findings;
 mod global_tags;
 mod hosts;
+mod http_services;
 mod invitations;
 mod ports;
 mod services;
 mod utils;
 mod wordlists;
+mod workspace_tags;
 mod workspaces;
 mod ws;
 

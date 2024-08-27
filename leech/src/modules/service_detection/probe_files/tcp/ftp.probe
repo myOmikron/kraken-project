@@ -1,11 +1,13 @@
 service: ftp
 prevalence: often
 probes:
-  - protocol: TCP
-    regex: [Ff][tT][Pp]
+  - tcp: yes
+    regex: |-
+      [Ff][tT][Pp]
     # https://datatracker.ietf.org/doc/html/rfc959
     # greeting message
     # exact form of response vary depending on the FTP server
     sub_regex:
       # includes ProFTPD, Pure-FTPD, vsftpd, FileZilla, Cerberus, Microsoft FTP, FTP
-      - ^\d\d\d( )*(-)*(ProFTPD)*( )*(Welcome to )*(Pure-[Ff][Tt][Pp][Dd])*(FileZilla)*(Cerberus FTP)*(Microsoft FTP)*(\([Vv][Ss][Ff][Tt][Pp][Dd] \d+\.\d+\.\d+\))*(FTP)*
+      - |-
+        ^\d\d\d( )*(-)*(ProFTPD)*( )*(Welcome to )*(Pure-[Ff][Tt][Pp][Dd])*(FileZilla)*(Cerberus FTP)*(Microsoft FTP)*(\([Vv][Ss][Ff][Tt][Pp][Dd] \d+\.\d+\.\d+\))*(FTP)*

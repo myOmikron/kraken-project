@@ -16,42 +16,66 @@
 use std::env;
 use std::error::Error;
 use std::io::Write;
-use std::net::{IpAddr, SocketAddr};
+use std::net::IpAddr;
+use std::net::SocketAddr;
 use std::num::NonZeroU32;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Duration;
 
-use chrono::{Datelike, Timelike};
-use clap::{ArgAction, Parser, Subcommand, ValueEnum};
+use chrono::Datelike;
+use chrono::Timelike;
+use clap::ArgAction;
+use clap::Parser;
+use clap::Subcommand;
+use clap::ValueEnum;
 use dehashed_rs::SearchType;
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
+use kraken_proto::push_attack_request;
 use kraken_proto::push_attack_service_client::PushAttackServiceClient;
 use kraken_proto::shared::CertEntry;
-use kraken_proto::{push_attack_request, CertificateTransparencyResponse, PushAttackRequest};
-use log::{error, info, warn};
+use kraken_proto::CertificateTransparencyResponse;
+use kraken_proto::PushAttackRequest;
+use log::error;
+use log::info;
+use log::warn;
 use prost_types::Timestamp;
-use rorm::{cli, Database, DatabaseConfiguration, DatabaseDriver};
+use rorm::cli;
+use rorm::Database;
+use rorm::DatabaseConfiguration;
+use rorm::DatabaseDriver;
 use tokio::sync::mpsc;
 use tokio::task;
 use trust_dns_resolver::Name;
 use uuid::Uuid;
 
 use crate::backlog::start_backlog;
-use crate::config::{get_config, Config};
-use crate::modules::bruteforce_subdomains::{
-    bruteforce_subdomains, BruteforceSubdomainResult, BruteforceSubdomainsSettings,
-};
-use crate::modules::certificate_transparency::{query_ct_api, CertificateTransparencySettings};
-use crate::modules::dns::txt::{start_dns_txt_scan, DnsTxtScanSettings};
-use crate::modules::host_alive::icmp_scan::{start_icmp_scan, IcmpScanSettings};
-use crate::modules::port_scanner::tcp_con::{start_tcp_con_port_scan, TcpPortScannerSettings};
-use crate::modules::service_detection::DetectServiceSettings;
+use crate::config::get_config;
+use crate::config::Config;
+use crate::modules::bruteforce_subdomains::bruteforce_subdomains;
+use crate::modules::bruteforce_subdomains::BruteforceSubdomainResult;
+use crate::modules::bruteforce_subdomains::BruteforceSubdomainsSettings;
+use crate::modules::certificate_transparency::query_ct_api;
+use crate::modules::certificate_transparency::CertificateTransparencySettings;
+use crate::modules::dehashed;
+use crate::modules::dns::txt::start_dns_txt_scan;
+use crate::modules::dns::txt::DnsTxtScanSettings;
+use crate::modules::host_alive::icmp_scan::start_icmp_scan;
+use crate::modules::host_alive::icmp_scan::IcmpScanSettings;
+use crate::modules::os_detection::os_detection;
+use crate::modules::os_detection::tcp_fingerprint::fingerprint_tcp;
+use crate::modules::os_detection::OsDetectionSettings;
+use crate::modules::service_detection;
+use crate::modules::service_detection::tcp::start_tcp_service_detection;
+use crate::modules::service_detection::tcp::TcpServiceDetectionResult;
+use crate::modules::service_detection::tcp::TcpServiceDetectionSettings;
+use crate::modules::testssl;
 use crate::modules::testssl::TestSSLSettings;
-use crate::modules::{dehashed, service_detection, testssl, whois};
+use crate::modules::whois;
 use crate::rpc::start_rpc_server;
-use crate::utils::{input, kraken_endpoint};
+use crate::utils::input;
+use crate::utils::kraken_endpoint;
 
 pub mod backlog;
 pub mod config;
@@ -111,46 +135,23 @@ pub enum RunCommand {
         #[clap(default_value_t = 100)]
         retry_interval: u16,
     },
-    /// A simple port scanning utility
-    PortScanner {
+    /// A simple icmp (ping) scanning utility
+    IcmpScanner {
         /// Valid IPv4 or IPv6 addresses or networks in CIDR notation
         #[clap(required(true))]
         targets: Vec<String>,
-        /// A single port, multiple, comma seperated ports or (inclusive) port ranges
-        ///
-        /// If no values are supplied, 1-65535 is used as default
-        #[clap(short = 'p')]
-        ports: Vec<String>,
-        /// The technique to use for port scans
-        #[clap(short = 't', long)]
-        #[clap(default_value = "tcp-con")]
-        technique: PortScanTechnique,
+
         /// The time to wait until a connection is considered failed.
         ///
         /// The timeout is specified in milliseconds.
         #[clap(long)]
         #[clap(default_value_t = 1000)]
         timeout: u16,
+
         /// The concurrent task limit
         #[clap(long)]
         #[clap(default_value_t = NonZeroU32::new(1000).unwrap())]
         concurrent_limit: NonZeroU32,
-        /// The number of times the connection should be retried if it failed.
-        #[clap(long)]
-        #[clap(default_value_t = 6)]
-        max_retries: u32,
-        /// The interval that should be wait between retries on a port.
-        ///
-        /// The interval is specified in milliseconds.
-        #[clap(long)]
-        #[clap(default_value_t = 100)]
-        retry_interval: u16,
-        /// Skips the initial icmp check.
-        ///
-        /// All hosts are assumed to be reachable.
-        #[clap(long)]
-        #[clap(default_value_t = false)]
-        skip_icmp_check: bool,
     },
     /// Query the dehashed API
     Dehashed {
@@ -162,32 +163,66 @@ pub enum RunCommand {
         /// The ip to query information for
         query: IpAddr,
     },
-    /// Detect the service running behind a port
-    ServiceDetection {
-        /// The ip address to connect to
-        addr: IpAddr,
+    /// Detect open tcp ports and their services
+    ServiceDetectionTcp {
+        /// Valid IPv4 or IPv6 addresses or networks in CIDR notation
+        #[clap(required(true))]
+        targets: Vec<String>,
 
-        /// The port to connect to
-        port: u16,
+        /// A single port, multiple, comma seperated ports or (inclusive) port ranges
+        ///
+        /// If no values are supplied, 1-65535 is used as default
+        #[clap(short = 'p')]
+        ports: Vec<String>,
 
-        /// The interval that should be waited for a response after connecting and sending an optional payload.
+        /// The time to wait until a connection is considered failed.
+        ///
+        /// The timeout is specified in milliseconds.
+        #[clap(long)]
+        #[clap(default_value_t = 1000)]
+        connect_timeout: u16,
+
+        /// The time to wait when receiving the service's response during detection.
+        ///
+        /// The timeout is specified in milliseconds.
+        #[clap(long)]
+        #[clap(default_value_t = 1000)]
+        receive_timeout: u16,
+
+        /// The concurrent task limit
+        #[clap(long)]
+        #[clap(default_value_t = NonZeroU32::new(1000).unwrap())]
+        concurrent_limit: NonZeroU32,
+
+        /// The number of times the connection should be retried if it failed.
+        #[clap(long)]
+        #[clap(default_value_t = 6)]
+        max_retries: u32,
+
+        /// The interval that should be waited between retries on a port.
         ///
         /// The interval is specified in milliseconds.
         #[clap(long)]
-        #[clap(default_value_t = 1000)]
-        timeout: u64,
+        #[clap(default_value_t = 100)]
+        retry_interval: u16,
 
-        /// Flag for debugging
+        /// Skips the initial icmp check.
         ///
-        /// Normally the service detection would stop after the first successful match.
-        /// When this flag is enabled it will always run all checks producing their logs before returning the first match.
+        /// All hosts are assumed to be reachable.
         #[clap(long)]
-        dont_stop_on_match: bool,
+        #[clap(default_value_t = false)]
+        skip_icmp_check: bool,
+
+        /// Just runs the initial port scanner without the service detection
+        #[clap(long)]
+        #[clap(default_value_t = false)]
+        just_scan: bool,
     },
     /// Detect the services running behind on a given address in the given port range
     ServiceDetectionUdp {
-        /// The ip address to connect to
-        addr: IpAddr,
+        /// Valid IPv4 or IPv6 addresses or networks in CIDR notation
+        #[clap(required(true))]
+        targets: Vec<String>,
 
         /// A single port, multiple, comma seperated ports or (inclusive) port ranges
         ///
@@ -217,6 +252,34 @@ pub enum RunCommand {
         #[clap(long)]
         #[clap(default_value_t = NonZeroU32::new(1000).unwrap())]
         concurrent_limit: NonZeroU32,
+    },
+    /// Generate the TCP fingerprint for the specified IP on the specified open and specified closed port.
+    TcpFingerprint {
+        /// The ip to query information for.
+        ip: IpAddr,
+        /// A TCP port that must accept connections for a consistent fingerprint.
+        #[clap(short = 'p')]
+        port: u16,
+        /// Timeout in milliseconds after which to give up the connection if it didn't send any reply by then.
+        #[clap(default_value_t = 1000)]
+        timeout: u64,
+    },
+    /// OS detection.
+    OsDetection {
+        /// The ip to query information for.
+        ip: IpAddr,
+        /// Timeout in milliseconds after which to abort checks and discard all immediate results.
+        #[clap(default_value_t = 60000)]
+        total_timeout: u64,
+        /// Timeout for each probe.
+        #[clap(default_value_t = 5000)]
+        timeout: u64,
+        /// Port for SSH detection
+        #[clap(default_value_t = 22)]
+        ssh_port: u16,
+        /// Timeout in milliseconds for each TCP port how long to wait for SYN/ACK on.
+        #[clap(default_value_t = 2000)]
+        port_timeout: u64,
     },
 
     /// Run `testssl.sh`
@@ -265,6 +328,7 @@ pub enum Command {
 
 /// The main CLI parser
 #[derive(Parser)]
+#[clap(version)]
 pub struct Cli {
     /// Specify an alternative path to the config file
     #[clap(long = "config-path")]
@@ -459,8 +523,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                         info!("  {part}");
                                     }
                                 }
-                                _ => {
-                                    info!("Found txt entry for {}: {}", res.domain, res.info);
+                                modules::dns::txt::TxtScanInfo::ServiceHints { hints } => {
+                                    info!("Found service hints for {}:", res.domain);
+                                    for (_rule, hint) in hints {
+                                        info!("  {hint}");
+                                    }
                                 }
                             };
                         }
@@ -493,70 +560,31 @@ async fn main() -> Result<(), Box<dyn Error>> {
                             info!("{x}");
                         }
                     }
-                    RunCommand::PortScanner {
+                    RunCommand::IcmpScanner {
                         targets,
-                        technique,
-                        ports,
                         timeout,
                         concurrent_limit,
-                        max_retries,
-                        retry_interval,
-                        skip_icmp_check,
                     } => {
                         let addresses = targets
                             .iter()
                             .map(|s| IpNetwork::from_str(s))
                             .collect::<Result<_, _>>()?;
 
-                        let mut port_range = vec![];
-                        if ports.is_empty() {
-                            port_range.push(1..=u16::MAX);
-                        } else {
-                            utils::parse_ports(&ports, &mut port_range)?;
-                        }
+                        let settings = IcmpScanSettings {
+                            addresses,
+                            timeout: Duration::from_millis(timeout as u64),
+                            concurrent_limit: u32::from(concurrent_limit),
+                        };
+                        let (tx, mut rx) = mpsc::channel(1);
 
-                        match technique {
-                            PortScanTechnique::TcpCon => {
-                                let settings = TcpPortScannerSettings {
-                                    addresses,
-                                    ports: port_range,
-                                    timeout: Duration::from_millis(timeout as u64),
-                                    skip_icmp_check,
-                                    max_retries,
-                                    retry_interval: Duration::from_millis(retry_interval as u64),
-                                    concurrent_limit: u32::from(concurrent_limit),
-                                };
-
-                                let (tx, mut rx) = mpsc::channel(1);
-
-                                task::spawn(async move {
-                                    while let Some(addr) = rx.recv().await {
-                                        info!("Open port found: {addr}");
-                                    }
-                                });
-
-                                if let Err(err) = start_tcp_con_port_scan(settings, tx).await {
-                                    error!("{err}");
-                                }
+                        task::spawn(async move {
+                            while let Some(addr) = rx.recv().await {
+                                info!("Host up: {addr}");
                             }
-                            PortScanTechnique::Icmp => {
-                                let settings = IcmpScanSettings {
-                                    addresses,
-                                    timeout: Duration::from_millis(timeout as u64),
-                                    concurrent_limit: u32::from(concurrent_limit),
-                                };
-                                let (tx, mut rx) = mpsc::channel(1);
+                        });
 
-                                task::spawn(async move {
-                                    while let Some(addr) = rx.recv().await {
-                                        info!("Host up: {addr}");
-                                    }
-                                });
-
-                                if let Err(err) = start_icmp_scan(settings, tx).await {
-                                    error!("{err}");
-                                }
-                            }
+                        if let Err(err) = start_icmp_scan(settings, tx).await {
+                            error!("{err}");
                         }
                     }
                     RunCommand::Dehashed { query } => {
@@ -595,48 +623,84 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                         Err(err) => error!("{err}"),
                     },
-                    RunCommand::ServiceDetection {
-                        addr,
-                        port,
-                        timeout: wait_for_response,
-                        dont_stop_on_match: debug,
+                    RunCommand::ServiceDetectionTcp {
+                        targets,
+                        ports,
+                        connect_timeout,
+                        receive_timeout,
+                        concurrent_limit,
+                        max_retries,
+                        retry_interval,
+                        skip_icmp_check,
+                        just_scan,
                     } => {
-                        let result = service_detection::detect_service(DetectServiceSettings {
-                            socket: SocketAddr::new(addr, port),
-                            timeout: Duration::from_millis(wait_for_response),
-                            always_run_everything: debug,
-                        })
-                        .await;
-                        println!("{result:?}");
+                        let addresses = targets
+                            .iter()
+                            .map(|s| IpNetwork::from_str(s))
+                            .collect::<Result<_, _>>()?;
+
+                        let (tx, mut rx) = mpsc::channel::<TcpServiceDetectionResult>(1);
+                        if just_scan {
+                            tokio::spawn(async move {
+                                while let Some(result) = rx.recv().await {
+                                    info!("Open port found: {}", result.addr);
+                                }
+                            });
+                        } else {
+                            tokio::spawn(async move {
+                                while let Some(result) = rx.recv().await {
+                                    info!("Open port found: {}", result.addr,);
+                                    info!("It's running: {:?} (TCP)", result.tcp_service);
+                                    info!("It's running: {:?} (TLS over TCP)", result.tls_service);
+                                }
+                            });
+                        }
+                        start_tcp_service_detection(
+                            TcpServiceDetectionSettings {
+                                addresses,
+                                ports: utils::parse_ports(&ports, Some(1..=u16::MAX))?,
+                                connect_timeout: Duration::from_millis(connect_timeout as u64),
+                                receive_timeout: Duration::from_millis(receive_timeout as u64),
+                                max_retries,
+                                retry_interval: Duration::from_millis(retry_interval as u64),
+                                concurrent_limit,
+                                skip_icmp_check,
+                                just_scan,
+                            },
+                            tx,
+                        )
+                        .await
+                        .map_err(|e| e.to_string())?;
                     }
                     RunCommand::ServiceDetectionUdp {
-                        addr,
+                        targets,
                         ports,
                         timeout,
                         port_retries,
                         retry_interval,
                         concurrent_limit,
                     } => {
-                        let mut port_range = vec![];
-                        if ports.is_empty() {
-                            port_range.push(1..=u16::MAX);
-                        } else {
-                            utils::parse_ports(&ports, &mut port_range)?;
-                        }
+                        let addresses = targets
+                            .iter()
+                            .map(|s| IpNetwork::from_str(s))
+                            .collect::<Result<_, _>>()?;
 
                         let (tx, mut rx) =
                             mpsc::channel::<service_detection::udp::UdpServiceDetectionResult>(1);
 
                         task::spawn(async move {
                             while let Some(result) = rx.recv().await {
-                                info!("detected service on {}: {:?}", result.port, result.service);
+                                info!(
+                                    "detected service on {}:{}: {:?}",
+                                    result.address, result.port, result.service
+                                );
                             }
                         });
 
                         if let Err(err) = service_detection::udp::start_udp_service_detection(
                             &service_detection::udp::UdpServiceDetectionSettings {
-                                ip: addr,
-                                ports: port_range,
+                                addresses,
+                                ports: utils::parse_ports(&ports, Some(1..=u16::MAX))?,
                                 max_retries: port_retries,
                                 retry_interval: Duration::from_millis(retry_interval),
                                 timeout: Duration::from_millis(timeout),
@@ -647,6 +711,53 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         .await
                         {
                             error!("{err}");
+                        }
+                    }
+                    RunCommand::TcpFingerprint { ip, port, timeout } => {
+                        let fp = fingerprint_tcp(
+                            SocketAddr::new(ip, port),
+                            Duration::from_millis(timeout),
+                        )
+                        .await?;
+                        println!("Fingerprint: {fp}");
+                    }
+                    RunCommand::OsDetection {
+                        ip,
+                        total_timeout,
+                        timeout,
+                        port_timeout,
+                        ssh_port,
+                    } => {
+                        let os = tokio::time::timeout(
+                            Duration::from_millis(total_timeout),
+                            os_detection(OsDetectionSettings {
+                                ip_addr: ip,
+                                fingerprint_port: None,
+                                fingerprint_timeout: Duration::from_millis(timeout),
+                                ssh_port: Some(ssh_port),
+                                ssh_connect_timeout: Duration::from_millis(timeout) / 2,
+                                ssh_timeout: Duration::from_millis(timeout),
+                                port_ack_timeout: Duration::from_millis(port_timeout),
+                                port_parallel_syns: 8,
+                            }),
+                        )
+                        .await?;
+
+                        match os {
+                            Ok(os) => {
+                                println!("OS detection result:");
+                                println!("- likely OS: {}", os);
+                                let hints = os.hints();
+                                if !hints.is_empty() {
+                                    println!("- hints:");
+                                    for hint in hints {
+                                        println!("\t- {hint}");
+                                    }
+                                }
+                            }
+                            Err(err) => {
+                                println!("Failed detecting OS: {err}")
+                            }
                         }
                     }
                     RunCommand::TestSSL { uri, ip, port } => {

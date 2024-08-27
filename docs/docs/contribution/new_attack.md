@@ -362,6 +362,9 @@
     ```
 
 ### 6. Write schemas and handler to retrieve raw results
+
+Add utoipa pagination structs to `kraken/src/api/handler/common/schema.rs`.
+
 Write an http handler in `kraken/src/api/handler/attack_results/handler.rs` to query your raw attack results
 (the model you created in step 4).
 
@@ -371,6 +374,35 @@ which we'll also need in the next step.
 !!! example
 
     ```rust
+    // kraken/src/api/handler/common/schema.rs
+    pub use utoipa_fix::{
+        ..., PortGuesserResultsPage, ...
+    }
+
+    ...
+
+    #[allow(missing_docs)]
+    mod utoipa_fix {
+        use crate::api::handler::attack_results::schema::{
+            ..., PortGuesserResult, ...
+        }
+
+        #[derive(Serialize, Deserialize, Default, ToSchema, Clone)]
+        #[aliases(
+            ...
+            PortGuesserResultsPage = Page<PortGuesserResult>,
+        )]
+        pub struct Page<T> {
+            ...
+        }
+        ...
+    }
+    ...
+    ```
+
+    ```rust
+    // kraken/src/api/handler/attack_results/handler.rs
+
     #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
     pub struct SimplePortGuesserResult {
         pub uuid: Uuid,
@@ -524,10 +556,6 @@ which we'll also need in the next step.
 
 - Add an endpoint in `kraken/src/api/handler/attacks/handler.rs` which calls this function
 
-!!! warning
-
-    Don't forget to register all the schemas and endpoints you created in `kraken/src/api/swagger.rs`
-
 !!! example
 
     ```rust
@@ -634,7 +662,57 @@ which we'll also need in the next step.
 
 ## Frontend's code
 
-### 9. Make it build again
+### 9. Expose API functions and structs
+
+In `kraken/src/api/server.rs` register your endpoints:
+
+!!! example
+
+    ```rust
+        ...
+        .service(attacks::handler::service_detection)
+        .service(attacks::handler::udp_service_detection)
+        .service(attacks::handler::dns_resolution)
+        .service(attacks::handler::dns_txt_scan)
+        .service(attacks::handler::port_guesser)
+        ...
+        .service(attack_results::handler::get_service_detection_results)
+        .service(attack_results::handler::get_udp_service_detection_results)
+        .service(attack_results::handler::get_dns_resolution_results)
+        .service(attack_results::handler::get_dns_txt_scan_results)
+        .service(attack_results::handler::get_port_guesser_results)
+    ```
+
+In `kraken/src/api/swagger.rs` register all your endpoints and custom data structures:
+
+!!! example
+
+    ```rust
+        ...
+        attacks::handler::dns_resolution,
+        attacks::handler::dns_txt_scan,
+        attacks::handler::port_guesser,
+        ...
+        attack_results::handler::get_dns_resolution_results,
+        attack_results::handler::get_dns_txt_scan_results,
+        attack_results::handler::get_port_guesser_results,
+        ...
+        attacks::schema::DnsResolutionRequest,
+        attacks::schema::DnsTxtScanRequest,
+        attacks::schema::PortGuesserRequest,
+        ...
+        attack_results::schema::SimpleDnsTxtScanResult,
+        attack_results::schema::FullDnsTxtScanResult,
+        attack_results::schema::PortGuesserResult,
+
+        ...
+        // as well as new types you expose inside the Request/Result types:
+        models::DnsTxtScanSpfType,
+        models::DnsTxtScanServiceHintType,
+        models::DnsTxtScanSummaryType,
+    ```
+
+### 10. Make it build again
 
 - Run `yarn gen-api`
 
@@ -644,13 +722,27 @@ which we'll also need in the next step.
 
 !!! example
 
-```ts
-export const ATTACKS: AttackResolver = {
-    // ...
-    PortGuesser: { abbreviation: "PG", long: "Port guesser", key: "portGuesser" },
-}
-```
+    ```ts
+    export const ATTACKS: AttackResolver = {
+        // ...
+        PortGuesser: { abbreviation: "PG", long: "Port guesser", key: "portGuesser" },
+    }
+    ```
 
-### 10. Make it usable
+- Wrap the API endpoint in `kraken_frontend/src/api/api.ts`
+
+!!! example
+
+    ```ts
+    import {
+        ...
+        PortGuesserRequest,
+        ...
+    } from "./generated";
+    ...
+    portGuesser: (attack: PortGuesserRequest) => handleError(attacks.portGuesser({ portGuesserRequest: attack })),
+    ```
+
+### 11. Make it usable
 
 TODO

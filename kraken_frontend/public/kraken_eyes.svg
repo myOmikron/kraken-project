@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   fill="#f74c00"
+   width="800px"
+   height="800px"
+   viewBox="0 0 128 128"
+   enable-background="new 0 0 128 128"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="kraken_augen.svg"
+   inkscape:version="1.3.2 (091e20ef0f, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.4675"
+     inkscape:cx="400"
+     inkscape:cy="400"
+     inkscape:window-width="2560"
+     inkscape:window-height="1378"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <path
+     id="rect5"
+     style="fill:#ffffff;stroke:#ffffff;stroke-width:1.20945;stroke-opacity:0.666667;paint-order:markers stroke fill"
+     d="M 55.650312,69.333438 C 55.249125,69.342189 54.643625,69.507879 54.423125,71.6 54.171125,73.990996 59.08,76.885937 59.08,76.885937 L 60.968125,73.865 c 0,0 -4.782,-4.530937 -5.16,-4.530937 -0.04725,0 -0.1005,-0.0019 -0.157813,-6.25e-4 z m 17.674375,0 c -0.05731,-0.0012 -0.110562,6.25e-4 -0.157812,6.25e-4 -0.378,-10e-7 -5.16,4.530937 -5.16,4.530937 L 69.895,76.885937 c 0,10e-7 4.908875,-2.894941 4.656875,-5.285937 -0.2205,-2.092996 -0.826,-2.257988 -1.227188,-2.266562 z"
+     sodipodi:nodetypes="ssccsssscccs" />
+</svg>
