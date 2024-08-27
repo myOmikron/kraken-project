@@ -416,11 +416,18 @@ pub enum ScanIssues {
 
 impl From<&str> for FindingId {
     fn from(s: &str) -> Self {
-        use FindingId::{
-            Certificate as crt, CipherList as cl, CipherOrder as co, Cookie as c, Hpkp as kp,
-            Hsts as ts, HttpHeader as hh, Logging as l, Pfs as pfs, Protocol as p,
-            ScanIssues as si, Vulnerabilities as v,
-        };
+        use FindingId::Certificate as crt;
+        use FindingId::CipherList as cl;
+        use FindingId::CipherOrder as co;
+        use FindingId::Cookie as c;
+        use FindingId::Hpkp as kp;
+        use FindingId::Hsts as ts;
+        use FindingId::HttpHeader as hh;
+        use FindingId::Logging as l;
+        use FindingId::Pfs as pfs;
+        use FindingId::Protocol as p;
+        use FindingId::ScanIssues as si;
+        use FindingId::Vulnerabilities as v;
         const T: bool = true;
         const F: bool = false;
 

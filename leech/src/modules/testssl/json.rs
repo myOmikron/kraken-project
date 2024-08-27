@@ -1,6 +1,7 @@
 //! Struct defining `testssl.sh`'s `--json` output
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
 /// The entire output file
 #[allow(dead_code)]

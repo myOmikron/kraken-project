@@ -21,11 +21,11 @@ use crate::models::OsDetectionResult;
 use crate::models::OsType;
 use crate::models::ServiceCertainty;
 use crate::models::ServiceDetectionResult;
-use crate::models::UdpServiceDetectionResult;
 use crate::models::TestSSLResultFinding;
 use crate::models::TestSSLResultHeader;
 use crate::models::TestSSLSection;
 use crate::models::TestSSLSeverity;
+use crate::models::UdpServiceDetectionResult;
 
 pub(crate) type BruteforceSubdomainsResultInsert = DnsRecordResultInsert;
 pub(crate) type DnsResolutionResultInsert = DnsRecordResultInsert;

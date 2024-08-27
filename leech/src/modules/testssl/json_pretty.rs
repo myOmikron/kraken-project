@@ -2,7 +2,8 @@
 
 use std::num::NonZeroU64;
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
 /// The entire output file
 ///

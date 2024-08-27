@@ -2,10 +2,15 @@ use std::str::FromStr;
 
 use ipnetwork::IpNetwork;
 use kraken_proto::shared::Address;
-use kraken_proto::{
-    test_ssl_scans, test_ssl_service, BasicAuth, StartTlsProtocol, TestSslRequest, TestSslResponse,
-    TestSslScanResult, TestSslScans, TestSslSeverity,
-};
+use kraken_proto::test_ssl_scans;
+use kraken_proto::test_ssl_service;
+use kraken_proto::BasicAuth;
+use kraken_proto::StartTlsProtocol;
+use kraken_proto::TestSslRequest;
+use kraken_proto::TestSslResponse;
+use kraken_proto::TestSslScanResult;
+use kraken_proto::TestSslScans;
+use kraken_proto::TestSslSeverity;
 use log::error;
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
@@ -14,12 +19,23 @@ use uuid::Uuid;
 use crate::api::handler::attacks::schema::StartTLSProtocol;
 use crate::chan::global::GLOBAL;
 use crate::chan::leech_manager::LeechClient;
-use crate::models::{
-    AggregationSource, AggregationTable, DomainCertainty, HostCertainty, PortCertainty,
-    PortProtocol, SourceType, TestSSLResultFinding, TestSSLResultFindingInsert,
-    TestSSLResultHeader, TestSSLResultHeaderInsert, TestSSLSection, TestSSLSeverity,
-};
-use crate::modules::attacks::{AttackContext, AttackError, HandleAttackResponse, TestSSLParams};
+use crate::models::AggregationSource;
+use crate::models::AggregationTable;
+use crate::models::DomainCertainty;
+use crate::models::HostCertainty;
+use crate::models::PortCertainty;
+use crate::models::PortProtocol;
+use crate::models::SourceType;
+use crate::models::TestSSLResultFinding;
+use crate::models::TestSSLResultFindingInsert;
+use crate::models::TestSSLResultHeader;
+use crate::models::TestSSLResultHeaderInsert;
+use crate::models::TestSSLSection;
+use crate::models::TestSSLSeverity;
+use crate::modules::attacks::AttackContext;
+use crate::modules::attacks::AttackError;
+use crate::modules::attacks::HandleAttackResponse;
+use crate::modules::attacks::TestSSLParams;
 
 impl AttackContext {
     /// Executes the "testssl" attack
