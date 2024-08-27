@@ -1,10 +1,10 @@
 import React, { forwardRef, useEffect, useRef, useState } from "react";
 import Select from "react-select";
 import { Api } from "../../../api/api";
-import { PortOrRange, Query, SearchType } from "../../../api/generated";
+import { PortOrRange, Query, SearchType, StartTLSProtocol } from "../../../api/generated";
 import Checkbox from "../../../components/checkbox";
 import Input from "../../../components/input";
-import { selectStyles } from "../../../components/select-menu";
+import { SelectPrimitive, selectStyles } from "../../../components/select-menu";
 import { handleApiError } from "../../../utils/helper";
 import { parseUserPorts } from "../../../utils/ports";
 
@@ -296,6 +296,24 @@ export const WordlistAttackInput = forwardRef<any, AttackInputProps<string>>((pr
                     }}
                 />
             )}
+        </React.Fragment>
+    );
+});
+
+/**
+ * A dropdown select input where you can select a whether to use StartTLS and which variant of it.
+ */
+export const StartTLSAttackInput = forwardRef<void, AttackInputProps<StartTLSProtocol | null>>((props, ref) => {
+    const { value, label, valueKey, onUpdate } = props;
+    return (
+        <React.Fragment>
+            <label htmlFor={valueKey + "_input"}>{label || valueKey}</label>
+            <SelectPrimitive
+                options={Object.values(StartTLSProtocol)}
+                value={value ?? null}
+                onChange={(v) => onUpdate(v)}
+                isClearable
+            />
         </React.Fragment>
     );
 });

@@ -33,6 +33,7 @@ import {
     NullNumberAttackInput,
     NumberAttackInput,
     PortListInput,
+    StartTLSAttackInput,
     StringAttackInput,
     WordlistAttackInput,
 } from "./attacks/attack-input";
@@ -670,7 +671,14 @@ const ATTACKS: AllAttackDescr = {
                     required: true,
                 },
                 basicAuth: { fixed: undefined },
-                starttls: { fixed: undefined },
+                starttls: {
+                    label: "StartTLS Protocol",
+                    multi: false,
+                    defaultValue: undefined,
+                    type: StartTLSAttackInput,
+                    group: "Advanced",
+                    required: false,
+                },
             },
         },
     },

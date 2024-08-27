@@ -1,11 +1,11 @@
 import React from "react";
+import { SourceAttack, TestSSLFinding, TestSSLSection, TestSSLSeverity } from "../../../api/generated";
 import OsIcon from "../../../components/os-icon";
 import "../../../styling/workspace-data-details.css";
 import ArrowLeftIcon from "../../../svg/arrow-left";
 import ArrowRightIcon from "../../../svg/arrow-right";
-import { SourceAttack, TestSSLFinding, TestSSLSection, TestSSLSeverity } from "../../../api/generated";
-import { copyToClipboard, ObjectFns } from "../../../utils/helper";
 import CopyIcon from "../../../svg/copy";
+import { ObjectFns, copyToClipboard } from "../../../utils/helper";
 
 type WorkspaceDataDetailsResultsProps = {
     attacks: Array<SourceAttack>;
@@ -500,13 +500,12 @@ export default function WorkspaceDataDetailsResults(props: WorkspaceDataDetailsR
                 const sections = ObjectFns.fromEntries(
                     Object.values(TestSSLSection).map((s) => [
                         s,
-                        { worst: TestSSLSeverity.Info as TestSSLSeverity, findings: Array<TestSSLFinding>() }
-                    ])
+                        { worst: TestSSLSeverity.Info as TestSSLSeverity, findings: Array<TestSSLFinding>() },
+                    ]),
                 );
                 for (const finding of tsResult.findings) {
                     const section = sections[finding.section];
-                    if (rateSeverity(finding.severity) > rateSeverity(section.worst))
-                        section.worst = finding.severity;
+                    if (rateSeverity(finding.severity) > rateSeverity(section.worst)) section.worst = finding.severity;
                     section.findings.push(finding);
                 }
                 return (

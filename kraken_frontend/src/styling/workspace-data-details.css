@@ -295,7 +295,6 @@
     max-width: 30em;
 }
 
-
 /* Base layout of testssl sections  */
 .workspace-data-details-testssl-section {
     display: grid;
@@ -311,7 +310,7 @@
 /* Set handling of long text based on hover */
 .workspace-data-details-testssl-section > span:hover {
     overflow-wrap: anywhere;
- }
+}
 .workspace-data-details-testssl-section > span:not(:hover) {
     white-space: nowrap;
     overflow-x: hidden;
@@ -319,10 +318,14 @@
 }
 
 /* Set color based on testssl severity */
-.workspace-data-details-testssl-debug {}
-.workspace-data-details-testssl-info {}
-.workspace-data-details-testssl-warn {}
-.workspace-data-details-testssl-fatal {}
+.workspace-data-details-testssl-debug {
+}
+.workspace-data-details-testssl-info {
+}
+.workspace-data-details-testssl-warn {
+}
+.workspace-data-details-testssl-fatal {
+}
 .workspace-data-details-testssl-ok {
     color: #008000;
 }
