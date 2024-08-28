@@ -514,11 +514,17 @@ export default function WorkspaceDataDetailsResults(props: WorkspaceDataDetailsR
                             <h3 className={"sub-heading"}>TestSSL</h3>
                             <div className={"workspace-data-details-list"}>
                                 <div className="workspace-data-details-list-elements">
+                                    <span>IP:</span>
+                                    <span>Port:</span>
+                                    <span>Domain:</span>
                                     <span>Started by:</span>
                                     <span>Created:</span>
                                     <span>Finished:</span>
                                 </div>
                                 <div className="workspace-data-details-list-elements">
+                                    <span>{tsResult.ip}</span>
+                                    <span>{tsResult.port}</span>
+                                    <span>{tsResult.domain || "<no domain>"}</span>
                                     <span>{attack.startedBy.displayName}</span>
                                     <span>{formatDate(attack.createdAt)}</span>
                                     <span>{formatDate(attack.finishedAt)}</span>
