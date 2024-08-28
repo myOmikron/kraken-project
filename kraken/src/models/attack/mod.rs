@@ -534,7 +534,7 @@ pub struct TestSSLResultHeader {
 
     /// The domain which was used for SNI and certificate verification
     #[rorm(max_length = 255)]
-    pub domain: String,
+    pub domain: Option<String>,
 
     /// The scanned ip address
     pub ip: IpNetwork,

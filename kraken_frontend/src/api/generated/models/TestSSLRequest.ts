@@ -45,7 +45,7 @@ export interface TestSSLRequest {
      * @type {string}
      * @memberof TestSSLRequest
      */
-    uri: string;
+    domain?: string | null;
     /**
      * The host to scan
      * @type {string}
@@ -90,7 +90,6 @@ export interface TestSSLRequest {
 export function instanceOfTestSSLRequest(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "workspaceUuid" in value;
-    isInstance = isInstance && "uri" in value;
     isInstance = isInstance && "host" in value;
     isInstance = isInstance && "port" in value;
 
@@ -109,7 +108,7 @@ export function TestSSLRequestFromJSONTyped(json: any, ignoreDiscriminator: bool
         
         'leechUuid': !exists(json, 'leech_uuid') ? undefined : json['leech_uuid'],
         'workspaceUuid': json['workspace_uuid'],
-        'uri': json['uri'],
+        'domain': !exists(json, 'domain') ? undefined : json['domain'],
         'host': json['host'],
         'port': json['port'],
         'connectTimeout': !exists(json, 'connect_timeout') ? undefined : json['connect_timeout'],
@@ -130,7 +129,7 @@ export function TestSSLRequestToJSON(value?: TestSSLRequest | null): any {
         
         'leech_uuid': value.leechUuid,
         'workspace_uuid': value.workspaceUuid,
-        'uri': value.uri,
+        'domain': value.domain,
         'host': value.host,
         'port': value.port,
         'connect_timeout': value.connectTimeout,

@@ -31,6 +31,7 @@ import {
     DehashedAttackInput,
     DurationAttackInput,
     NullNumberAttackInput,
+    NullStringAttackInput,
     NumberAttackInput,
     PortListInput,
     StartTLSAttackInput,
@@ -630,14 +631,6 @@ const ATTACKS: AllAttackDescr = {
             endpoint: "testssl",
             jsonKey: "testSSLRequest",
             inputs: {
-                uri: {
-                    label: "Domain",
-                    multi: false,
-                    defaultValue: "",
-                    required: true,
-                    prefill: ["domain"],
-                    type: StringAttackInput,
-                },
                 host: {
                     label: "IP",
                     multi: false,
@@ -653,6 +646,14 @@ const ATTACKS: AllAttackDescr = {
                     prefill: ["port[Tcp]"],
                     type: NumberAttackInput,
                     required: true,
+                },
+                domain: {
+                    label: "Domain",
+                    multi: false,
+                    defaultValue: null,
+                    required: false,
+                    prefill: ["domain"],
+                    type: NullStringAttackInput,
                 },
                 connectTimeout: {
                     label: "Connect Timeout (in s)",

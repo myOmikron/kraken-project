@@ -540,7 +540,7 @@ pub async fn testssl(
     let TestSSLRequest {
         leech_uuid,
         workspace_uuid,
-        uri,
+        domain,
         host,
         port,
         connect_timeout,
@@ -564,7 +564,7 @@ pub async fn testssl(
         user_uuid,
         client,
         TestSSLParams {
-            uri,
+            domain,
             ip: host,
             port,
             connect_timeout,

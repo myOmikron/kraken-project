@@ -359,7 +359,7 @@ pub async fn start_udp_service_detection(
 /// The parameters of a "testssl" attack
 pub struct TestSSLParams {
     /// The domain to use for sni and cert validation
-    pub uri: String,
+    pub domain: Option<String>,
 
     /// The ip to scan
     pub ip: IpAddr,

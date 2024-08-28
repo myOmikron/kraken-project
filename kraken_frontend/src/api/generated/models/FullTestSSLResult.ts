@@ -49,7 +49,7 @@ export interface FullTestSSLResult {
      * @type {string}
      * @memberof FullTestSSLResult
      */
-    domain: string;
+    domain?: string | null;
     /**
      * The scanned ip address
      * @type {string}
@@ -92,7 +92,6 @@ export function instanceOfFullTestSSLResult(value: object): boolean {
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "attack" in value;
     isInstance = isInstance && "createdAt" in value;
-    isInstance = isInstance && "domain" in value;
     isInstance = isInstance && "ip" in value;
     isInstance = isInstance && "port" in value;
     isInstance = isInstance && "rdns" in value;
@@ -115,7 +114,7 @@ export function FullTestSSLResultFromJSONTyped(json: any, ignoreDiscriminator: b
         'uuid': json['uuid'],
         'attack': json['attack'],
         'createdAt': (new Date(json['created_at'])),
-        'domain': json['domain'],
+        'domain': !exists(json, 'domain') ? undefined : json['domain'],
         'ip': json['ip'],
         'port': json['port'],
         'rdns': json['rdns'],

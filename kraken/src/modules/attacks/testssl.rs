@@ -53,7 +53,7 @@ impl AttackContext {
     ) -> Result<(), AttackError> {
         let request = TestSslRequest {
             attack_uuid: self.attack_uuid.to_string(),
-            uri: params.uri,
+            domain: params.domain,
             ip: Some(Address::from(params.ip)),
             port: params.port as u32,
             connect_timeout: params.connect_timeout,
@@ -232,7 +232,7 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                     .single(&TestSSLResultHeaderInsert {
                         uuid: Uuid::new_v4(),
                         attack: ForeignModelByField::Key(self.attack_uuid),
-                        domain: target_host,
+                        domain: (ip.to_string() != target_host).then_some(target_host),
                         ip,
                         port: port as i32,
                         rdns,

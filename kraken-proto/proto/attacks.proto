@@ -282,7 +282,7 @@ message TestSSLRequest {
   // A unique id that identifier the attack
   string attack_uuid = 1;
   // The domain used for SNI and cert validity check
-  string uri = 2;
+  optional string domain = 2;
   // The ip address to scan
   shared.Address ip = 3;
   // The port to scan
@@ -312,23 +312,23 @@ message BasicAuth {
 // Protocols to select from when using `testssl.sh`'s `--starttls` option
 enum StartTLSProtocol {
   // FTP
-  FTP      = 0;
+  FTP = 0;
   // SMTP
-  SMTP     = 1;
+  SMTP = 1;
   // POP3
-  POP3     = 2;
+  POP3 = 2;
   // IMAP
-  IMAP     = 3;
+  IMAP = 3;
   // XMPP
-  XMPP     = 4;
+  XMPP = 4;
   // LMTP
-  LMTP     = 5;
+  LMTP = 5;
   // NNTP
-  NNTP     = 6;
+  NNTP = 6;
   // Postgres
   Postgres = 7;
   // MySQL
-  MySQL    = 8;
+  MySQL = 8;
 }
 
 /// Config option which scans `testssl.sh` should run
@@ -474,22 +474,22 @@ message TestSSLFinding {
 // A TestSSLFinding's severity
 enum TestSSLSeverity {
   // A debug level log message
-  Debug    = 0;
+  Debug = 0;
   // An info level log message
-  Info     = 1;
+  Info = 1;
   // A warning level log message
-  Warn     = 2;
+  Warn = 2;
   // An error level log message
-  Fatal    = 3;
+  Fatal = 3;
 
   // The test's result doesn't pose an issue
-  Ok       = 4;
+  Ok = 4;
   // The test's result pose a low priority issue
-  Low      = 5;
+  Low = 5;
   // The test's result pose a medium priority issue
-  Medium   = 6;
+  Medium = 6;
   // The test's result pose a high priority issue
-  High     = 7;
+  High = 7;
   // The test's result pose a critical priority issue
   Critical = 8;
 }

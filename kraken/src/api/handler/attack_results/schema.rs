@@ -427,7 +427,7 @@ pub struct FullTestSSLResult {
     pub created_at: DateTime<Utc>,
 
     /// The domain which was used for SNI and certificate verification
-    pub domain: String,
+    pub domain: Option<String>,
 
     /// The scanned ip address
     #[schema(value_type = String, example = "127.0.0.1")]

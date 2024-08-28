@@ -21,7 +21,7 @@ pub use self::json_pretty::*;
 #[derive(Debug)]
 pub struct TestSSLSettings {
     /// The domain to scan
-    pub uri: String,
+    pub domain: Option<String>,
 
     /// The ip address to scan
     pub ip: IpAddr,
@@ -50,7 +50,7 @@ pub struct TestSSLSettings {
 impl Default for TestSSLSettings {
     fn default() -> Self {
         Self {
-            uri: "localhost".to_string(),
+            domain: Some("localhost".to_string()),
             ip: IpAddr::from([127, 0, 0, 1]),
             port: 443,
             connect_timeout: None,
@@ -133,7 +133,7 @@ pub enum TestSSLScans {
 /// Run `testssl.sh` and parse its output
 pub async fn run_testssl(settings: TestSSLSettings) -> Result<json_pretty::File, TestSSLError> {
     let TestSSLSettings {
-        uri,
+        domain,
         ip,
         port,
         connect_timeout,
@@ -247,7 +247,13 @@ pub async fn run_testssl(settings: TestSSLSettings) -> Result<json_pretty::File,
     let cmd = cmd
         .arg("--ip")
         .arg(ip.to_string())
-        .arg(format!("{uri}:{port}"));
+        .arg(if let Some(domain) = domain {
+            format!("{domain}:{port}")
+        } else if ip.is_ipv6() {
+            format!("[{ip}]:{port}")
+        } else {
+            format!("{ip}:{port}")
+        });
     debug!("Starting testssl: {cmd:?}");
     let output = cmd.output().await?;
 

@@ -153,7 +153,7 @@ pub(crate) struct OsDetectionResultInsert {
 pub(crate) struct TestSSLResultHeaderInsert {
     pub(crate) uuid: Uuid,
     pub(crate) attack: ForeignModel<Attack>,
-    pub(crate) domain: String,
+    pub(crate) domain: Option<String>,
     pub(crate) ip: IpNetwork,
     pub(crate) port: i32,
     pub(crate) rdns: String,

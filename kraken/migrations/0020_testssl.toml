@@ -33,9 +33,6 @@ Type = "varchar"
 Type = "max_length"
 Value = 255
 
-[[Migration.Operations.Fields.Annotations]]
-Type = "not_null"
-
 [[Migration.Operations.Fields]]
 Name = "ip"
 Type = "ipnetwork"

@@ -12362,7 +12362,6 @@
                     "uuid",
                     "attack",
                     "created_at",
-                    "domain",
                     "ip",
                     "port",
                     "rdns",
@@ -12387,7 +12386,8 @@
                     },
                     "domain": {
                         "type": "string",
-                        "description": "The domain which was used for SNI and certificate verification"
+                        "description": "The domain which was used for SNI and certificate verification",
+                        "nullable": true
                     },
                     "ip": {
                         "type": "string",
@@ -16243,7 +16243,6 @@
                 "description": "Request to run testssl",
                 "required": [
                     "workspace_uuid",
-                    "uri",
                     "host",
                     "port"
                 ],
@@ -16259,9 +16258,10 @@
                         "format": "uuid",
                         "description": "The workspace to execute the attack in"
                     },
-                    "uri": {
+                    "domain": {
                         "type": "string",
-                        "description": "The domain to scan"
+                        "description": "The domain to scan",
+                        "nullable": true
                     },
                     "host": {
                         "type": "string",

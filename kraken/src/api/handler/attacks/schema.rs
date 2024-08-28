@@ -302,7 +302,7 @@ pub struct TestSSLRequest {
     pub workspace_uuid: Uuid,
 
     /// The domain to scan
-    pub uri: String,
+    pub domain: Option<String>,
 
     /// The host to scan
     #[schema(value_type = String, example = "127.0.0.1")]

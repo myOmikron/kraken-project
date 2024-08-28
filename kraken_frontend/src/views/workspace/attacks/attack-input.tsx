@@ -48,6 +48,26 @@ export const StringAttackInput = forwardRef<HTMLInputElement, AttackInputProps<s
 });
 
 /**
+ * Input component to manipulate a string attack input.
+ */
+export const NullStringAttackInput = forwardRef<HTMLInputElement, AttackInputProps<string | null>>((props, ref) => {
+    const { value, label, valueKey, onUpdate, ...htmlProps } = props;
+
+    return (
+        <React.Fragment key={valueKey}>
+            <label htmlFor={valueKey + "_input"}>{label || valueKey}</label>
+            <Input
+                ref={ref}
+                id={valueKey + "_input"}
+                value={value || ""}
+                onChange={(v) => onUpdate(v || null)}
+                {...htmlProps}
+            />
+        </React.Fragment>
+    );
+});
+
+/**
  * Input component to manipulate an attack input on string basis, with a
  * `deserialize` & `serialize` callback for any custom types.
  *
