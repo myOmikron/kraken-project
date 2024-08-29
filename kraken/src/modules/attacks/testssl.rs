@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
 use kraken_proto::shared::Address;
 use kraken_proto::test_ssl_scans;
@@ -13,12 +12,8 @@ use kraken_proto::TestSslScanResult;
 use kraken_proto::TestSslScans;
 use kraken_proto::TestSslSeverity;
 use log::error;
-use rorm::and;
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
-use rorm::query;
-use rorm::FieldAccess;
-use rorm::Model;
 use uuid::Uuid;
 
 use crate::api::handler::attacks::schema::StartTLSProtocol;
@@ -31,7 +26,7 @@ use crate::models::DomainCertainty;
 use crate::models::HostCertainty;
 use crate::models::PortCertainty;
 use crate::models::PortProtocol;
-use crate::models::Service;
+use crate::models::ServiceCertainty;
 use crate::models::SourceType;
 use crate::models::TestSSLResultFinding;
 use crate::models::TestSSLResultFindingInsert;
@@ -113,6 +108,17 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                     browser_simulations,
                 } = result;
 
+                let domain = if target_host == ip {
+                    None
+                } else {
+                    Some(target_host)
+                };
+
+                let mut reverse_domain = rdns.clone();
+                if reverse_domain.ends_with('.') {
+                    reverse_domain.pop();
+                }
+
                 let ip = match IpNetwork::from_str(&ip) {
                     Ok(ip) => ip,
                     Err(err) => {
@@ -132,11 +138,6 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                         return Ok(());
                     }
                 };
-
-                let mut domain = rdns.clone();
-                if domain.ends_with('.') {
-                    domain.pop();
-                }
 
                 let findings = [
                     (pretest, TestSSLSection::Pretest),
@@ -183,11 +184,45 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                 })
                 .collect::<Result<Vec<_>, AttackError>>()?;
 
-                let domain_uuid = GLOBAL
+                let source_uuid = insert!(&mut tx, TestSSLResultHeader)
+                    .return_primary_key()
+                    .single(&TestSSLResultHeaderInsert {
+                        uuid: Uuid::new_v4(),
+                        attack: ForeignModelByField::Key(self.attack_uuid),
+                        domain: domain.clone(),
+                        ip,
+                        port: port as i32,
+                        rdns,
+                        service: service.clone(),
+                    })
+                    .await?;
+
+                insert!(&mut tx, TestSSLResultFinding)
+                    .return_nothing()
+                    .bulk(&findings)
+                    .await?;
+
+                let domain_uuid = if let Some(domain) = domain.as_deref() {
+                    Some(
+                        GLOBAL
+                            .aggregator
+                            .aggregate_domain(
+                                self.workspace.uuid,
+                                domain,
+                                DomainCertainty::Unverified,
+                                self.user.uuid,
+                            )
+                            .await?,
+                    )
+                } else {
+                    None
+                };
+
+                let reverse_domain_uuid = GLOBAL
                     .aggregator
                     .aggregate_domain(
                         self.workspace.uuid,
-                        &domain,
+                        &reverse_domain,
                         DomainCertainty::Unverified,
                         self.user.uuid,
                     )
@@ -209,82 +244,48 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                     )
                     .await?;
 
-                // testssl didn't gather the information to aggregate a service, but it should attach to an existing one
-                let service_uuids = query!(&GLOBAL.db, (Service::F.uuid, Service::F.protocols))
-                    .condition(and![
-                        Service::F.workspace.equals(self.workspace.uuid),
-                        Service::F.host.equals(host_uuid),
-                        Service::F.port.equals(port_uuid),
-                    ])
-                    .stream()
-                    .try_filter_map(|(uuid, protocols)| async move {
-                        Ok(matches!(
-                            PortProtocol::Tcp.decode_service(protocols),
-                            ServiceProtocols::Tcp { tls: true, .. }
-                        )
-                        .then_some(uuid))
-                    })
-                    .try_collect::<Vec<Uuid>>()
-                    .await?;
-
-                let source_uuid = insert!(&mut tx, TestSSLResultHeader)
-                    .return_primary_key()
-                    .single(&TestSSLResultHeaderInsert {
-                        uuid: Uuid::new_v4(),
-                        attack: ForeignModelByField::Key(self.attack_uuid),
-                        domain: (ip.to_string() != target_host).then_some(target_host),
-                        ip,
-                        port: port as i32,
-                        rdns,
-                        service,
-                    })
-                    .await?;
-
-                insert!(&mut tx, TestSSLResultFinding)
-                    .return_nothing()
-                    .bulk(&findings)
-                    .await?;
+                // TODO: extend this check to services verified through STARTTLS
+                let service_uuid = if service == "HTTP" {
+                    Some(
+                        GLOBAL
+                            .aggregator
+                            .aggregate_service(
+                                self.workspace.uuid,
+                                host_uuid,
+                                Some(port_uuid),
+                                Some(ServiceProtocols::Tcp {
+                                    tls: true,
+                                    raw: false,
+                                }),
+                                "http",
+                                ServiceCertainty::DefinitelyVerified,
+                            )
+                            .await?,
+                    )
+                } else {
+                    None
+                };
 
                 insert!(&mut tx, AggregationSource)
                     .return_nothing()
                     .bulk(
                         [
-                            AggregationSource {
-                                uuid: Uuid::new_v4(),
-                                workspace: ForeignModelByField::Key(self.workspace.uuid),
-                                source_type: SourceType::TestSSL,
-                                source_uuid,
-                                aggregated_table: AggregationTable::Domain,
-                                aggregated_uuid: domain_uuid,
-                            },
-                            AggregationSource {
-                                uuid: Uuid::new_v4(),
-                                workspace: ForeignModelByField::Key(self.workspace.uuid),
-                                source_type: SourceType::TestSSL,
-                                source_uuid,
-                                aggregated_table: AggregationTable::Host,
-                                aggregated_uuid: host_uuid,
-                            },
-                            AggregationSource {
-                                uuid: Uuid::new_v4(),
-                                workspace: ForeignModelByField::Key(self.workspace.uuid),
-                                source_type: SourceType::TestSSL,
-                                source_uuid,
-                                aggregated_table: AggregationTable::Port,
-                                aggregated_uuid: port_uuid,
-                            },
+                            (AggregationTable::Domain, domain_uuid),
+                            (AggregationTable::Domain, Some(reverse_domain_uuid)),
+                            (AggregationTable::Host, Some(host_uuid)),
+                            (AggregationTable::Port, Some(port_uuid)),
+                            (AggregationTable::Service, service_uuid),
                         ]
                         .into_iter()
-                        .chain(service_uuids.into_iter().map(|aggregated_uuid| {
-                            AggregationSource {
-                                uuid: Uuid::new_v4(),
-                                workspace: ForeignModelByField::Key(self.workspace.uuid),
-                                source_type: SourceType::TestSSL,
-                                source_uuid,
-                                aggregated_table: AggregationTable::Service,
-                                aggregated_uuid,
-                            }
-                        })),
+                        .filter_map(|(table, uuid)| uuid.map(|uuid| (table, uuid)))
+                        .map(|(aggregated_table, aggregated_uuid)| AggregationSource {
+                            uuid: Uuid::new_v4(),
+                            workspace: ForeignModelByField::Key(self.workspace.uuid),
+                            source_type: SourceType::TestSSL,
+                            source_uuid,
+                            aggregated_table,
+                            aggregated_uuid,
+                        }),
                     )
                     .await?;
 
