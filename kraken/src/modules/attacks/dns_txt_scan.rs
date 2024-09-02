@@ -35,7 +35,7 @@ use crate::modules::attacks::HandleAttackResponse;
 impl AttackContext {
     /// Executes the "dns txt scan" attack
     pub async fn dns_txt_scan(
-        &self,
+        &mut self,
         mut leech: LeechClient,
         params: DnsTxtScanParams,
     ) -> Result<(), AttackError> {
@@ -49,7 +49,7 @@ impl AttackContext {
 }
 
 impl HandleAttackResponse<DnsTxtScanResponse> for AttackContext {
-    async fn handle_response(&self, response: DnsTxtScanResponse) -> Result<(), AttackError> {
+    async fn handle_response(&mut self, response: DnsTxtScanResponse) -> Result<(), AttackError> {
         let DnsTxtScanResponse {
             record: Some(entry),
         } = response

@@ -31,7 +31,7 @@ use crate::modules::attacks::HandleAttackResponse;
 impl AttackContext {
     /// Executes the "bruteforce subdomains" attack
     pub async fn bruteforce_subdomains(
-        &self,
+        &mut self,
         mut leech: LeechClient,
         params: BruteforceSubdomainsParams,
     ) -> Result<(), AttackError> {
@@ -47,7 +47,7 @@ impl AttackContext {
 }
 impl HandleAttackResponse<BruteforceSubdomainResponse> for AttackContext {
     async fn handle_response(
-        &self,
+        &mut self,
         response: BruteforceSubdomainResponse,
     ) -> Result<(), AttackError> {
         let BruteforceSubdomainResponse {

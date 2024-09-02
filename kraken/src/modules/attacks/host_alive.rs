@@ -25,7 +25,7 @@ use crate::modules::attacks::HostAliveParams;
 impl AttackContext {
     /// Executes the "host alive" attack
     pub async fn host_alive(
-        &self,
+        &mut self,
         mut leech: LeechClient,
         params: HostAliveParams,
     ) -> Result<(), AttackError> {
@@ -46,7 +46,7 @@ impl AttackContext {
     }
 }
 impl HandleAttackResponse<HostsAliveResponse> for AttackContext {
-    async fn handle_response(&self, response: HostsAliveResponse) -> Result<(), AttackError> {
+    async fn handle_response(&mut self, response: HostsAliveResponse) -> Result<(), AttackError> {
         let HostsAliveResponse { host: Some(host) } = response else {
             return Err(AttackError::Malformed("Missing `host`"));
         };

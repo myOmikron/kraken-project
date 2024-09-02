@@ -31,7 +31,7 @@ use crate::modules::attacks::ServiceDetectionParams;
 impl AttackContext {
     /// Executes the "service detection" attack
     pub async fn service_detection(
-        &self,
+        &mut self,
         mut leech: LeechClient,
         params: ServiceDetectionParams,
     ) -> Result<(), AttackError> {
@@ -58,7 +58,10 @@ impl AttackContext {
 }
 
 impl HandleAttackResponse<ServiceDetectionResponse> for AttackContext {
-    async fn handle_response(&self, response: ServiceDetectionResponse) -> Result<(), AttackError> {
+    async fn handle_response(
+        &mut self,
+        response: ServiceDetectionResponse,
+    ) -> Result<(), AttackError> {
         let ServiceDetectionResponse {
             address: Some(address),
             port,

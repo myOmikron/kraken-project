@@ -45,7 +45,7 @@ impl AttackContext {
     #[allow(clippy::manual_async_fn)]
     /// Executes the "dns resolution" attack
     pub fn dns_resolution(
-        &self,
+        &mut self,
         mut leech: LeechClient,
         params: DnsResolutionParams,
     ) -> impl Future<Output = Result<(), AttackError>> + Send + '_ {
@@ -61,7 +61,10 @@ impl AttackContext {
     }
 }
 impl HandleAttackResponse<DnsResolutionResponse> for AttackContext {
-    async fn handle_response(&self, response: DnsResolutionResponse) -> Result<(), AttackError> {
+    async fn handle_response(
+        &mut self,
+        response: DnsResolutionResponse,
+    ) -> Result<(), AttackError> {
         let DnsResolutionResponse {
             record: Some(shared::DnsRecord {
                 record: Some(record),

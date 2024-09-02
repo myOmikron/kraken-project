@@ -25,7 +25,7 @@ use crate::modules::utc::utc_from_seconds;
 impl AttackContext {
     /// Executes the "certificate transparency" attack
     pub async fn certificate_transparency(
-        &self,
+        &mut self,
         mut leech: LeechClient,
         params: CertificateTransparencyParams,
     ) -> Result<(), AttackError> {
@@ -47,7 +47,7 @@ impl AttackContext {
 }
 impl HandleAttackResponse<CertificateTransparencyResponse> for AttackContext {
     async fn handle_response(
-        &self,
+        &mut self,
         response: CertificateTransparencyResponse,
     ) -> Result<(), AttackError> {
         for entry in response.entries.clone() {

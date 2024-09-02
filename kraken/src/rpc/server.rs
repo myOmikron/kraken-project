@@ -89,7 +89,7 @@ impl PushAttackService for Results {
 
         tx.commit().await.map_err(status_from_database)?;
 
-        let attack = AttackContext::new(
+        let mut attack = AttackContext::new(
             workspace_uuid,
             user_uuid,
             match &response {
@@ -181,8 +181,7 @@ impl BacklogService for Results {
                         .await
                         .map_err(status_from_database)?,
                 ),
-            })
-            .as_ref() else {
+            }) else {
                 warn!("Unknown attack uuid: {attack_uuid}");
                 continue;
             };
