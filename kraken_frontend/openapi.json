@@ -11257,15 +11257,12 @@
             },
             "FindingFactoryIdentifier": {
                 "type": "string",
-                "description": "Enum identifying specific kinds of issues the finding factory might detect and create findings for.\n\nTODO: The current variants are plausible dummies",
+                "description": "Enum identifying specific kinds of issues the finding factory might detect and create findings for.",
                 "enum": [
-                    "TestSslNullCiphers",
-                    "TestSslExportCiphers",
                     "ServiceDetectionPostgres",
                     "ServiceDetectionMySql",
-                    "KrakenAssiCertLeak",
-                    "KrakenAssiConnDowngrade",
-                    "KrakenAssiMissingHSTS"
+                    "ServiceDetectionSsh",
+                    "ServiceDetectionSnmp"
                 ]
             },
             "FindingSection": {

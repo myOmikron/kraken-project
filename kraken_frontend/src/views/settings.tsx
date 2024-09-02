@@ -335,7 +335,7 @@ export function SettingsFindingFactory(props: SettingsFindingFactoryProps) {
  * Please read `FINDING_FACTORY_SECTIONED_ENTRIES`'s docs an update `FindingFactorySection`'s docs,
  * if you reuse it outside `FINDING_FACTORY_SECTIONED_ENTRIES`.
  */
-type FindingFactorySection = "TestSsl" | "ServiceDetection" | "KrakenAssi";
+type FindingFactorySection = "ServiceDetection";
 () => {
     // Checks whether there are any sections missing in `FindingFactorySection`.
     // It will fail to compile if there exists any `FindingFactoryIdentifier` which is not prefixed by any section.
@@ -374,26 +374,13 @@ const FINDING_FACTORY_SECTIONED_ENTRIES: {
         };
     };
 } = {
-    TestSsl: {
-        heading: "TestSsl",
-        entries: {
-            TestSslNullCiphers: { label: "Offers NULL Ciphers" },
-            TestSslExportCiphers: { label: "Offers Export ciphers:" },
-        },
-    },
     ServiceDetection: {
         heading: "ServiceDetection",
         entries: {
-            ServiceDetectionPostgres: { label: "Exposed postgres:" },
-            ServiceDetectionMySql: { label: "Exposed MySQL:" },
-        },
-    },
-    KrakenAssi: {
-        heading: "KrakenAssi",
-        entries: {
-            KrakenAssiCertLeak: { label: "Cert Leak:" },
-            KrakenAssiConnDowngrade: { label: "Connection Downgrade:" },
-            KrakenAssiMissingHSTS: { label: "Missing HSTS:" },
+            ServiceDetectionPostgres: { label: "Found postgres:" },
+            ServiceDetectionMariaDb: { label: "Found MariaDB:" },
+            ServiceDetectionSnmp: { label: "Found Snmp:" },
+            ServiceDetectionSsh: { label: "Found Ssh:" },
         },
     },
 };

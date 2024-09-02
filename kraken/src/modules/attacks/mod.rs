@@ -41,6 +41,7 @@ use crate::models::DomainHostRelation;
 use crate::models::InsertAttackError;
 use crate::models::User;
 use crate::models::Workspace;
+use crate::modules::finding_factory::FindingFactory;
 
 mod bruteforce_subdomains;
 mod certificate_transparency;
@@ -371,6 +372,9 @@ pub(crate) struct AttackContext {
 
     /// The type of the attack
     attack_type: AttackType,
+
+    /// A finding factory attacks can collect issues in
+    finding_factory: FindingFactory,
 }
 
 impl AttackContext {
@@ -421,6 +425,7 @@ impl AttackContext {
             workspace,
             attack_uuid: attack.uuid,
             created_at: attack.created_at,
+            finding_factory: FindingFactory::new(),
         })
     }
 
@@ -470,6 +475,7 @@ impl AttackContext {
             attack_uuid,
             created_at: started_at,
             attack_type,
+            finding_factory: FindingFactory::new(),
         }))
     }
 
@@ -547,6 +553,19 @@ impl AttackContext {
                 attack_uuid = self.attack_uuid
             );
         }
+
+        tokio::spawn(async move {
+            if let Err(err) = self
+                .finding_factory
+                .process(&GLOBAL.db, self.workspace.uuid)
+                .await
+            {
+                error!(
+                    "Failed to process the attack {attack_uuid}'s findings: {err}",
+                    attack_uuid = self.attack_uuid
+                );
+            }
+        });
 
         self.attack_uuid
     }

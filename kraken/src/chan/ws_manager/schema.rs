@@ -382,7 +382,7 @@ pub enum EditorTarget {
 }
 
 /// The different types of aggregations
-#[derive(Deserialize, Serialize, ToSchema, Debug, Clone, Copy)]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum AggregationType {
     /// The domain model
     Domain,

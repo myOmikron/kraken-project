@@ -689,7 +689,7 @@ pub enum SourceType {
 }
 
 /// Enum used in [`AggregationSource`] to identify which table it points to
-#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug)]
+#[derive(DbEnum, Copy, Clone, Deserialize, Serialize, ToSchema, Debug, Eq, PartialEq, Hash)]
 pub enum AggregationTable {
     /// The [`Host`] table
     Host,

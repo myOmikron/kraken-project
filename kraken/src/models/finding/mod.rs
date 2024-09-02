@@ -11,7 +11,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[cfg(feature = "bin")]
-pub(crate) use crate::models::finding::patches::InsertFindingDefinition;
+pub(crate) use crate::models::finding::patches::*;
 use crate::models::Domain;
 use crate::models::Host;
 use crate::models::HttpService;
@@ -201,7 +201,7 @@ pub struct FindingDetails {
 }
 
 /// The category of a finding
-#[derive(Model)]
+#[derive(Model, Clone)]
 pub struct FindingCategory {
     /// The primary key of a finding category
     #[rorm(primary_key)]

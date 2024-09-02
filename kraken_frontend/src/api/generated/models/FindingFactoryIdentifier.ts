@@ -15,18 +15,13 @@
 
 /**
  * Enum identifying specific kinds of issues the finding factory might detect and create findings for.
- * 
- * TODO: The current variants are plausible dummies
  * @export
  */
 export const FindingFactoryIdentifier = {
-    TestSslNullCiphers: 'TestSslNullCiphers',
-    TestSslExportCiphers: 'TestSslExportCiphers',
     ServiceDetectionPostgres: 'ServiceDetectionPostgres',
-    ServiceDetectionMySql: 'ServiceDetectionMySql',
-    KrakenAssiCertLeak: 'KrakenAssiCertLeak',
-    KrakenAssiConnDowngrade: 'KrakenAssiConnDowngrade',
-    KrakenAssiMissingHsts: 'KrakenAssiMissingHSTS'
+    ServiceDetectionMariaDb: 'ServiceDetectionMariaDb',
+    ServiceDetectionSsh: 'ServiceDetectionSsh',
+    ServiceDetectionSnmp: 'ServiceDetectionSnmp'
 } as const;
 export type FindingFactoryIdentifier = typeof FindingFactoryIdentifier[keyof typeof FindingFactoryIdentifier];
 

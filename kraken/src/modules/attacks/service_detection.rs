@@ -27,6 +27,7 @@ use crate::modules::attacks::AttackContext;
 use crate::modules::attacks::AttackError;
 use crate::modules::attacks::HandleAttackResponse;
 use crate::modules::attacks::ServiceDetectionParams;
+use crate::modules::finding_factory::schema::FindingFactoryIdentifier;
 
 impl AttackContext {
     /// Executes the "service detection" attack
@@ -83,13 +84,15 @@ impl HandleAttackResponse<ServiceDetectionResponse> for AttackContext {
 
         // Preprocess list of services:
         // Combine `tcp_services` and `tls_services` into one list while merging matches between the two
+        // The uuid is populated later when the aggregations are updated
         let mut services = Vec::new();
         for name in tcp_services.iter().cloned() {
-            services.push((name, true, false, tcp_certainty));
+            services.push((Uuid::nil(), name, true, false, tcp_certainty));
         }
         if is_tls {
             if tls_certainty == ServiceCertainty::UnknownService {
                 services.push((
+                    Uuid::nil(),
                     "unknown".to_string(),
                     false,
                     true,
@@ -99,16 +102,16 @@ impl HandleAttackResponse<ServiceDetectionResponse> for AttackContext {
                 for name in tls_services.iter() {
                     if let Some(service) = services
                         .iter_mut()
-                        .find(|(tcp_name, _, _, _)| tcp_name == name)
+                        .find(|(_, tcp_name, _, _, _)| tcp_name == name)
                     {
                         service.2 = true;
                     } else {
-                        services.push((name.clone(), false, true, tls_certainty));
+                        services.push((Uuid::nil(), name.clone(), false, true, tls_certainty));
                     }
                 }
             } else {
                 for name in tls_services.iter().cloned() {
-                    services.push((name, false, true, tls_certainty));
+                    services.push((Uuid::nil(), name, false, true, tls_certainty));
                 }
             }
         }
@@ -159,23 +162,26 @@ impl HandleAttackResponse<ServiceDetectionResponse> for AttackContext {
             .await?;
         let mut tcp_service_uuids = Vec::new();
         let mut tls_service_uuids = Vec::new();
-        for (name, raw, tls, certainty) in services {
-            let uuid = GLOBAL
+        for (uuid, name, raw, tls, certainty) in &mut services {
+            *uuid = GLOBAL
                 .aggregator
                 .aggregate_service(
                     self.workspace.uuid,
                     host_uuid,
                     Some(port_uuid),
-                    Some(ServiceProtocols::Tcp { raw, tls }),
+                    Some(ServiceProtocols::Tcp {
+                        raw: *raw,
+                        tls: *tls,
+                    }),
                     &name,
-                    certainty,
+                    *certainty,
                 )
                 .await?;
-            if raw {
-                tcp_service_uuids.push(uuid);
+            if *raw {
+                tcp_service_uuids.push(*uuid);
             }
-            if tls {
-                tls_service_uuids.push(uuid);
+            if *tls {
+                tls_service_uuids.push(*uuid);
             }
         }
 
@@ -224,6 +230,25 @@ impl HandleAttackResponse<ServiceDetectionResponse> for AttackContext {
             .await?;
 
         tx.commit().await?;
+
+        // Find issues in the detected services
+        for (uuid, name, _raw, _tls, _certainty) in services {
+            match name.as_str() {
+                "postgres" => self
+                    .finding_factory
+                    .add_service(uuid, FindingFactoryIdentifier::ServiceDetectionPostgres),
+                "mariadb" => self
+                    .finding_factory
+                    .add_service(uuid, FindingFactoryIdentifier::ServiceDetectionMariaDb),
+                "ssh" => self
+                    .finding_factory
+                    .add_service(uuid, FindingFactoryIdentifier::ServiceDetectionSsh),
+                "snmp" => self
+                    .finding_factory
+                    .add_service(uuid, FindingFactoryIdentifier::ServiceDetectionSnmp),
+                _ => {}
+            }
+        }
 
         Ok(())
     }
