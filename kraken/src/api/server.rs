@@ -41,6 +41,7 @@ use crate::api::handler::files;
 use crate::api::handler::finding_affected;
 use crate::api::handler::finding_categories;
 use crate::api::handler::finding_definitions;
+use crate::api::handler::finding_factory;
 use crate::api::handler::findings;
 use crate::api::handler::global_tags;
 use crate::api::handler::hosts;
@@ -188,6 +189,8 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(finding_categories::handler_admin::delete_finding_category)
                     .service(finding_definitions::handler_admin::get_finding_definition_usage)
                     .service(finding_definitions::handler_admin::delete_finding_definition)
+                    .service(finding_factory::handler_admin::get_finding_factory_entries)
+                    .service(finding_factory::handler_admin::set_finding_factory_entry)
                     .service(bearer_tokens::handler_admin::create_bearer_token)
                     .service(bearer_tokens::handler_admin::delete_bearer_token)
                     .service(bearer_tokens::handler_admin::list_all_bearer_tokens),

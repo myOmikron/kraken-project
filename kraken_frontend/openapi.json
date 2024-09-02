@@ -630,6 +630,100 @@
                 ]
             }
         },
+        "/api/v1/admin/finding-factory/entries": {
+            "get": {
+                "tags": [
+                    "Finding Factory"
+                ],
+                "operationId": "get_finding_factory_entries",
+                "responses": {
+                    "200": {
+                        "description": "Retrieved the list of all finding factory entries",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetFindingFactoryEntriesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/finding-factory/entry": {
+            "put": {
+                "tags": [
+                    "Finding Factory"
+                ],
+                "operationId": "set_finding_factory_entry",
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetFindingFactoryEntryRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "The entry has been set"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/findingCategories": {
             "post": {
                 "tags": [
@@ -11161,6 +11255,18 @@
                     "User"
                 ]
             },
+            "FindingFactoryIdentifier": {
+                "type": "string",
+                "enum": [
+                    "TestSslNullCiphers",
+                    "TestSslExportCiphers",
+                    "ServiceDetectionPostgres",
+                    "ServiceDetectionMySql",
+                    "KrakenAssiCertLeak",
+                    "KrakenAssiConnDowngrade",
+                    "KrakenAssiMissingHSTS"
+                ]
+            },
             "FindingSection": {
                 "type": "string",
                 "description": "The definition section that was edited",
@@ -12629,6 +12735,21 @@
                     }
                 ],
                 "description": "Query parameters for filtering the services to get"
+            },
+            "GetFindingFactoryEntriesResponse": {
+                "type": "object",
+                "description": "The list of all finding factory entries",
+                "required": [
+                    "entries"
+                ],
+                "properties": {
+                    "entries": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/SimpleFindingDefinition"
+                        }
+                    }
+                }
             },
             "HostAliveResultsPage": {
                 "type": "object",
@@ -14670,6 +14791,24 @@
                         "format": "int64",
                         "description": "The total number of items this page is a subset of",
                         "minimum": 0
+                    }
+                }
+            },
+            "SetFindingFactoryEntryRequest": {
+                "type": "object",
+                "description": "The request to set a finding factory entry",
+                "required": [
+                    "identifier"
+                ],
+                "properties": {
+                    "identifier": {
+                        "$ref": "#/components/schemas/FindingFactoryIdentifier"
+                    },
+                    "finding_definition": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Set's the entry's finding definition or `None` to disable an entry",
+                        "nullable": true
                     }
                 }
             },

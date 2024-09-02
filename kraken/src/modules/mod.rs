@@ -6,6 +6,7 @@ pub mod attacks;
 pub mod cache;
 pub mod editor;
 pub mod filter;
+pub mod finding_factory;
 pub mod media_files;
 pub mod oauth;
 pub mod raw_query;

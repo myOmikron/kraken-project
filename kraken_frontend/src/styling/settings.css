@@ -86,3 +86,26 @@
     gap: 0.5em;
     align-items: center;
 }
+
+.settings-finding-factory label {
+    display: contents;
+}
+
+.settings-finding-factory .collapsible-section {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    align-items: center;
+}
+
+.settings-finding-factory .collapsible-section h2 {
+    grid-column: 1 / span 2;
+}
+
+.settings-finding-factory .collapsible-section .dropdown {
+    /*
+    This is set by .dropdown and I don't know why.
+    But I don't want to break other code, so I'm unsetting it here
+    because it breaks the UI.
+    */
+    z-index: unset;
+}

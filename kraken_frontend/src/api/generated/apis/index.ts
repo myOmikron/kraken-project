@@ -9,6 +9,7 @@ export * from './BearerTokenApi';
 export * from './DomainsApi';
 export * from './FilesApi';
 export * from './FindingCategoriesApi';
+export * from './FindingFactoryApi';
 export * from './FindingsApi';
 export * from './GlobalTagsApi';
 export * from './HostsApi';
