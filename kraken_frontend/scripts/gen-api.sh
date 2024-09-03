@@ -64,7 +64,7 @@ export function DomainOrNetworkToJSON(value?: DomainOrNetwork | null): any {
 EOF
 
 echo "Patch WsMessage.ts"
-mapfile -t VARIANTS < <(find "${GENERATED}/models/" | grep -o 'WsMessageOneOf[0-9]*')
+mapfile -t VARIANTS < <(find "${GENERATED}/models/" | grep -o 'WsMessageOneOf[0-9]*' | sort)
 
 IMPORTS=""
 TYPE_DECL=""
@@ -143,7 +143,7 @@ EOF
 
 
 echo "Patch WsClientMessage.ts"
-mapfile -t VARIANTS < <(find "${GENERATED}/models/" | grep -o 'WsClientMessageOneOf[0-9]*')
+mapfile -t VARIANTS < <(find "${GENERATED}/models/" | grep -o 'WsClientMessageOneOf[0-9]*' | sort)
 
 IMPORTS=""
 TYPE_DECL=""
@@ -221,7 +221,7 @@ export function WsClientMessageToJSON(value?: WsClientMessage | null): any {
 EOF
 
 echo "Patch SourceAttackResult.ts"
-mapfile -t VARIANTS < <(find "${GENERATED}/models/" | grep -o 'SourceAttackResultOneOf[0-9]*')
+mapfile -t VARIANTS < <(find "${GENERATED}/models/" | grep -o 'SourceAttackResultOneOf[0-9]*' | sort)
 
 IMPORTS=""
 TYPE_DECL=""
@@ -301,7 +301,7 @@ echo "Patch SourceAttack.ts"+
 sed -i 's/export interface SourceAttack extends SourceAttackResult/export type SourceAttack = SourceAttackResult \&/' "${GENERATED}/models/SourceAttack.ts"
 
 echo "Patch ManualInsert.ts"
-mapfile -t VARIANTS < <(find "${GENERATED}/models/" | grep -o 'ManualInsertOneOf[0-9]*')
+mapfile -t VARIANTS < <(find "${GENERATED}/models/" | grep -o 'ManualInsertOneOf[0-9]*' | sort)
 
 IMPORTS=""
 TYPE_DECL=""
