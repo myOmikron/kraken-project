@@ -1,5 +1,5 @@
 [Migration]
-Hash = "11902616581617739002"
+Hash = "16660833653141628540"
 Initial = false
 Dependency = 19
 Replaces = []
@@ -45,6 +45,3 @@ TableName = "findingdefinition"
 ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"

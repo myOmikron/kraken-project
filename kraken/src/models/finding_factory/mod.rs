@@ -29,5 +29,5 @@ pub struct FindingFactoryEntry {
 
     /// The finding definition to create a finding with, if the identifier's associated issue is found.
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
-    pub finding: ForeignModel<FindingDefinition>,
+    pub finding: Option<ForeignModel<FindingDefinition>>,
 }

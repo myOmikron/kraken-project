@@ -234,7 +234,7 @@ impl Modify for SecurityAddon2 {
         finding_definitions::handler_admin::get_finding_definition_usage,
         finding_definitions::handler_admin::delete_finding_definition,
         finding_factory::handler_admin::get_finding_factory_entries,
-        finding_factory::handler_admin::set_finding_factory_entry,
+        finding_factory::handler_admin::update_finding_factory_entry,
     ),
     components(schemas(
         common::schema::ApiErrorResponse,
@@ -419,7 +419,8 @@ impl Modify for SecurityAddon2 {
         finding_definitions::schema::ListFindingDefinitionUsages,
         finding_definitions::schema::FindingDefinitionUsage,
         finding_factory::schema::GetFindingFactoryEntriesResponse,
-        finding_factory::schema::SetFindingFactoryEntryRequest,
+        finding_factory::schema::FullFindingFactoryEntry,
+        finding_factory::schema::UpdateFindingFactoryEntryRequest,
         crate::modules::finding_factory::schema::FindingFactoryIdentifier,
     )),
     modifiers(&SecurityAddon)

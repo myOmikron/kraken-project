@@ -190,7 +190,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(finding_definitions::handler_admin::get_finding_definition_usage)
                     .service(finding_definitions::handler_admin::delete_finding_definition)
                     .service(finding_factory::handler_admin::get_finding_factory_entries)
-                    .service(finding_factory::handler_admin::set_finding_factory_entry)
+                    .service(finding_factory::handler_admin::update_finding_factory_entry)
                     .service(bearer_tokens::handler_admin::create_bearer_token)
                     .service(bearer_tokens::handler_admin::delete_bearer_token)
                     .service(bearer_tokens::handler_admin::list_all_bearer_tokens),

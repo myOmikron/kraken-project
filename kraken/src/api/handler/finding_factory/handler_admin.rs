@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use actix_web::get;
 use actix_web::put;
 use actix_web::web::Json;
@@ -12,10 +14,12 @@ use rorm::FieldAccess;
 use rorm::Model;
 use uuid::Uuid;
 
+use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::finding_definitions::schema::SimpleFindingDefinition;
+use crate::api::handler::finding_factory::schema::FullFindingFactoryEntry;
 use crate::api::handler::finding_factory::schema::GetFindingFactoryEntriesResponse;
-use crate::api::handler::finding_factory::schema::SetFindingFactoryEntryRequest;
+use crate::api::handler::finding_factory::schema::UpdateFindingFactoryEntryRequest;
 use crate::chan::global::GLOBAL;
 use crate::models::convert::FromDb;
 use crate::models::FindingDefinition;
@@ -34,20 +38,29 @@ use crate::modules::finding_factory::schema::FindingFactoryIdentifier;
 )]
 #[get("/finding-factory/entries")]
 pub async fn get_finding_factory_entries() -> ApiResult<Json<GetFindingFactoryEntriesResponse>> {
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
     // TODO query categories
-    let entries = query!(
-        &GLOBAL.db,
+
+    let entries: HashMap<_, _> = query!(
+        &mut tx,
         (
             FindingFactoryEntry::F.identifier,
-            FindingFactoryEntry::F.finding as FindingDefinition
+            FindingFactoryEntry::F.finding as FindingDefinition,
         )
     )
     .stream()
     .try_filter_map(|(identifier, finding)| async move {
-        if let Ok(identifier) = identifier.parse::<FindingFactoryIdentifier>() {
-            Ok(Some((
+        let Ok(identifier) = identifier.parse::<FindingFactoryIdentifier>() else {
+            warn!("Found invalid `FindingFactoryIdentifier` in db: {identifier}");
+            return Ok(None);
+        };
+
+        Ok(Some((
+            identifier,
+            FullFindingFactoryEntry {
                 identifier,
-                SimpleFindingDefinition {
+                finding: Some(SimpleFindingDefinition {
                     uuid: finding.uuid,
                     name: finding.name,
                     cve: finding.cve,
@@ -55,15 +68,14 @@ pub async fn get_finding_factory_entries() -> ApiResult<Json<GetFindingFactoryEn
                     summary: finding.summary,
                     created_at: finding.created_at,
                     categories: Vec::new(),
-                },
-            )))
-        } else {
-            warn!("Found invalid `FindingFactoryIdentifier` in db: {identifier}");
-            Ok(None)
-        }
+                }),
+            },
+        )))
     })
     .try_collect()
     .await?;
+
+    tx.commit().await?;
     Ok(Json(GetFindingFactoryEntriesResponse { entries }))
 }
 
@@ -71,45 +83,40 @@ pub async fn get_finding_factory_entries() -> ApiResult<Json<GetFindingFactoryEn
     tag = "Finding Factory",
     context_path = "/api/v1/admin",
     responses(
-        (status = 200, description = "The entry has been set"),
+        (status = 200, description = "The entry has been updated"),
         (status = 400, description = "Client error", body = ApiErrorResponse),
         (status = 500, description = "Server error", body = ApiErrorResponse),
     ),
     security(("api_key" = []))
 )]
 #[put("/finding-factory/entry")]
-pub async fn set_finding_factory_entry(
-    request: Json<SetFindingFactoryEntryRequest>,
+pub async fn update_finding_factory_entry(
+    request: Json<UpdateFindingFactoryEntryRequest>,
 ) -> ApiResult<HttpResponse> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
-    let SetFindingFactoryEntryRequest {
+    let UpdateFindingFactoryEntryRequest {
         identifier,
         finding_definition,
     } = request.into_inner();
     let identifier = identifier.to_string();
+    let finding = finding_definition.map(|opt| opt.map(ForeignModelByField::Key));
 
-    if let Some(finding) = finding_definition {
-        let updated = update!(&mut tx, FindingFactoryEntry)
-            .set(
-                FindingFactoryEntry::F.finding,
-                ForeignModelByField::Key(finding),
-            )
-            .condition(FindingFactoryEntry::F.identifier.equals(&identifier))
-            .await?;
+    let updated = update!(&mut tx, FindingFactoryEntry)
+        .begin_dyn_set()
+        .set_if(FindingFactoryEntry::F.finding, finding.clone())
+        .finish_dyn_set()
+        .map_err(|_| ApiError::EmptyJson)?
+        .condition(FindingFactoryEntry::F.identifier.equals(&identifier))
+        .await?;
 
-        if updated < 1 {
-            insert!(&mut tx, FindingFactoryEntry)
-                .single(&FindingFactoryEntry {
-                    uuid: Uuid::new_v4(),
-                    identifier,
-                    finding: ForeignModelByField::Key(finding),
-                })
-                .await?;
-        }
-    } else {
-        rorm::delete!(&mut tx, FindingFactoryEntry)
-            .condition(FindingFactoryEntry::F.identifier.equals(&identifier))
+    if updated < 1 {
+        insert!(&mut tx, FindingFactoryEntry)
+            .single(&FindingFactoryEntry {
+                uuid: Uuid::new_v4(),
+                identifier,
+                finding: finding.unwrap_or(None),
+            })
             .await?;
     }
 

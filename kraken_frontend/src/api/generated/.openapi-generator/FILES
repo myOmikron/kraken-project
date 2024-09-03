@@ -106,6 +106,7 @@ models/FullFilesPage.ts
 models/FullFinding.ts
 models/FullFindingAffected.ts
 models/FullFindingDefinition.ts
+models/FullFindingFactoryEntry.ts
 models/FullGlobalTag.ts
 models/FullHost.ts
 models/FullHttpService.ts
@@ -233,7 +234,6 @@ models/ServiceProtocolsOneOf3.ts
 models/ServiceProtocolsOneOf3Sctp.ts
 models/ServiceRelations.ts
 models/ServiceResultsPage.ts
-models/SetFindingFactoryEntryRequest.ts
 models/SetPasswordRequest.ts
 models/SettingsFull.ts
 models/SimpleAggregationSource.ts
@@ -280,6 +280,7 @@ models/UpdateDomainRequest.ts
 models/UpdateFindingAffectedRequest.ts
 models/UpdateFindingCategoryRequest.ts
 models/UpdateFindingDefinitionRequest.ts
+models/UpdateFindingFactoryEntryRequest.ts
 models/UpdateFindingRequest.ts
 models/UpdateGlobalTag.ts
 models/UpdateHostRequest.ts

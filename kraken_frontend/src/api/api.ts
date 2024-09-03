@@ -45,6 +45,7 @@ import {
     UpdateFindingAffectedRequest,
     UpdateFindingCategoryRequest,
     UpdateFindingDefinitionRequest,
+    UpdateFindingFactoryEntryRequest,
     UpdateFindingRequest,
     UpdateGlobalTag,
     UpdateHostRequest,
@@ -157,12 +158,15 @@ export const Api = {
         },
         findingFactory: {
             get: () => handleError(findingFactory.getFindingFactoryEntries()),
-            set: (identifier: FindingFactoryIdentifier, findingDefinition: UUID | null) =>
+            update: (
+                identifier: FindingFactoryIdentifier,
+                request: Omit<UpdateFindingFactoryEntryRequest, "identifier">,
+            ) =>
                 handleError(
-                    findingFactory.setFindingFactoryEntry({
-                        setFindingFactoryEntryRequest: {
+                    findingFactory.updateFindingFactoryEntry({
+                        updateFindingFactoryEntryRequest: {
                             identifier,
-                            findingDefinition,
+                            ...request,
                         },
                     }),
                 ),

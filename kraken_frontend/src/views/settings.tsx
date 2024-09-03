@@ -2,10 +2,10 @@ import React from "react";
 import { toast } from "react-toastify";
 import { Api } from "../api/api";
 import {
+    FullFindingFactoryEntry,
     FullOauthClient,
     FullWordlist,
     SettingsFull,
-    SimpleFindingDefinition,
     type FindingFactoryIdentifier,
 } from "../api/generated";
 import Input from "../components/input";
@@ -284,7 +284,7 @@ type SettingsFindingFactoryProps = {};
 /** An expandable panel in [`<Settings />`]{@link Settings} */
 export function SettingsFindingFactory(props: SettingsFindingFactoryProps) {
     const [assignedEntries, setAssignedEntries] = React.useState<
-        Partial<Record<FindingFactoryIdentifier, SimpleFindingDefinition>>
+        Partial<Record<FindingFactoryIdentifier, FullFindingFactoryEntry>>
     >({});
 
     React.useEffect(() => {
@@ -297,23 +297,31 @@ export function SettingsFindingFactory(props: SettingsFindingFactoryProps) {
             {Object.entries(FINDING_FACTORY_SECTIONED_ENTRIES).map(([key, { heading, entries }]) => (
                 <CollapsibleSection summary={heading} key={key}>
                     {ObjectFns.entries(entries).map(([identifier, { label }]) => (
-                        <label key={identifier}>
+                        <React.Fragment key={identifier}>
                             <span>{label}</span>
                             <SelectFindingDefinition
-                                selected={assignedEntries[identifier]?.uuid}
-                                onSelect={(finding) => {
-                                    Api.admin.findingFactory.set(identifier, finding?.uuid ?? null).then(
-                                        handleApiError(() => {
-                                            setAssignedEntries(({ [identifier]: _old, ...other }) =>
-                                                finding ? { [identifier]: finding, ...other } : other,
-                                            );
-                                        }),
-                                    );
+                                selected={assignedEntries[identifier]?.finding?.uuid}
+                                onSelect={(newFinding) => {
+                                    Api.admin.findingFactory
+                                        .update(identifier, {
+                                            findingDefinition: newFinding?.uuid ?? null,
+                                        })
+                                        .then(
+                                            handleApiError(() =>
+                                                setAssignedEntries(({ [identifier]: old, ...other }) => ({
+                                                    [identifier]: {
+                                                        identifier,
+                                                        finding: newFinding,
+                                                    },
+                                                    ...other,
+                                                })),
+                                            ),
+                                        );
                                 }}
                                 onHover={() => {}}
                                 isClearable={true}
                             />
-                        </label>
+                        </React.Fragment>
                     ))}
                 </CollapsibleSection>
             ))}

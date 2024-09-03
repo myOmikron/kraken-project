@@ -87,10 +87,6 @@
     align-items: center;
 }
 
-.settings-finding-factory label {
-    display: contents;
-}
-
 .settings-finding-factory .collapsible-section {
     display: grid;
     grid-template-columns: 1fr 2fr;

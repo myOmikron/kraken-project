@@ -680,13 +680,13 @@
                 "tags": [
                     "Finding Factory"
                 ],
-                "operationId": "set_finding_factory_entry",
+                "operationId": "update_finding_factory_entry",
                 "requestBody": {
                     "description": "",
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/SetFindingFactoryEntryRequest"
+                                "$ref": "#/components/schemas/UpdateFindingFactoryEntryRequest"
                             }
                         }
                     },
@@ -694,7 +694,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "The entry has been set"
+                        "description": "The entry has been updated"
                     },
                     "400": {
                         "description": "Client error",
@@ -11257,6 +11257,7 @@
             },
             "FindingFactoryIdentifier": {
                 "type": "string",
+                "description": "Enum identifying specific kinds of issues the finding factory might detect and create findings for.\n\nTODO: The current variants are plausible dummies",
                 "enum": [
                     "TestSslNullCiphers",
                     "TestSslExportCiphers",
@@ -11764,6 +11765,26 @@
                             "$ref": "#/components/schemas/SimpleFindingCategory"
                         },
                         "description": "The list of categories this finding definition falls into"
+                    }
+                }
+            },
+            "FullFindingFactoryEntry": {
+                "type": "object",
+                "description": "Settings mapping an identifier to a finding definition\n\nAn identifier is an enum variant which identifies one kind of issue,\nthe finding factory might create a finding for.\n\nIf the finding factory detects an issue it will look up its identifier's finding definition\nand create a finding using this definition (if it found any).",
+                "required": [
+                    "identifier"
+                ],
+                "properties": {
+                    "identifier": {
+                        "$ref": "#/components/schemas/FindingFactoryIdentifier"
+                    },
+                    "finding": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/SimpleFindingDefinition"
+                            }
+                        ],
+                        "nullable": true
                     }
                 }
             },
@@ -12745,8 +12766,9 @@
                 "properties": {
                     "entries": {
                         "type": "object",
+                        "description": "Map of all active finding factory identifiers and their finding definitions",
                         "additionalProperties": {
-                            "$ref": "#/components/schemas/SimpleFindingDefinition"
+                            "$ref": "#/components/schemas/FullFindingFactoryEntry"
                         }
                     }
                 }
@@ -14794,24 +14816,6 @@
                     }
                 }
             },
-            "SetFindingFactoryEntryRequest": {
-                "type": "object",
-                "description": "The request to set a finding factory entry",
-                "required": [
-                    "identifier"
-                ],
-                "properties": {
-                    "identifier": {
-                        "$ref": "#/components/schemas/FindingFactoryIdentifier"
-                    },
-                    "finding_definition": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Set's the entry's finding definition or `None` to disable an entry",
-                        "nullable": true
-                    }
-                }
-            },
             "SetPasswordRequest": {
                 "type": "object",
                 "description": "The request to set a new password for a user",
@@ -16368,6 +16372,24 @@
                             "format": "uuid"
                         },
                         "description": "List of categories",
+                        "nullable": true
+                    }
+                }
+            },
+            "UpdateFindingFactoryEntryRequest": {
+                "type": "object",
+                "description": "The request to set a finding factory entry",
+                "required": [
+                    "identifier"
+                ],
+                "properties": {
+                    "identifier": {
+                        "$ref": "#/components/schemas/FindingFactoryIdentifier"
+                    },
+                    "finding_definition": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Set's the entry's finding definition or `None` to disable an entry",
                         "nullable": true
                     }
                 }
