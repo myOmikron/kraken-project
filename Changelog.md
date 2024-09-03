@@ -4,6 +4,7 @@
 
 - Updated dependencies
 - Fixed permissions of state dir creation
+- Fixed infinite loop in adminworkspaces
 
 ## v0.4.2
 
