@@ -104,7 +104,7 @@ pub async fn upload_image(
     };
 
     tokio::task::spawn_blocking(move || {
-        let mut reader = image::io::Reader::open(media_file_path(file_uuid))?;
+        let mut reader = image::ImageReader::open(media_file_path(file_uuid))?;
         reader.set_format(image_format);
         let image = reader.decode()?;
 
