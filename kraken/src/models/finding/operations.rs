@@ -166,6 +166,10 @@ impl FindingAffected {
         Ok(uuid)
     }
 
+    /// Insert a few [`FindingAffected`]s in a bulk.
+    ///
+    /// To reduce the complexity of the iterator,
+    /// the parameters for creating the [`FindingAffected`]s are greatly restricted.
     pub async fn insert_simple_bulk(
         executor: impl Executor<'_>,
         items: impl IntoIterator<

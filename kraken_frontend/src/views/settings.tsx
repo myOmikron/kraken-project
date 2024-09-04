@@ -308,7 +308,7 @@ export function SettingsFindingFactory(props: SettingsFindingFactoryProps) {
                                         })
                                         .then(
                                             handleApiError(() =>
-                                                setAssignedEntries(({ [identifier]: old, ...other }) => ({
+                                                setAssignedEntries(({ [identifier]: _old, ...other }) => ({
                                                     [identifier]: {
                                                         identifier,
                                                         finding: newFinding,

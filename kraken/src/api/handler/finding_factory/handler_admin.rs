@@ -26,6 +26,13 @@ use crate::models::FindingDefinition;
 use crate::models::FindingFactoryEntry;
 use crate::modules::finding_factory::schema::FindingFactoryIdentifier;
 
+/// Retrieves the current mapping between finding factory identifiers and finding definitions
+///
+/// An identifier is an enum variant which identifies one kind of issue,
+/// the finding factory might create a finding for.
+///
+/// If the finding factory detects an issue it will look up its identifier's finding definition
+/// and create a finding using this definition (if it found any).
 #[utoipa::path(
     tag = "Finding Factory",
     context_path = "/api/v1/admin",
@@ -79,6 +86,7 @@ pub async fn get_finding_factory_entries() -> ApiResult<Json<GetFindingFactoryEn
     Ok(Json(GetFindingFactoryEntriesResponse { entries }))
 }
 
+/// Updates a single finding factory identifier
 #[utoipa::path(
     tag = "Finding Factory",
     context_path = "/api/v1/admin",

@@ -27,14 +27,16 @@ use crate::models::FindingFindingCategoryRelation;
 use crate::models::InsertFinding;
 use crate::modules::finding_factory::schema::FindingFactoryIdentifier;
 
+/// The finding factory provides a simple api to create findings in automations.
+///
+/// It collects what findings should be created with what affected
+/// and performs all database operations in [`FindingFactory::process`] consuming itself.
+///
+/// The finding factory's API uses an enum [`FindingFactoryIdentifier`] instead of [`FindingDefinition`] uuids
+/// to allow code to hard code them while being dynamically configurable at runtime.
+#[derive(Debug)]
 pub struct FindingFactory {
     issues: HashMap<FindingFactoryIdentifier, HashSet<(Uuid, AggregationType)>>,
-}
-
-impl fmt::Debug for FindingFactory {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("FindingFactory").finish_non_exhaustive()
-    }
 }
 
 impl FindingFactory {

@@ -8,6 +8,12 @@ use serde::Serialize;
 use utoipa::ToSchema;
 
 /// Enum identifying specific kinds of issues the finding factory might detect and create findings for.
+///
+/// The frontend displays them seperated into sections / categories.
+/// This separation should also be respected by the backend code using the variant.
+/// It is achieved by prefixing all variants with the categories "name".
+///
+/// For example, all identifiers produced by the service detection attack start with `ServiceDetection`.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)] //
 #[derive(Serialize, Deserialize, ToSchema)]
 pub enum FindingFactoryIdentifier {

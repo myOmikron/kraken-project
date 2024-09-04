@@ -374,6 +374,11 @@ pub(crate) struct AttackContext {
     attack_type: AttackType,
 
     /// A finding factory attacks can collect issues in
+    ///
+    /// Implementations of attacks may use this factory to collect issues
+    /// either while streaming their results or once after they finished.
+    ///
+    /// Either way, the factory will be consumed and processed in [`AttackContext::set_finished`].
     finding_factory: FindingFactory,
 }
 
