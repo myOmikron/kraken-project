@@ -16,12 +16,15 @@ use uuid::Uuid;
 
 use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::error::ApiResult;
+use crate::api::handler::common::schema::Color;
+use crate::api::handler::finding_categories::schema::SimpleFindingCategory;
 use crate::api::handler::finding_definitions::schema::SimpleFindingDefinition;
 use crate::api::handler::finding_factory::schema::FullFindingFactoryEntry;
 use crate::api::handler::finding_factory::schema::GetFindingFactoryEntriesResponse;
 use crate::api::handler::finding_factory::schema::UpdateFindingFactoryEntryRequest;
 use crate::chan::global::GLOBAL;
 use crate::models::convert::FromDb;
+use crate::models::FindingCategory;
 use crate::models::FindingDefinition;
 use crate::models::FindingFactoryEntry;
 use crate::modules::finding_factory::schema::FindingFactoryIdentifier;
@@ -47,7 +50,25 @@ use crate::modules::finding_factory::schema::FindingFactoryIdentifier;
 pub async fn get_finding_factory_entries() -> ApiResult<Json<GetFindingFactoryEntriesResponse>> {
     let mut tx = GLOBAL.db.start_transaction().await?;
 
-    // TODO query categories
+    let categories = query!(
+        &mut tx,
+        (
+            FindingFactoryEntry::F.finding.uuid,
+            FindingFactoryEntry::F.finding.categories.category as FindingCategory,
+        )
+    )
+    .stream()
+    .try_fold(HashMap::new(), |mut map, (definition, category)| {
+        map.entry(definition)
+            .or_insert(Vec::new())
+            .push(SimpleFindingCategory {
+                uuid: category.uuid,
+                name: category.name,
+                color: Color::from_db(category.color),
+            });
+        async move { Ok(map) }
+    })
+    .await?;
 
     let entries: HashMap<_, _> = query!(
         &mut tx,
@@ -57,27 +78,30 @@ pub async fn get_finding_factory_entries() -> ApiResult<Json<GetFindingFactoryEn
         )
     )
     .stream()
-    .try_filter_map(|(identifier, finding)| async move {
-        let Ok(identifier) = identifier.parse::<FindingFactoryIdentifier>() else {
-            warn!("Found invalid `FindingFactoryIdentifier` in db: {identifier}");
-            return Ok(None);
-        };
+    .try_filter_map(|(identifier, finding)| {
+        let categories = categories.get(&finding.uuid).cloned().unwrap_or_default();
+        async move {
+            let Ok(identifier) = identifier.parse::<FindingFactoryIdentifier>() else {
+                warn!("Found invalid `FindingFactoryIdentifier` in db: {identifier}");
+                return Ok(None);
+            };
 
-        Ok(Some((
-            identifier,
-            FullFindingFactoryEntry {
+            Ok(Some((
                 identifier,
-                finding: Some(SimpleFindingDefinition {
-                    uuid: finding.uuid,
-                    name: finding.name,
-                    cve: finding.cve,
-                    severity: FromDb::from_db(finding.severity),
-                    summary: finding.summary,
-                    created_at: finding.created_at,
-                    categories: Vec::new(),
-                }),
-            },
-        )))
+                FullFindingFactoryEntry {
+                    identifier,
+                    finding: Some(SimpleFindingDefinition {
+                        uuid: finding.uuid,
+                        name: finding.name,
+                        cve: finding.cve,
+                        severity: FromDb::from_db(finding.severity),
+                        summary: finding.summary,
+                        created_at: finding.created_at,
+                        categories,
+                    }),
+                },
+            )))
+        }
     })
     .try_collect()
     .await?;

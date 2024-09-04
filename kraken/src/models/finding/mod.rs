@@ -83,6 +83,9 @@ pub struct FindingDefinition {
     /// The point in time this finding was created
     #[rorm(auto_create_time)]
     pub created_at: DateTime<Utc>,
+
+    /// Reference the definition's categories
+    pub categories: BackRef<field!(FindingDefinitionCategoryRelation::F.definition)>,
 }
 
 /// The instance of a finding
@@ -219,7 +222,7 @@ pub struct FindingCategory {
 
 /// The relation between a [FindingDefinition] and a [FindingCategory]
 // the name FindingDefinitionFindingCategoryRelation is too long for postgres when involved in joins
-#[derive(Model)]
+#[derive(Model, Clone)]
 pub struct FindingDefinitionCategoryRelation {
     /// The primary key
     #[rorm(primary_key)]
