@@ -1,7 +1,6 @@
 use std::collections::hash_map;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::fmt;
 
 use futures::TryStreamExt;
 use rorm::and;
