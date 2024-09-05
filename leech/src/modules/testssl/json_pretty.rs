@@ -67,10 +67,10 @@ pub struct ScanResult {
     /// The scanned port
     pub port: String,
 
-    /// The ip address' rDNS name
-    #[serde(rename = "rDNS")]
-    pub rdns: String,
-
+    // /// The ip address' rDNS name
+    // #[serde(rename = "rDNS")]
+    // pub rdns: String,
+    //
     /// The detected service
     pub service: String,
 
@@ -138,7 +138,6 @@ impl ScanResult {
             target_host: _,
             ip: _,
             port: _,
-            rdns: _,
             service: _,
             hostname: _,
             pretest,

@@ -1,0 +1,10 @@
+[Migration]
+Hash = "1457786132841928709"
+Initial = false
+Dependency = 21
+Replaces = []
+
+[[Migration.Operations]]
+Type = "DeleteField"
+Model = "testsslresultheader"
+Name = "rdns"

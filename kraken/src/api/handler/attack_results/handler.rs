@@ -787,7 +787,6 @@ pub async fn get_testssl_results(
         domain: header.domain,
         ip: header.ip.ip(),
         port: header.port as u16,
-        rdns: header.rdns,
         service: header.service,
         findings: query!(&mut tx, TestSSLResultFinding)
             .condition(TestSSLResultFinding::F.attack.equals(attack_uuid))

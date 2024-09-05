@@ -410,9 +410,6 @@ message TestSSLScanResult {
   // The scanned port
   string port = 3;
 
-  // The ip address' rDNS name
-  string rdns = 4;
-
   // The detected service
   string service = 5;
 

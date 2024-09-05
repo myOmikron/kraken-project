@@ -155,6 +155,9 @@ pub async fn run_testssl(settings: TestSSLSettings) -> Result<json_pretty::File,
     // Don't wait for user confirmation when encountering problems
     cmd.arg("--warnings").arg("batch");
 
+    // `--ip <ip>` still performs DNS lookups and uses those ips except the first one?
+    cmd.arg("--nodns").arg("none");
+
     // Add timeouts
     if let Some(seconds) = connect_timeout {
         cmd.arg("--connect-timeout").arg(&seconds.to_string());
@@ -221,7 +224,7 @@ pub async fn run_testssl(settings: TestSSLSettings) -> Result<json_pretty::File,
                 cmd.arg("--pfs");
             }
             if server_preferences {
-                cmd.arg("--server-preferences");
+                cmd.arg("--server-preference");
             }
             if server_defaults {
                 cmd.arg("--server-defaults");

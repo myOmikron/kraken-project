@@ -485,7 +485,6 @@ impl FullAggregationSource {
                                     domain: result.domain,
                                     ip: result.ip.ip(),
                                     port: result.port as u16,
-                                    rdns: result.rdns,
                                     service: result.service,
                                     findings: Vec::new(),
                                 },

@@ -917,7 +917,6 @@ impl ReqAttackService for Attacks {
                                 target_host: service.target_host,
                                 ip: service.ip,
                                 port: service.port,
-                                rdns: service.rdns,
                                 service: service.service,
                                 pretest: conv_findings(service.pretest),
                                 protocols: conv_findings(service.protocols),

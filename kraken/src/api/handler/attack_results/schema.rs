@@ -436,9 +436,6 @@ pub struct FullTestSSLResult {
     /// The scanned port
     pub port: u16,
 
-    /// The ip address' rDNS name
-    pub rdns: String,
-
     /// The detected service
     pub service: String,
 

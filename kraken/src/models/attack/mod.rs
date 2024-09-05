@@ -542,10 +542,6 @@ pub struct TestSSLResultHeader {
     /// The scanned port
     pub port: i32,
 
-    /// The ip address' rDNS name
-    #[rorm(max_length = 255)]
-    pub rdns: String,
-
     /// The detected service
     #[rorm(max_length = 255)]
     pub service: String,

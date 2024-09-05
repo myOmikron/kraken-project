@@ -95,7 +95,6 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                     target_host,
                     ip,
                     port,
-                    rdns,
                     service,
                     pretest,
                     protocols,
@@ -115,11 +114,6 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                 } else {
                     Some(target_host)
                 };
-
-                let mut reverse_domain = rdns.clone();
-                if reverse_domain.ends_with('.') {
-                    reverse_domain.pop();
-                }
 
                 let ip = match IpNetwork::from_str(&ip) {
                     Ok(ip) => ip,
@@ -194,7 +188,6 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                         domain: domain.clone(),
                         ip,
                         port: port as i32,
-                        rdns,
                         service: service.clone(),
                     })
                     .await?;
@@ -219,16 +212,6 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                 } else {
                     None
                 };
-
-                let reverse_domain_uuid = GLOBAL
-                    .aggregator
-                    .aggregate_domain(
-                        self.workspace.uuid,
-                        &reverse_domain,
-                        DomainCertainty::Unverified,
-                        self.user.uuid,
-                    )
-                    .await?;
 
                 let host_uuid = GLOBAL
                     .aggregator
@@ -273,7 +256,6 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                     .bulk(
                         [
                             (AggregationTable::Domain, domain_uuid),
-                            (AggregationTable::Domain, Some(reverse_domain_uuid)),
                             (AggregationTable::Host, Some(host_uuid)),
                             (AggregationTable::Port, Some(port_uuid)),
                             (AggregationTable::Service, service_uuid),
