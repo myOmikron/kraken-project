@@ -13,6 +13,7 @@ pub mod files;
 pub mod finding_affected;
 pub mod finding_categories;
 pub mod finding_definitions;
+pub mod finding_factory;
 pub mod findings;
 pub mod global_tags;
 pub mod hosts;

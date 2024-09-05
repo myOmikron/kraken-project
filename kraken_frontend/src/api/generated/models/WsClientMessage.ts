@@ -3,17 +3,17 @@
 
 
 import {
-    WsClientMessageOneOf1,
-    WsClientMessageOneOf1TypeEnum,
-    WsClientMessageOneOf1FromJSONTyped,
-    WsClientMessageOneOf1ToJSON,
-} from './WsClientMessageOneOf1';
-import {
     WsClientMessageOneOf,
     WsClientMessageOneOfTypeEnum,
     WsClientMessageOneOfFromJSONTyped,
     WsClientMessageOneOfToJSON,
 } from './WsClientMessageOneOf';
+import {
+    WsClientMessageOneOf1,
+    WsClientMessageOneOf1TypeEnum,
+    WsClientMessageOneOf1FromJSONTyped,
+    WsClientMessageOneOf1ToJSON,
+} from './WsClientMessageOneOf1';
 
 /**
  * @type WsClientMessage
@@ -21,16 +21,16 @@ import {
  * @export
  */
 export type WsClientMessage = 
-  | WsClientMessageOneOf1
-  | WsClientMessageOneOf;
+  | WsClientMessageOneOf
+  | WsClientMessageOneOf1;
 
 function enumToString<T extends string>(obj: Record<T, T>): T {
     // @ts-ignore
     return Object.values(obj)[0];
 }
 
-const WsClientMessageOneOf1Type = enumToString(WsClientMessageOneOf1TypeEnum);
 const WsClientMessageOneOfType = enumToString(WsClientMessageOneOfTypeEnum);
+const WsClientMessageOneOf1Type = enumToString(WsClientMessageOneOf1TypeEnum);
 
 export function WsClientMessageFromJSON(json: any): WsClientMessage {
     return WsClientMessageFromJSONTyped(json, false);
@@ -42,10 +42,10 @@ export function WsClientMessageFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     switch (json['type']) {
         
-        case WsClientMessageOneOf1Type:
-            return WsClientMessageOneOf1FromJSONTyped(json, ignoreDiscriminator);
         case WsClientMessageOneOfType:
             return WsClientMessageOneOfFromJSONTyped(json, ignoreDiscriminator);
+        case WsClientMessageOneOf1Type:
+            return WsClientMessageOneOf1FromJSONTyped(json, ignoreDiscriminator);
         default:
             throw new Error("No variant of WsClientMessage exists with 'type=" + json["type"] + "'");
     }
@@ -60,10 +60,10 @@ export function WsClientMessageToJSON(value?: WsClientMessage | null): any {
     }
     switch (value['type']) {
         
-        case WsClientMessageOneOf1Type:
-            return WsClientMessageOneOf1ToJSON(value);
         case WsClientMessageOneOfType:
             return WsClientMessageOneOfToJSON(value);
+        case WsClientMessageOneOf1Type:
+            return WsClientMessageOneOf1ToJSON(value);
         default:
             throw new Error("No variant of WsClientMessage exists with 'type=" + value["type"] + "'");
     }

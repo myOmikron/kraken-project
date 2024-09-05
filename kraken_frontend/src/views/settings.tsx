@@ -1,13 +1,21 @@
 import React from "react";
 import { toast } from "react-toastify";
 import { Api } from "../api/api";
-import { FullOauthClient, FullWordlist, SettingsFull } from "../api/generated";
+import {
+    FullFindingFactoryEntry,
+    FullOauthClient,
+    FullWordlist,
+    SettingsFull,
+    type FindingFactoryIdentifier,
+} from "../api/generated";
 import Input from "../components/input";
 import Textarea from "../components/textarea";
 import "../styling/settings.css";
 import CloseIcon from "../svg/close";
 import CopyIcon from "../svg/copy";
-import { copyToClipboard, handleApiError } from "../utils/helper";
+import { ObjectFns, copyToClipboard, handleApiError } from "../utils/helper";
+import CollapsibleSection from "./workspace/components/collapsible-section";
+import SelectFindingDefinition from "./workspace/components/select-finding-definition";
 
 export default function Settings() {
     const [settings, setSettings] = React.useState<SettingsFull | null>(null);
@@ -264,7 +272,115 @@ export default function Settings() {
                         ))}
                     </div>
                 </div>
+                <SettingsFindingFactory />
             </div>
         </>
     );
 }
+
+/** React props for [`<SettingsFindingFactory />`]{@link SettingsFindingFactory} */
+type SettingsFindingFactoryProps = {};
+
+/** An expandable panel in [`<Settings />`]{@link Settings} */
+export function SettingsFindingFactory(props: SettingsFindingFactoryProps) {
+    const [assignedEntries, setAssignedEntries] = React.useState<
+        Partial<Record<FindingFactoryIdentifier, FullFindingFactoryEntry>>
+    >({});
+
+    React.useEffect(() => {
+        Api.admin.findingFactory.get().then(handleApiError(({ entries }) => setAssignedEntries(entries)));
+    }, []);
+
+    return (
+        <div className={"pane settings-finding-factory"}>
+            <h2 className={"heading"}>Finding Factory Entries</h2>
+            {Object.entries(FINDING_FACTORY_SECTIONED_ENTRIES).map(([key, { heading, entries }]) => (
+                <CollapsibleSection summary={heading} key={key}>
+                    {ObjectFns.entries(entries).map(([identifier, { label }]) => (
+                        <React.Fragment key={identifier}>
+                            <span>{label}</span>
+                            <SelectFindingDefinition
+                                selected={assignedEntries[identifier]?.finding?.uuid}
+                                onSelect={(newFinding) => {
+                                    Api.admin.findingFactory
+                                        .update(identifier, {
+                                            findingDefinition: newFinding?.uuid ?? null,
+                                        })
+                                        .then(
+                                            handleApiError(() =>
+                                                setAssignedEntries(({ [identifier]: _old, ...other }) => ({
+                                                    [identifier]: {
+                                                        identifier,
+                                                        finding: newFinding,
+                                                    },
+                                                    ...other,
+                                                })),
+                                            ),
+                                        );
+                                }}
+                                onHover={() => {}}
+                                isClearable={true}
+                            />
+                        </React.Fragment>
+                    ))}
+                </CollapsibleSection>
+            ))}
+        </div>
+    );
+}
+
+/**
+ * Helper type for [`FINDING_FACTORY_SECTIONED_ENTRIES`]{@link FINDING_FACTORY_SECTIONED_ENTRIES}.
+ *
+ * Please read `FINDING_FACTORY_SECTIONED_ENTRIES`'s docs an update `FindingFactorySection`'s docs,
+ * if you reuse it outside `FINDING_FACTORY_SECTIONED_ENTRIES`.
+ */
+type FindingFactorySection = "ServiceDetection";
+() => {
+    // Checks whether there are any sections missing in `FindingFactorySection`.
+    // It will fail to compile if there exists any `FindingFactoryIdentifier` which is not prefixed by any section.
+    //
+    // The error following error tells you to add `"NewSection"` to `FindingFactorySection`:
+    // ```
+    // Type 'FindingFactoryIdentifier' is not assignable to type '[...]'.
+    // Type '"NewSectionNewIdentifier"' is not assignable to type '[...]'.
+    // ```
+    const _: `${FindingFactorySection}${string}` = undefined as unknown as FindingFactoryIdentifier;
+};
+
+/**
+ * This object groups [`FindingFactoryIdentifier`]{@link FindingFactoryIdentifier} into sections
+ * and associates them with meta information like their display labels.
+ *
+ * A "section" is simply a common prefix shared by several identifiers
+ * which symbolizes some other connection between those identifiers.
+ *
+ * This object uses a few tricks to type check its completeness:
+ * The list of all sections is stored in the helper type [`FindingFactorySection`]{@link FindingFactorySection}.
+ * This list is type-checked to contain a prefix for every identifier.
+ * This object requires a property for every section in this list which contains all identifier prefixed by it.
+ * -> Using this setup, missing a new section / identifier will fail to type check
+ */
+const FINDING_FACTORY_SECTIONED_ENTRIES: {
+    [Section in FindingFactorySection]: {
+        /** The section's heading */
+        heading: string;
+        /** The identifiers contained in this section */
+        entries: {
+            [Identifier in Extract<FindingFactoryIdentifier, `${Section}${string}`>]: {
+                /** The identifier's label */
+                label: string;
+            };
+        };
+    };
+} = {
+    ServiceDetection: {
+        heading: "ServiceDetection",
+        entries: {
+            ServiceDetectionPostgres: { label: "Found postgres:" },
+            ServiceDetectionMariaDb: { label: "Found MariaDB:" },
+            ServiceDetectionSnmp: { label: "Found Snmp:" },
+            ServiceDetectionSsh: { label: "Found Ssh:" },
+        },
+    },
+};

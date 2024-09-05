@@ -24,6 +24,7 @@ use crate::api::handler::files;
 use crate::api::handler::finding_affected;
 use crate::api::handler::finding_categories;
 use crate::api::handler::finding_definitions;
+use crate::api::handler::finding_factory;
 use crate::api::handler::findings;
 use crate::api::handler::global_tags;
 use crate::api::handler::hosts;
@@ -234,6 +235,8 @@ impl Modify for SecurityAddon2 {
         finding_definitions::handler::update_finding_definition,
         finding_definitions::handler_admin::get_finding_definition_usage,
         finding_definitions::handler_admin::delete_finding_definition,
+        finding_factory::handler_admin::get_finding_factory_entries,
+        finding_factory::handler_admin::update_finding_factory_entry,
     ),
     components(schemas(
         common::schema::ApiErrorResponse,
@@ -423,6 +426,10 @@ impl Modify for SecurityAddon2 {
         finding_definitions::schema::UpdateFindingDefinitionRequest,
         finding_definitions::schema::ListFindingDefinitionUsages,
         finding_definitions::schema::FindingDefinitionUsage,
+        finding_factory::schema::GetFindingFactoryEntriesResponse,
+        finding_factory::schema::FullFindingFactoryEntry,
+        finding_factory::schema::UpdateFindingFactoryEntryRequest,
+        crate::modules::finding_factory::schema::FindingFactoryIdentifier,
     )),
     modifiers(&SecurityAddon)
 )]

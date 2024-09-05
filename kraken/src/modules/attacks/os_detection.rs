@@ -27,7 +27,7 @@ use crate::modules::attacks::OsDetectionParams;
 
 impl AttackContext {
     pub async fn os_detection(
-        &self,
+        &mut self,
         mut leech: LeechClient,
         params: OsDetectionParams,
     ) -> Result<(), AttackError> {
@@ -56,7 +56,7 @@ impl AttackContext {
 }
 
 impl HandleAttackResponse<OsDetectionResponse> for AttackContext {
-    async fn handle_response(&self, response: OsDetectionResponse) -> Result<(), AttackError> {
+    async fn handle_response(&mut self, response: OsDetectionResponse) -> Result<(), AttackError> {
         let OsDetectionResponse {
             host: Some(host),
             hints,

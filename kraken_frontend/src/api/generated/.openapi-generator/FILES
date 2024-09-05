@@ -7,6 +7,7 @@ apis/BearerTokenApi.ts
 apis/DomainsApi.ts
 apis/FilesApi.ts
 apis/FindingCategoriesApi.ts
+apis/FindingFactoryApi.ts
 apis/FindingsApi.ts
 apis/GlobalTagsApi.ts
 apis/HostsApi.ts
@@ -90,6 +91,7 @@ models/FindingAffectedObjectOneOf3.ts
 models/FindingAffectedObjectOneOf4.ts
 models/FindingDefinitionUsage.ts
 models/FindingDetails.ts
+models/FindingFactoryIdentifier.ts
 models/FindingSection.ts
 models/FindingSeverity.ts
 models/FinishRegisterRequest.ts
@@ -104,6 +106,7 @@ models/FullFilesPage.ts
 models/FullFinding.ts
 models/FullFindingAffected.ts
 models/FullFindingDefinition.ts
+models/FullFindingFactoryEntry.ts
 models/FullGlobalTag.ts
 models/FullHost.ts
 models/FullHttpService.ts
@@ -131,6 +134,7 @@ models/GetAllPortsQuery.ts
 models/GetAllPortsQueryAllOf.ts
 models/GetAllServicesQuery.ts
 models/GetAllServicesQueryAllOf.ts
+models/GetFindingFactoryEntriesResponse.ts
 models/HostAliveResultsPage.ts
 models/HostCertainty.ts
 models/HostRelations.ts
@@ -283,6 +287,7 @@ models/UpdateDomainRequest.ts
 models/UpdateFindingAffectedRequest.ts
 models/UpdateFindingCategoryRequest.ts
 models/UpdateFindingDefinitionRequest.ts
+models/UpdateFindingFactoryEntryRequest.ts
 models/UpdateFindingRequest.ts
 models/UpdateGlobalTag.ts
 models/UpdateHostRequest.ts

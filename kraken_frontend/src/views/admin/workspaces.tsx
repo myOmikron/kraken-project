@@ -4,8 +4,11 @@ import { SimpleWorkspace } from "../../api/generated";
 import Loading from "../../components/loading";
 import { handleApiError } from "../../utils/helper";
 
+/** React props for [`<AdminWorkspaces />`]{@link AdminWorkspaces} */
+type AdminWorkspacesProps = {};
+
 /** View to expose the `/api/v1/admin/workspaces` endpoints */
-export default function AdminWorkspaces() {
+export default function AdminWorkspaces(props: AdminWorkspacesProps) {
     const [workspaces, setWorkspaces] = React.useState<Array<SimpleWorkspace> | undefined>(undefined);
 
     React.useEffect(() => {
@@ -14,7 +17,7 @@ export default function AdminWorkspaces() {
                 setWorkspaces(workspaces);
             }),
         );
-    });
+    }, []);
 
     return (
         <>

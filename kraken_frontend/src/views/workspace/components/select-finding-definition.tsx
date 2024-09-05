@@ -10,14 +10,22 @@ import { handleApiError } from "../../../utils/helper";
 import { CreateFindingDefinition } from "../../knowledge-base/create-finding-definition";
 
 export type SelectFindingDefinitionProps = {
-    selected: string | undefined;
-    onSelect: (newSelected: SimpleFindingDefinition) => void;
+    selected: string | null | undefined;
     onHover: (newHovered: SimpleFindingDefinition | undefined) => void;
     required?: boolean;
-};
+} & (
+    | {
+          isClearable: true;
+          onSelect: (newSelected: SimpleFindingDefinition | null) => void;
+      }
+    | {
+          isClearable?: false;
+          onSelect: (newSelected: SimpleFindingDefinition) => void;
+      }
+);
 
 export default function SelectFindingDefinition(props: SelectFindingDefinitionProps) {
-    const { selected, onSelect, onHover, required } = props;
+    const { selected, onHover, required } = props;
 
     const [newDefinition, setNewDefinition] = React.useState<string>();
     const [definitions, setDefinitions] = React.useState([] as Array<SimpleFindingDefinition>); // all definitions
@@ -40,7 +48,7 @@ export default function SelectFindingDefinition(props: SelectFindingDefinitionPr
             <Creatable<SimpleFindingDefinition>
                 className={"dropdown"}
                 styles={selectStyles("default")}
-                isClearable={false}
+                isClearable={props.isClearable}
                 autoFocus={false}
                 required={required}
                 options={definitions}
@@ -49,7 +57,8 @@ export default function SelectFindingDefinition(props: SelectFindingDefinitionPr
                 value={definitions.find(({ uuid }) => uuid === selected) ?? null}
                 onChange={(value) => {
                     onHover(undefined);
-                    if (value) onSelect(value);
+                    if (props.isClearable) props.onSelect(value);
+                    else if (value !== null) props.onSelect(value);
                 }}
                 onCreateOption={(name) => setNewDefinition(name)}
                 components={{
@@ -92,7 +101,7 @@ export default function SelectFindingDefinition(props: SelectFindingDefinitionPr
                         onCreate={(def) => {
                             setDefinitions((defs) => [def, ...defs]);
                             setNewDefinition(undefined);
-                            onSelect(def);
+                            props.onSelect(def);
                         }}
                         inPane
                     />

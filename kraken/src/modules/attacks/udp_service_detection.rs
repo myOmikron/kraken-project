@@ -31,7 +31,7 @@ use crate::modules::attacks::UdpServiceDetectionParams;
 impl AttackContext {
     /// Executes the "service detection" attack
     pub async fn udp_service_detection(
-        &self,
+        &mut self,
         mut leech: LeechClient,
         params: UdpServiceDetectionParams,
     ) -> Result<(), AttackError> {
@@ -57,7 +57,7 @@ impl AttackContext {
 
 impl HandleAttackResponse<UdpServiceDetectionResponse> for AttackContext {
     async fn handle_response(
-        &self,
+        &mut self,
         response: UdpServiceDetectionResponse,
     ) -> Result<(), AttackError> {
         let UdpServiceDetectionResponse {

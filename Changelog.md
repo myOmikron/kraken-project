@@ -2,8 +2,25 @@
 
 ## WIP
 
-- Updated dependencies
+### Feature: Finding Factory
+
+- service detection can auto-create findings for certain services:
+    - postgres
+    - mariadb
+    - snmp
+    - ssh
+
+### Frontend Fixes
+
+- Fixed infinite loop in adminworkspaces
+
+### Backend Fixes
+
 - Fixed permissions of state dir creation
+
+### General
+
+- Updated dependencies
 
 ## v0.4.2
 

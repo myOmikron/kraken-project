@@ -26,6 +26,7 @@ import {
     DomainsApi,
     FilesApi,
     FindingCategoriesApi,
+    FindingFactoryApi,
     FindingsApi,
     GlobalTagsApi,
     HostsApi,
@@ -44,6 +45,7 @@ import {
     UpdateFindingAffectedRequest,
     UpdateFindingCategoryRequest,
     UpdateFindingDefinitionRequest,
+    UpdateFindingFactoryEntryRequest,
     UpdateFindingRequest,
     UpdateGlobalTag,
     UpdateHostRequest,
@@ -63,6 +65,7 @@ import {
     WorkspaceInvitationsApi,
     WorkspaceTagsApi,
     WorkspacesApi,
+    type FindingFactoryIdentifier,
 } from "./generated";
 
 /** Database id i.e. and u32 */
@@ -99,6 +102,7 @@ const wordlists = new WordlistApi(configuration);
 const wordlistsManagement = new WordlistManagementApi(configuration);
 const knowledgeBase = new KnowledgeBaseApi(configuration);
 const findingCategories = new FindingCategoriesApi(configuration);
+const findingFactory = new FindingFactoryApi(configuration);
 
 export const Api = {
     admin: {
@@ -151,6 +155,21 @@ export const Api = {
             update: (uuid: UUID, updateWordlistRequest: UpdateWordlistRequest) =>
                 handleError(wordlistsManagement.updateWordlistAdmin({ uuid, updateWordlistRequest })),
             delete: (uuid: UUID) => handleError(wordlistsManagement.deleteWordlistAdmin({ uuid })),
+        },
+        findingFactory: {
+            get: () => handleError(findingFactory.getFindingFactoryEntries()),
+            update: (
+                identifier: FindingFactoryIdentifier,
+                request: Omit<UpdateFindingFactoryEntryRequest, "identifier">,
+            ) =>
+                handleError(
+                    findingFactory.updateFindingFactoryEntry({
+                        updateFindingFactoryEntryRequest: {
+                            identifier,
+                            ...request,
+                        },
+                    }),
+                ),
         },
     },
     attacks: {

@@ -42,7 +42,7 @@ use crate::modules::attacks::TestSSLParams;
 impl AttackContext {
     /// Executes the "testssl" attack
     pub async fn testssl(
-        &self,
+        &mut self,
         mut leech: LeechClient,
         params: TestSSLParams,
     ) -> Result<(), AttackError> {
@@ -83,7 +83,9 @@ impl AttackContext {
 }
 
 impl HandleAttackResponse<TestSslResponse> for AttackContext {
-    async fn handle_response(&self, response: TestSslResponse) -> Result<(), AttackError> {
+    async fn handle_response(&mut self, response: TestSslResponse) -> Result<(), AttackError> {
+        let attack_uuid = self.attack_uuid;
+
         for service in response.services {
             if let Some(test_ssl_service::TestsslService::Result(result)) = service.testssl_service
             {
@@ -160,7 +162,7 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                         .map(move |finding| {
                             Ok(TestSSLResultFindingInsert {
                                 uuid: Uuid::new_v4(),
-                                attack: ForeignModelByField::Key(self.attack_uuid),
+                                attack: ForeignModelByField::Key(attack_uuid),
                                 section,
                                 key: finding.id,
                                 value: finding.finding,

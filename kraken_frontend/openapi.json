@@ -630,6 +630,103 @@
                 ]
             }
         },
+        "/api/v1/admin/finding-factory/entries": {
+            "get": {
+                "tags": [
+                    "Finding Factory"
+                ],
+                "summary": "Retrieves the current mapping between finding factory identifiers and finding definitions",
+                "description": "An identifier is an enum variant which identifies one kind of issue,\nthe finding factory might create a finding for.\n\nIf the finding factory detects an issue it will look up its identifier's finding definition\nand create a finding using this definition (if it found any).",
+                "operationId": "get_finding_factory_entries",
+                "responses": {
+                    "200": {
+                        "description": "Retrieved the list of all finding factory entries",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetFindingFactoryEntriesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/finding-factory/entry": {
+            "put": {
+                "tags": [
+                    "Finding Factory"
+                ],
+                "summary": "Updates a single finding factory identifier",
+                "operationId": "update_finding_factory_entry",
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateFindingFactoryEntryRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "The entry has been updated"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/findingCategories": {
             "post": {
                 "tags": [
@@ -11276,6 +11373,16 @@
                     "User"
                 ]
             },
+            "FindingFactoryIdentifier": {
+                "type": "string",
+                "description": "Enum identifying specific kinds of issues the finding factory might detect and create findings for.\n\nThe frontend displays them seperated into sections / categories.\nThis separation should also be respected by the backend code using the variant.\nIt is achieved by prefixing all variants with the categories \"name\".\n\nFor example, all identifiers produced by the service detection attack start with `ServiceDetection`.",
+                "enum": [
+                    "ServiceDetectionPostgres",
+                    "ServiceDetectionMariaDb",
+                    "ServiceDetectionSsh",
+                    "ServiceDetectionSnmp"
+                ]
+            },
             "FindingSection": {
                 "type": "string",
                 "description": "The definition section that was edited",
@@ -11773,6 +11880,26 @@
                             "$ref": "#/components/schemas/SimpleFindingCategory"
                         },
                         "description": "The list of categories this finding definition falls into"
+                    }
+                }
+            },
+            "FullFindingFactoryEntry": {
+                "type": "object",
+                "description": "Settings mapping an identifier to a finding definition\n\nAn identifier is an enum variant which identifies one kind of issue,\nthe finding factory might create a finding for.\n\nIf the finding factory detects an issue it will look up its identifier's finding definition\nand create a finding using this definition (if it found any).",
+                "required": [
+                    "identifier"
+                ],
+                "properties": {
+                    "identifier": {
+                        "$ref": "#/components/schemas/FindingFactoryIdentifier"
+                    },
+                    "finding": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/SimpleFindingDefinition"
+                            }
+                        ],
+                        "nullable": true
                     }
                 }
             },
@@ -12806,6 +12933,22 @@
                     }
                 ],
                 "description": "Query parameters for filtering the services to get"
+            },
+            "GetFindingFactoryEntriesResponse": {
+                "type": "object",
+                "description": "The list of all finding factory entries",
+                "required": [
+                    "entries"
+                ],
+                "properties": {
+                    "entries": {
+                        "type": "object",
+                        "description": "Map of all active finding factory identifiers and their finding definitions",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/FullFindingFactoryEntry"
+                        }
+                    }
+                }
             },
             "HostAliveResultsPage": {
                 "type": "object",
@@ -16590,6 +16733,24 @@
                             "format": "uuid"
                         },
                         "description": "List of categories",
+                        "nullable": true
+                    }
+                }
+            },
+            "UpdateFindingFactoryEntryRequest": {
+                "type": "object",
+                "description": "The request to set a finding factory entry",
+                "required": [
+                    "identifier"
+                ],
+                "properties": {
+                    "identifier": {
+                        "$ref": "#/components/schemas/FindingFactoryIdentifier"
+                    },
+                    "finding_definition": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Set's the entry's finding definition or `None` to disable an entry",
                         "nullable": true
                     }
                 }

@@ -17,7 +17,7 @@ use crate::modules::attacks::DehashedQueryParams;
 impl AttackContext {
     /// Executes the "dehashed query" attack
     pub async fn dehashed_query(
-        &self,
+        &mut self,
         sender: mpsc::Sender<ScheduledRequest>,
         params: DehashedQueryParams,
     ) -> Result<(), AttackError> {

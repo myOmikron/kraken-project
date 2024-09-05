@@ -43,6 +43,7 @@ use crate::models::DomainHostRelation;
 use crate::models::InsertAttackError;
 use crate::models::User;
 use crate::models::Workspace;
+use crate::modules::finding_factory::FindingFactory;
 
 mod bruteforce_subdomains;
 mod certificate_transparency;
@@ -73,7 +74,7 @@ pub async fn start_bruteforce_subdomains(
     leech: LeechClient,
     params: BruteforceSubdomainsParams,
 ) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
-    let ctx = AttackContext::new(workspace, user, AttackType::BruteforceSubdomains).await?;
+    let mut ctx = AttackContext::new(workspace, user, AttackType::BruteforceSubdomains).await?;
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
@@ -99,7 +100,7 @@ pub async fn start_dns_resolution(
     leech: LeechClient,
     params: DnsResolutionParams,
 ) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
-    let ctx = AttackContext::new(workspace, user, AttackType::DnsResolution).await?;
+    let mut ctx = AttackContext::new(workspace, user, AttackType::DnsResolution).await?;
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
@@ -122,7 +123,7 @@ pub async fn start_dns_txt_scan(
     leech: LeechClient,
     params: DnsTxtScanParams,
 ) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
-    let ctx = AttackContext::new(workspace, user, AttackType::DnsTxtScan).await?;
+    let mut ctx = AttackContext::new(workspace, user, AttackType::DnsTxtScan).await?;
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
@@ -153,7 +154,7 @@ pub async fn start_host_alive(
     leech: LeechClient,
     params: HostAliveParams,
 ) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
-    let ctx = AttackContext::new(workspace, user, AttackType::HostAlive).await?;
+    let mut ctx = AttackContext::new(workspace, user, AttackType::HostAlive).await?;
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
@@ -192,7 +193,7 @@ pub async fn start_os_detection(
     leech: LeechClient,
     params: crate::modules::attacks::OsDetectionParams,
 ) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
-    let ctx = AttackContext::new(workspace, user, AttackType::OSDetection).await?;
+    let mut ctx = AttackContext::new(workspace, user, AttackType::OSDetection).await?;
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
@@ -226,7 +227,8 @@ pub async fn start_certificate_transparency(
     leech: LeechClient,
     params: CertificateTransparencyParams,
 ) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
-    let ctx = AttackContext::new(workspace, user, AttackType::QueryCertificateTransparency).await?;
+    let mut ctx =
+        AttackContext::new(workspace, user, AttackType::QueryCertificateTransparency).await?;
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
@@ -249,7 +251,7 @@ pub async fn start_dehashed_query(
     sender: mpsc::Sender<ScheduledRequest>,
     params: DehashedQueryParams,
 ) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
-    let ctx = AttackContext::new(workspace, user, AttackType::QueryUnhashed).await?;
+    let mut ctx = AttackContext::new(workspace, user, AttackType::QueryUnhashed).await?;
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
@@ -302,7 +304,7 @@ pub async fn start_service_detection(
     leech: LeechClient,
     params: ServiceDetectionParams,
 ) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
-    let ctx = AttackContext::new(workspace, user, AttackType::ServiceDetection).await?;
+    let mut ctx = AttackContext::new(workspace, user, AttackType::ServiceDetection).await?;
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
@@ -345,7 +347,7 @@ pub async fn start_udp_service_detection(
     leech: LeechClient,
     params: UdpServiceDetectionParams,
 ) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
-    let ctx = AttackContext::new(workspace, user, AttackType::UdpServiceDetection).await?;
+    let mut ctx = AttackContext::new(workspace, user, AttackType::UdpServiceDetection).await?;
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
@@ -386,7 +388,7 @@ pub async fn start_testssl(
     leech: LeechClient,
     params: TestSSLParams,
 ) -> Result<(Uuid, JoinHandle<()>), InsertAttackError> {
-    let ctx = AttackContext::new(workspace, user, AttackType::TestSSL).await?;
+    let mut ctx = AttackContext::new(workspace, user, AttackType::TestSSL).await?;
     Ok((
         ctx.attack_uuid,
         tokio::spawn(async move {
@@ -398,7 +400,7 @@ pub async fn start_testssl(
 }
 
 /// Collection of uuids required for a running attack
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct AttackContext {
     /// The user who started the attack
     user: SimpleUser,
@@ -414,6 +416,14 @@ pub(crate) struct AttackContext {
 
     /// The type of the attack
     attack_type: AttackType,
+
+    /// A finding factory attacks can collect issues in
+    ///
+    /// Implementations of attacks may use this factory to collect issues
+    /// either while streaming their results or once after they finished.
+    ///
+    /// Either way, the factory will be consumed and processed in [`AttackContext::set_finished`].
+    finding_factory: FindingFactory,
 }
 
 impl AttackContext {
@@ -464,6 +474,7 @@ impl AttackContext {
             workspace,
             attack_uuid: attack.uuid,
             created_at: attack.created_at,
+            finding_factory: FindingFactory::new(),
         })
     }
 
@@ -513,6 +524,7 @@ impl AttackContext {
             attack_uuid,
             created_at: started_at,
             attack_type,
+            finding_factory: FindingFactory::new(),
         }))
     }
 
@@ -591,26 +603,39 @@ impl AttackContext {
             );
         }
 
+        tokio::spawn(async move {
+            if let Err(err) = self
+                .finding_factory
+                .process(&GLOBAL.db, self.workspace.uuid)
+                .await
+            {
+                error!(
+                    "Failed to process the attack {attack_uuid}'s findings: {err}",
+                    attack_uuid = self.attack_uuid
+                );
+            }
+        });
+
         self.attack_uuid
     }
 }
 
 pub(crate) trait HandleAttackResponse<T> {
-    async fn handle_response(&self, response: T) -> Result<(), AttackError>;
+    async fn handle_response(&mut self, response: T) -> Result<(), AttackError>;
 
     async fn handle_streamed_response(
-        &self,
+        &mut self,
         streamed_response: impl Future<Output = Result<Response<Streaming<T>>, Status>>,
     ) -> Result<(), AttackError> {
-        let stream = streamed_response.await?.into_inner();
+        let mut stream = streamed_response.await?.into_inner();
 
-        stream
-            .map_err(AttackError::from)
-            .try_for_each(|response| self.handle_response(response))
-            .await
+        while let Some(response) = stream.try_next().await? {
+            self.handle_response(response).await?;
+        }
+        Ok(())
     }
 
-    async fn handle_vec_response(&self, vec_response: Vec<T>) -> Result<(), AttackError> {
+    async fn handle_vec_response(&mut self, vec_response: Vec<T>) -> Result<(), AttackError> {
         for response in vec_response {
             self.handle_response(response).await?;
         }

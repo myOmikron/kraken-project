@@ -1,7 +1,7 @@
 [Migration]
-Hash = ""
+Hash = "17574876020326552698"
 Initial = false
-Dependency = 19
+Dependency = 20
 Replaces = []
 
 [[Migration.Operations]]
@@ -174,26 +174,6 @@ Value = 255
 
 [[Migration.Operations]]
 Type = "CreateField"
-Model = "testsslresultheader"
-
-[Migration.Operations.Field]
-Name = "attack"
-Type = "uuid"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "foreign_key"
-
-[Migration.Operations.Field.Annotations.Value]
-TableName = "attack"
-ColumnName = "uuid"
-OnDelete = "Cascade"
-OnUpdate = "Cascade"
-
-[[Migration.Operations.Field.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations]]
-Type = "CreateField"
 Model = "testsslresultfinding"
 
 [Migration.Operations.Field]
@@ -213,15 +193,21 @@ OnUpdate = "Cascade"
 Type = "not_null"
 
 [[Migration.Operations]]
-Type = "RawSQL"
-StructureSafe = true
-SQLite = "only Postgres databases are supported right now"
-MySQL = "only Postgres databases are supported right now"
-Postgres = "ALTER TYPE _attack_attack_type ADD VALUE IF NOT EXISTS 'TestSSL' AFTER 'AntiPortScanningDetection';"
+Type = "CreateField"
+Model = "testsslresultheader"
 
-[[Migration.Operations]]
-Type = "RawSQL"
-StructureSafe = true
-SQLite = "only Postgres databases are supported right now"
-MySQL = "only Postgres databases are supported right now"
-Postgres = "ALTER TYPE _aggregationsource_source_type ADD VALUE IF NOT EXISTS 'TestSSL' AFTER 'AntiPortScanningDetection';"
+[Migration.Operations.Field]
+Name = "attack"
+Type = "uuid"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "foreign_key"
+
+[Migration.Operations.Field.Annotations.Value]
+TableName = "attack"
+ColumnName = "uuid"
+OnDelete = "Cascade"
+OnUpdate = "Cascade"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"

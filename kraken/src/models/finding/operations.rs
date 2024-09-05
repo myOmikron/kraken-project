@@ -14,11 +14,11 @@ use uuid::Uuid;
 
 use crate::api::handler::common::error::ApiError;
 use crate::chan::ws_manager::schema::AggregationType;
+use crate::models::finding::patches::InsertFinding;
 use crate::models::Domain;
 use crate::models::Finding;
 use crate::models::FindingAffected;
 use crate::models::FindingCategory;
-use crate::models::FindingDefinition;
 use crate::models::FindingDetails;
 use crate::models::FindingSeverity;
 use crate::models::Host;
@@ -164,6 +164,66 @@ impl FindingAffected {
 
         guard.commit().await?;
         Ok(uuid)
+    }
+
+    /// Insert a few [`FindingAffected`]s in a bulk.
+    ///
+    /// To reduce the complexity of the iterator,
+    /// the parameters for creating the [`FindingAffected`]s are greatly restricted.
+    pub async fn insert_simple_bulk(
+        executor: impl Executor<'_>,
+        items: impl IntoIterator<
+            Item = (
+                ForeignModel<Finding>,
+                Uuid,
+                AggregationType,
+                ForeignModel<Workspace>,
+            ),
+        >,
+    ) -> Result<Vec<Uuid>, rorm::Error> {
+        let mut guard = executor.ensure_transaction().await?;
+
+        let inserted = insert!(guard.get_transaction(), FindingAffected)
+            .return_primary_key()
+            .bulk(
+                items
+                    .into_iter()
+                    .map(|(finding, object_uuid, object_type, workspace)| {
+                        let mut patch = InsertFindingAffected {
+                            uuid: Uuid::new_v4(),
+                            finding,
+                            domain: None,
+                            host: None,
+                            port: None,
+                            service: None,
+                            http_service: None,
+                            details: None,
+                            workspace,
+                        };
+                        match object_type {
+                            AggregationType::Domain => {
+                                patch.domain = Some(ForeignModelByField::Key(object_uuid))
+                            }
+                            AggregationType::Host => {
+                                patch.host = Some(ForeignModelByField::Key(object_uuid))
+                            }
+                            AggregationType::Service => {
+                                patch.service = Some(ForeignModelByField::Key(object_uuid))
+                            }
+                            AggregationType::Port => {
+                                patch.port = Some(ForeignModelByField::Key(object_uuid))
+                            }
+                            AggregationType::HttpService => {
+                                patch.http_service = Some(ForeignModelByField::Key(object_uuid))
+                            }
+                        }
+                        patch
+                    }),
+            )
+            .await?;
+
+        guard.commit().await?;
+        Ok(inserted)
     }
 
     /// Deletes a [`FindingAffected`]
@@ -360,16 +420,6 @@ impl From<UpdateFindingDetailsError> for ApiError {
             UpdateFindingDetailsError::InvalidScreenshot => ApiError::InvalidUuid,
         }
     }
-}
-
-#[derive(Patch)]
-#[rorm(model = "Finding")]
-struct InsertFinding {
-    uuid: Uuid,
-    definition: ForeignModel<FindingDefinition>,
-    severity: FindingSeverity,
-    details: ForeignModel<FindingDetails>,
-    workspace: ForeignModel<Workspace>,
 }
 
 #[derive(Patch)]
