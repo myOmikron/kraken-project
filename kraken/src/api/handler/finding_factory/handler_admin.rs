@@ -53,8 +53,8 @@ pub async fn get_finding_factory_entries() -> ApiResult<Json<GetFindingFactoryEn
     let categories = query!(
         &mut tx,
         (
-            FindingFactoryEntry::F.finding.uuid,
-            FindingFactoryEntry::F.finding.categories.category as FindingCategory,
+            FindingDefinition::F.uuid,
+            FindingDefinition::F.categories.category as FindingCategory,
         )
     )
     .stream()
