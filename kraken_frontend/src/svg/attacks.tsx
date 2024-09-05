@@ -96,7 +96,7 @@ export default function AttacksIcon(params: AttacksParams) {
                 scale={2}
                 padding={12}
                 text="Ports"
-                className={`category-text kraken-attacks-hex-unavailable`}
+                className="category-text"
                 categoryType={AttackCategory.Ports}
             />
             <Hex
@@ -177,7 +177,7 @@ export default function AttacksIcon(params: AttacksParams) {
                 y={-3}
                 scale={1}
                 attackType={AttackType.TestSSL}
-                text="TS"
+                text="TLS"
             />
             <Hex
                 {...hexProps}
