@@ -633,6 +633,7 @@ impl EditorCacheImpl for WsNotes {
 // Implementation details
 // --------------
 
+#[allow(clippy::type_complexity)]
 pub struct EditorCache<Impl: EditorCacheImpl> {
     /// HashMap used to store cached entries
     ///
@@ -709,41 +710,38 @@ impl<Impl: EditorCacheImpl> EditorCache<Impl> {
     /// Retrieve an item through a key
     ///
     /// The option marks the availability of the key in the database.
-    pub fn get(
+    pub async fn get(
         &self,
         key: Impl::Key,
-    ) -> impl Future<Output = Result<Option<(String, Impl::Workspace)>, rorm::Error>> + Send + '_
-    {
-        async move {
-            let cache_item = self.read_cache().get(&key).cloned();
+    ) -> Result<Option<(String, Impl::Workspace)>, rorm::Error> {
+        let cache_item = self.read_cache().get(&key).cloned();
 
-            // Check if ws notes have already been queried once
-            return if let Some(item) = cache_item {
-                Ok(item.map(|x| (x.data, x.workspace)))
-            } else {
-                // Query the db to populate the cache
-                let notes = Impl::query_db(key).await?;
+        // Check if ws notes have already been queried once
+        return if let Some(item) = cache_item {
+            Ok(item.map(|x| (x.data, x.workspace)))
+        } else {
+            // Query the db to populate the cache
+            let notes = Impl::query_db(key).await?;
 
-                let Some((notes, workspace)) = notes else {
-                    // Update cache so it knows that there's no DB entry
-                    self.write_cache().insert(key, None);
-                    return Ok(None);
-                };
-
-                // If the workspace was found, insert it into the cache
-
-                self.write_cache().insert(
-                    key,
-                    Some(InnerItem {
-                        changed: true,
-                        data: notes.clone(),
-                        workspace,
-                    }),
-                );
-
-                Ok(Some((notes, workspace)))
+            let Some((notes, workspace)) = notes else {
+                // Update cache so it knows that there's no DB entry
+                self.write_cache().insert(key, None);
+                return Ok(None);
             };
-        }
+
+            // If the workspace was found, insert it into the cache
+
+            self.write_cache().insert(
+                key,
+                Some(InnerItem {
+                    changed: true,
+                    data: notes.clone(),
+                    workspace,
+                }),
+            );
+
+            Ok(Some((notes, workspace)))
+        };
     }
 
     /// Invalidates everything marked as "Not found in DB"
@@ -765,53 +763,46 @@ impl<Impl: EditorCacheImpl> EditorCache<Impl> {
     }
 
     /// Update an item in the cache
-    pub fn update(
-        &self,
-        key: Impl::Key,
-        value: String,
-    ) -> impl Future<Output = Result<(), CacheError>> + Send + '_ {
-        async move {
-            // Check if ws notes have already been queried once
-            let item = self.read_cache().get(&key).cloned();
+    pub async fn update(&self, key: Impl::Key, value: String) -> Result<(), CacheError> {
+        // Check if ws notes have already been queried once
+        let item = self.read_cache().get(&key).cloned();
 
-            match item {
-                None => {
+        match item {
+            None => {
+                let (_, workspace) = Impl::query_db(key).await?.ok_or(CacheError::ItemNotFound)?;
+
+                // If the item was found, insert the update in the cache
+                self.write_cache().insert(
+                    key,
+                    Some(InnerItem {
+                        changed: true,
+                        data: value,
+                        workspace,
+                    }),
+                );
+
+                Ok(())
+            }
+            Some(old) => {
+                let item = if let Some(data) = old {
+                    InnerItem {
+                        changed: true,
+                        data: value,
+                        workspace: data.workspace,
+                    }
+                } else {
                     let (_, workspace) =
                         Impl::query_db(key).await?.ok_or(CacheError::ItemNotFound)?;
+                    InnerItem {
+                        changed: true,
+                        data: value,
+                        workspace,
+                    }
+                };
 
-                    // If the item was found, insert the update in the cache
-                    self.write_cache().insert(
-                        key,
-                        Some(InnerItem {
-                            changed: true,
-                            data: value,
-                            workspace,
-                        }),
-                    );
+                self.write_cache().insert(key, Some(item));
 
-                    Ok(())
-                }
-                Some(old) => {
-                    let item = if let Some(data) = old {
-                        InnerItem {
-                            changed: true,
-                            data: value,
-                            workspace: data.workspace,
-                        }
-                    } else {
-                        let (_, workspace) =
-                            Impl::query_db(key).await?.ok_or(CacheError::ItemNotFound)?;
-                        InnerItem {
-                            changed: true,
-                            data: value,
-                            workspace,
-                        }
-                    };
-
-                    self.write_cache().insert(key, Some(item));
-
-                    Ok(())
-                }
+                Ok(())
             }
         }
     }
@@ -819,85 +810,84 @@ impl<Impl: EditorCacheImpl> EditorCache<Impl> {
     /// Saves the cache in regular intervals to the database
     ///
     /// This is an infinite loop and should be run as background task
-    pub fn run_cache_save(self) -> impl Future<Output = Never> + Send
+    pub async fn run_cache_save(self) -> Never
     where
         Self: Sized,
     {
-        async move {
-            let mut timer = tokio::time::interval(Duration::from_secs(30));
+        let mut timer = tokio::time::interval(Duration::from_secs(30));
 
-            let dir_path = Path::new("/var/lib/kraken/editor_cache_failures/");
-            if fs::try_exists(dir_path).await.is_err() {
-                if let Err(err) = async {
-                    fs::create_dir_all(dir_path).await?;
-                    fs::set_permissions(dir_path, Permissions::from_mode(0o700)).await
-                }
-                .await
-                {
-                    error!("{err}");
+        let dir_path = Path::new("/var/lib/kraken/editor_cache_failures/");
+        if fs::try_exists(dir_path).await.is_err() {
+            if let Err(err) = async {
+                fs::create_dir_all(dir_path).await?;
+                fs::set_permissions(dir_path, Permissions::from_mode(0o700)).await
+            }
+            .await
+            {
+                error!("{err}");
+            }
+        }
+
+        loop {
+            timer.tick().await;
+
+            if !GLOBAL.is_initialized() {
+                trace!("Skipping cache save run as GLOBAL isn't initialized yet");
+                continue;
+            }
+
+            // Get all changed records
+            let data: Vec<(Impl::Key, String)> = self
+                .read_cache()
+                .iter()
+                .filter_map(|(uuid, inner)| match inner {
+                    Some(inner) if inner.changed => Some((*uuid, inner.data.clone())),
+                    _ => None,
+                })
+                .collect();
+
+            let mut update_failed = vec![];
+            let mut update_success = vec![];
+            for (uuid, value) in data {
+                let res = Impl::save_to_db(uuid, value.clone()).await;
+
+                if let Err(err) = res {
+                    error!("DB error when updating workspace notes: {err}");
+                    update_failed.push((uuid, value))
+                } else {
+                    update_success.push((uuid, value));
                 }
             }
 
-            loop {
-                timer.tick().await;
-
-                if !GLOBAL.is_initialized() {
-                    trace!("Skipping cache save run as GLOBAL isn't initialized yet");
-                    continue;
-                }
-
-                // Get all changed records
-                let data: Vec<(Impl::Key, String)> = self
-                    .read_cache()
-                    .iter()
-                    .filter_map(|(uuid, inner)| match inner {
-                        Some(inner) if inner.changed => Some((*uuid, inner.data.clone())),
-                        _ => None,
-                    })
-                    .collect();
-
-                let mut update_failed = vec![];
-                let mut update_success = vec![];
-                for (uuid, value) in data {
-                    let res = Impl::save_to_db(uuid, value.clone()).await;
-
-                    if let Err(err) = res {
-                        error!("DB error when updating workspace notes: {err}");
-                        update_failed.push((uuid, value))
-                    } else {
-                        update_success.push((uuid, value));
-                    }
-                }
-
-                {
-                    let mut guard = self.write_cache();
-                    for (key, value) in update_success {
-                        guard.get_mut(&key).and_then(|opt| {
-                            opt.as_mut().map(|inner| {
-                                // If the data was changed in the meantime, we shouldn't set
-                                // changed to false
-                                if inner.data == value {
-                                    inner.changed = false
-                                }
-                            })
-                        });
-                    }
-                }
-
-                for (key, value) in update_failed {
-                    match fs::File::create(dir_path.join(Impl::file_name(key))).await {
-                        Ok(mut file) => {
-                            if let Err(err) = file.write_all(value.as_bytes()).await {
-                                error!("{err}");
+            {
+                let mut guard = self.write_cache();
+                for (key, value) in update_success {
+                    guard.get_mut(&key).and_then(|opt| {
+                        opt.as_mut().map(|inner| {
+                            // If the data was changed in the meantime, we shouldn't set
+                            // changed to false
+                            if inner.data == value {
+                                inner.changed = false
                             }
+                        })
+                    });
+                }
+            }
+
+            for (key, value) in update_failed {
+                match fs::File::create(dir_path.join(Impl::file_name(key))).await {
+                    Ok(mut file) => {
+                        if let Err(err) = file.write_all(value.as_bytes()).await {
+                            error!("{err}");
                         }
-                        Err(err) => error!("{err}"),
                     }
+                    Err(err) => error!("{err}"),
                 }
             }
         }
     }
 
+    #[allow(clippy::type_complexity)]
     fn read_cache(
         &self,
     ) -> RwLockReadGuard<'_, HashMap<Impl::Key, Option<InnerItem<Impl::Workspace>>>> {
@@ -905,6 +895,7 @@ impl<Impl: EditorCacheImpl> EditorCache<Impl> {
         self.inner.read().expect(EXPECT_MSG)
     }
 
+    #[allow(clippy::type_complexity)]
     fn write_cache(
         &self,
     ) -> RwLockWriteGuard<'_, HashMap<Impl::Key, Option<InnerItem<Impl::Workspace>>>> {

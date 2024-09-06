@@ -59,7 +59,7 @@ impl KrakenClient {
     /// Delete a domain
     pub async fn delete_domain(&self, workspace: Uuid, domain: Uuid) -> KrakenResult<()> {
         self.delete(&format!("api/v1/workspaces/{workspace}/domains/{domain}"))
-            .send()
+            .send::<()>()
             .await?;
 
         Ok(())

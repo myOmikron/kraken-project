@@ -29,6 +29,7 @@ use crate::models::FindingDefinition;
 
 /// Sync editor
 #[derive(Clone)]
+#[allow(clippy::type_complexity)]
 pub struct EditorSync {
     ws_notes_tx: Arc<Sender<(Uuid, Uuid, Change)>>,
     finding_definition_tx: Arc<Sender<(Uuid, Uuid, FindingSection, Change)>>,

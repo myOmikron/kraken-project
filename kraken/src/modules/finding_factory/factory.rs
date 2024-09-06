@@ -33,7 +33,7 @@ use crate::modules::finding_factory::schema::FindingFactoryIdentifier;
 ///
 /// The finding factory's API uses an enum [`FindingFactoryIdentifier`] instead of [`FindingDefinition`] uuids
 /// to allow code to hard code them while being dynamically configurable at runtime.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct FindingFactory {
     issues: HashMap<FindingFactoryIdentifier, HashSet<(Uuid, AggregationType)>>,
 }
@@ -41,9 +41,7 @@ pub struct FindingFactory {
 impl FindingFactory {
     /// Constructs a new empty `FindingFactory`
     pub fn new() -> Self {
-        FindingFactory {
-            issues: HashMap::new(),
-        }
+        Self::default()
     }
 
     /// Adds an aggregated model and its issue to the factory

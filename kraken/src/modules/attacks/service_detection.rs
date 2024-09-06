@@ -173,7 +173,7 @@ impl HandleAttackResponse<ServiceDetectionResponse> for AttackContext {
                         raw: *raw,
                         tls: *tls,
                     }),
-                    &name,
+                    name,
                     *certainty,
                 )
                 .await?;

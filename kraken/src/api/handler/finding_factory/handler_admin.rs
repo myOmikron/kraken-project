@@ -58,16 +58,19 @@ pub async fn get_finding_factory_entries() -> ApiResult<Json<GetFindingFactoryEn
         )
     )
     .stream()
-    .try_fold(HashMap::new(), |mut map, (definition, category)| {
-        map.entry(definition)
-            .or_insert(Vec::new())
-            .push(SimpleFindingCategory {
-                uuid: category.uuid,
-                name: category.name,
-                color: Color::from_db(category.color),
-            });
-        async move { Ok(map) }
-    })
+    .try_fold(
+        HashMap::<_, Vec<_>>::new(),
+        |mut map, (definition, category)| {
+            map.entry(definition)
+                .or_default()
+                .push(SimpleFindingCategory {
+                    uuid: category.uuid,
+                    name: category.name,
+                    color: Color::from_db(category.color),
+                });
+            async move { Ok(map) }
+        },
+    )
     .await?;
 
     let entries: HashMap<_, _> = query!(

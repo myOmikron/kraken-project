@@ -161,10 +161,10 @@ pub async fn run_testssl(settings: TestSSLSettings) -> Result<json_pretty::File,
 
     // Add timeouts
     if let Some(seconds) = connect_timeout {
-        cmd.arg("--connect-timeout").arg(&seconds.to_string());
+        cmd.arg("--connect-timeout").arg(seconds.to_string());
     }
     if let Some(seconds) = openssl_timeout {
-        cmd.arg("--openssl-timeout").arg(&seconds.to_string());
+        cmd.arg("--openssl-timeout").arg(seconds.to_string());
     }
 
     // Enable ip v6
@@ -174,8 +174,7 @@ pub async fn run_testssl(settings: TestSSLSettings) -> Result<json_pretty::File,
 
     // Set BASICAUTH header
     if let Some((username, password)) = basic_auth {
-        cmd.arg("--basicauth")
-            .arg(&format!("{username}:{password}"));
+        cmd.arg("--basicauth").arg(format!("{username}:{password}"));
     }
 
     // Enable STARTTLS

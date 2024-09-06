@@ -26,7 +26,7 @@ impl KrakenClient {
                 username: self.username.clone(),
                 password: self.password.clone(),
             })
-            .send()
+            .send::<()>()
             .await?;
 
         info!("Logged in successfully");
