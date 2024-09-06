@@ -84,8 +84,6 @@ impl AttackContext {
 
 impl HandleAttackResponse<TestSslResponse> for AttackContext {
     async fn handle_response(&mut self, response: TestSslResponse) -> Result<(), AttackError> {
-        let attack_uuid = self.attack_uuid;
-
         for service in response.services {
             if let Some(test_ssl_service::TestsslService::Result(result)) = service.testssl_service
             {
@@ -135,6 +133,18 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                     }
                 };
 
+                let source_uuid = insert!(&mut tx, TestSSLResultHeader)
+                    .return_primary_key()
+                    .single(&TestSSLResultHeaderInsert {
+                        uuid: Uuid::new_v4(),
+                        attack: ForeignModelByField::Key(self.attack_uuid),
+                        domain: domain.clone(),
+                        ip,
+                        port: port as i32,
+                        service: service.clone(),
+                    })
+                    .await?;
+
                 let findings = [
                     (pretest, TestSSLSection::Pretest),
                     (protocols, TestSSLSection::Protocols),
@@ -156,7 +166,7 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                         .map(move |finding| {
                             Ok(TestSSLResultFindingInsert {
                                 uuid: Uuid::new_v4(),
-                                attack: ForeignModelByField::Key(attack_uuid),
+                                header: ForeignModelByField::Key(source_uuid),
                                 section,
                                 key: finding.id,
                                 value: finding.finding,
@@ -179,18 +189,6 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                         })
                 })
                 .collect::<Result<Vec<_>, AttackError>>()?;
-
-                let source_uuid = insert!(&mut tx, TestSSLResultHeader)
-                    .return_primary_key()
-                    .single(&TestSSLResultHeaderInsert {
-                        uuid: Uuid::new_v4(),
-                        attack: ForeignModelByField::Key(self.attack_uuid),
-                        domain: domain.clone(),
-                        ip,
-                        port: port as i32,
-                        service: service.clone(),
-                    })
-                    .await?;
 
                 insert!(&mut tx, TestSSLResultFinding)
                     .return_nothing()

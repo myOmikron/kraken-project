@@ -1,5 +1,5 @@
 [Migration]
-Hash = "17574876020326552698"
+Hash = "4024405889827429141"
 Initial = false
 Dependency = 20
 Replaces = []
@@ -43,17 +43,6 @@ Type = "not_null"
 [[Migration.Operations.Fields]]
 Name = "port"
 Type = "int32"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "not_null"
-
-[[Migration.Operations.Fields]]
-Name = "rdns"
-Type = "varchar"
-
-[[Migration.Operations.Fields.Annotations]]
-Type = "max_length"
-Value = 255
 
 [[Migration.Operations.Fields.Annotations]]
 Type = "not_null"
@@ -177,14 +166,14 @@ Type = "CreateField"
 Model = "testsslresultfinding"
 
 [Migration.Operations.Field]
-Name = "attack"
+Name = "header"
 Type = "uuid"
 
 [[Migration.Operations.Field.Annotations]]
 Type = "foreign_key"
 
 [Migration.Operations.Field.Annotations.Value]
-TableName = "attack"
+TableName = "testsslresultheader"
 ColumnName = "uuid"
 OnDelete = "Cascade"
 OnUpdate = "Cascade"

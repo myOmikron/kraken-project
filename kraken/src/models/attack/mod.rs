@@ -556,10 +556,9 @@ pub struct TestSSLResultFinding {
     #[rorm(primary_key)]
     pub uuid: Uuid,
 
-    // TODO: shouldn't this be associated with the header?
-    /// The [attack](Attack) which produced this result
+    /// The [`TestSSLResultHeader`] this finding belongs to
     #[rorm(on_delete = "Cascade", on_update = "Cascade")]
-    pub attack: ForeignModel<Attack>,
+    pub header: ForeignModel<TestSSLResultHeader>,
 
     /// The point in time, this result was produced
     #[rorm(auto_create_time)]

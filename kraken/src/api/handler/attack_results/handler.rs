@@ -789,7 +789,7 @@ pub async fn get_testssl_results(
         port: header.port as u16,
         service: header.service,
         findings: query!(&mut tx, TestSSLResultFinding)
-            .condition(TestSSLResultFinding::F.attack.equals(attack_uuid))
+            .condition(TestSSLResultFinding::F.header.equals(header.uuid))
             .stream()
             .map_ok(|x| TestSSLFinding {
                 section: FromDb::from_db(x.section),

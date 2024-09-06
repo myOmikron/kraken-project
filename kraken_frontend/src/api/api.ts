@@ -173,7 +173,7 @@ export const Api = {
         },
     },
     attacks: {
-        impl: attacks, // TODO add testssl
+        impl: attacks,
         all: () => handleError(attacks.getAllAttacks()),
         get: (uuid: UUID) => handleError(attacks.getAttack({ uuid })),
         delete: (uuid: UUID) => handleError(attacks.deleteAttack({ uuid })),

@@ -163,7 +163,7 @@ pub(crate) struct TestSSLResultHeaderInsert {
 #[rorm(model = "TestSSLResultFinding")]
 pub(crate) struct TestSSLResultFindingInsert {
     pub(crate) uuid: Uuid,
-    pub(crate) attack: ForeignModel<Attack>,
+    pub(crate) header: ForeignModel<TestSSLResultHeader>,
     pub(crate) section: TestSSLSection,
     pub(crate) key: String,
     pub(crate) value: String,

@@ -472,49 +472,46 @@ impl FullAggregationSource {
                     }
                 }
                 SourceType::TestSSL => {
-                    {
-                        let mut stream = query!(&mut *tx, TestSSLResultHeader)
-                            .condition(field_in(TestSSLResultHeader::F.uuid, uuids))
-                            .stream();
-                        while let Some(result) = stream.try_next().await? {
-                            testssl.entry(*result.attack.key()).or_default().push(
-                                FullTestSSLResult {
-                                    uuid: result.uuid,
-                                    attack: *result.attack.key(),
-                                    created_at: result.created_at,
-                                    domain: result.domain,
-                                    ip: result.ip.ip(),
-                                    port: result.port as u16,
-                                    service: result.service,
-                                    findings: Vec::new(),
-                                },
-                            );
-                        }
-                    }
-                    {
-                        let mut stream = query!(&mut *tx, TestSSLResultFinding)
-                            .condition(field_in(
-                                TestSSLResultFinding::F.attack,
-                                testssl.keys().copied(),
-                            ))
-                            .stream();
-                        while let Some(result) = stream.try_next().await? {
-                            if let Some(slot) = testssl
-                                .get_mut(result.attack.key())
-                                .and_then(|v| v.last_mut())
-                            {
-                                slot.findings.push(TestSSLFinding {
-                                    section: FromDb::from_db(result.section),
-                                    id: result.key.to_string(),
-                                    value: result.value,
-                                    severity: FromDb::from_db(result.testssl_severity),
-                                    cve: result.cve,
-                                    cwe: result.cwe,
+                    let mut findings = query!(&mut *tx, TestSSLResultFinding)
+                        .condition(field_in(
+                            TestSSLResultFinding::F.header,
+                            uuids.iter().copied(),
+                        ))
+                        .stream()
+                        .try_fold(HashMap::<_, Vec<_>>::new(), |mut map, finding| {
+                            map.entry(*finding.header.key())
+                                .or_default()
+                                .push(TestSSLFinding {
+                                    section: FromDb::from_db(finding.section),
+                                    id: finding.key.to_string(),
+                                    value: finding.value,
+                                    severity: FromDb::from_db(finding.testssl_severity),
+                                    cve: finding.cve,
+                                    cwe: finding.cwe,
                                     issue: (),
                                 });
-                            }
-                        }
-                    }
+                            async move { Ok(map) }
+                        })
+                        .await?;
+                    query!(&mut *tx, TestSSLResultHeader)
+                        .condition(field_in(TestSSLResultHeader::F.uuid, uuids))
+                        .stream()
+                        .try_for_each(|header| {
+                            testssl.entry(*header.attack.key()).or_default().push(
+                                FullTestSSLResult {
+                                    uuid: header.uuid,
+                                    attack: *header.attack.key(),
+                                    created_at: header.created_at,
+                                    domain: header.domain,
+                                    ip: header.ip.ip(),
+                                    port: header.port as u16,
+                                    service: header.service,
+                                    findings: findings.remove(&header.uuid).unwrap_or_default(),
+                                },
+                            );
+                            async move { Ok(()) }
+                        })
+                        .await?;
                 }
                 SourceType::UdpPortScan
                 | SourceType::ForcedBrowsing
