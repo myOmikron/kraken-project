@@ -6,6 +6,7 @@ use std::net::IpAddr;
 use log::debug;
 use log::error;
 use log::trace;
+use log::warn;
 use tempfile::NamedTempFile;
 use thiserror::Error;
 use tokio::fs::File as TokioFile;
@@ -259,29 +260,37 @@ pub async fn run_testssl(settings: TestSSLSettings) -> Result<json_pretty::File,
         });
     debug!("Starting testssl: {cmd:?}");
     let output = cmd.output().await?;
+    trace!(
+        "Testssl's stdout: \n{}",
+        String::from_utf8_lossy(&output.stdout)
+    );
+    trace!(
+        "Testssl's stderr: \n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
 
-    if output.status.success() {
-        let mut json_output = Vec::new();
-        json_file.read_to_end(&mut json_output).await?;
-        let json = serde_json::from_slice(&json_output)?;
-        Ok(json)
+    let mut json_output = Vec::new();
+    json_file.read_to_end(&mut json_output).await?;
+    let json_result = serde_json::from_slice(&json_output);
+
+    if let Some(exit_code) = output.status.code() {
+        match exit_code {
+            0 => Ok(json_result?),
+            1..50 => {
+                warn!("testssl.sh reported {exit_code} \"ambiguous situations or errors\"");
+                Ok(json_result?)
+            }
+            242 | 244..256 => {
+                error!("testssl.sh returned error code {exit_code}");
+                Err(TestSSLError::NonZeroExitStatus)
+            }
+            _ => {
+                warn!("testssl.sh returned undocumented exit code: {exit_code}");
+                Ok(json_result?)
+            }
+        }
     } else {
-        error!(
-            "testssl.sh exited with [{}]",
-            output
-                .status
-                .code()
-                .expect("No one should have send this process a signal")
-        );
-        trace!(
-            "Testssl's stdout: \n{}",
-            String::from_utf8_lossy(&output.stdout)
-        );
-        trace!(
-            "Testssl's stderr: \n{}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-
+        error!("testssl.sh exited without code");
         Err(TestSSLError::NonZeroExitStatus)
     }
 }

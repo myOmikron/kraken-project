@@ -229,8 +229,19 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                     )
                     .await?;
 
-                // TODO: extend this check to services verified through STARTTLS
-                let service_uuid = if service == "HTTP" {
+                let service_uuid = if let Some(service_name) = match service.as_str() {
+                    "HTTP" => Some("http"),
+                    "ftp" => Some("ftp"),
+                    "smtp" => Some("smtp"),
+                    "pop3" => Some("pop3"),
+                    "imap" => Some("imap"),
+                    "xmpp" => Some("xmpp"),
+                    "lmtp" => Some("lmtp"),
+                    "nntp" => Some("nntp"),
+                    "postgres" => Some("postgres"),
+                    "mysql" => Some("mysql"),
+                    _ => None,
+                } {
                     Some(
                         GLOBAL
                             .aggregator
@@ -242,7 +253,7 @@ impl HandleAttackResponse<TestSslResponse> for AttackContext {
                                     tls: true,
                                     raw: false,
                                 }),
-                                "http",
+                                service_name,
                                 ServiceCertainty::DefinitelyVerified,
                             )
                             .await?,
