@@ -13,6 +13,7 @@
 ### Frontend Fixes
 
 - Fixed infinite loop in adminworkspaces
+- Fixed "add as affected"
 
 ### Backend Fixes
 
