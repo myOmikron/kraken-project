@@ -19,6 +19,10 @@
 
 - Fixed permissions of state dir creation
 
+### Leech Fixes
+
+- Fixed FTP probe for FileZilla
+
 ### General
 
 - Updated dependencies
