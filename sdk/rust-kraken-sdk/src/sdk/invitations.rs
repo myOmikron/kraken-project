@@ -27,7 +27,7 @@ impl KrakenClient {
     }
 
     /// Create a new invitation to a given workspace
-    pub async fn create_invitation(&self, workspace: Uuid, user: Uuid) -> KrakenResult<Uuid> {
+    pub async fn create_invitation(&self, workspace: Uuid, user: Uuid) -> KrakenResult<()> {
         self.post(&format!("api/v1/workspaces/{workspace}/invitations"))
             .body(InviteToWorkspaceRequest { user })
             .send()
