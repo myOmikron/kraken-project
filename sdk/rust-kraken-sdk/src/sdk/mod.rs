@@ -20,6 +20,7 @@ mod http_services;
 mod invitations;
 mod ports;
 mod services;
+mod users;
 mod utils;
 mod wordlists;
 mod workspace_tags;
