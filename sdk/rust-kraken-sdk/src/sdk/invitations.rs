@@ -1,4 +1,5 @@
 use kraken::api::handler::workspace_invitations::schema::WorkspaceInvitationList;
+use kraken::api::handler::workspaces::schema::InviteToWorkspaceRequest;
 use uuid::Uuid;
 
 use crate::error::KrakenError;
@@ -21,6 +22,14 @@ impl KrakenClient {
     /// Decline an open invitation to a workspace
     pub async fn decline_invitation(&self, invitation: Uuid) -> KrakenResult<()> {
         self.post(&format!("api/v1/invitations/{invitation}/decline"))
+            .send()
+            .await
+    }
+
+    /// Create a new invitation to a given workspace
+    pub async fn create_invitation(&self, workspace: Uuid, user: Uuid) -> KrakenResult<Uuid> {
+        self.post(&format!("api/v1/workspaces/{workspace}/invitations"))
+            .body(InviteToWorkspaceRequest { user })
             .send()
             .await
     }
