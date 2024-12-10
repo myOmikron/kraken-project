@@ -1,3 +1,4 @@
+use kraken::api::handler::common::schema::UuidResponse;
 use kraken::api::handler::workspaces::schema::CreateWorkspaceRequest;
 use kraken::api::handler::workspaces::schema::FullWorkspace;
 use kraken::api::handler::workspaces::schema::ListWorkspaces;
@@ -24,7 +25,7 @@ impl KrakenClient {
         &self,
         name: String,
         description: Option<String>,
-    ) -> KrakenResult<Uuid> {
+    ) -> KrakenResult<UuidResponse> {
         self.post("api/v1/workspaces")
             .body(CreateWorkspaceRequest { name, description })
             .send()
