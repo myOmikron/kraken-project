@@ -31,4 +31,11 @@ impl KrakenClient {
             .send()
             .await
     }
+
+    /// Archive an existing workspace
+    pub async fn archive_workspace(&self, workspace: Uuid) -> KrakenResult<()> {
+        self.post(&format!("api/v1/workspaces/{workspace}/archive"))
+            .send()
+            .await
+    }
 }
