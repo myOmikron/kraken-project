@@ -668,6 +668,7 @@ export type UsedASTTypes =
     | (typeof ASTFieldTypes)["httpService"][keyof (typeof ASTFieldTypes)["httpService"]]
     | (typeof ASTFieldTypes)["port"][keyof (typeof ASTFieldTypes)["port"]];
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Expr {
     /** An optional `or` */
     export type Or<T> = {

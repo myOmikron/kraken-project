@@ -323,7 +323,7 @@ export const WordlistAttackInput = forwardRef<any, AttackInputProps<string>>((pr
 /**
  * A dropdown select input where you can select a whether to use StartTLS and which variant of it.
  */
-export const StartTLSAttackInput = forwardRef<void, AttackInputProps<StartTLSProtocol | null>>((props, ref) => {
+export const StartTLSAttackInput = forwardRef<void, AttackInputProps<StartTLSProtocol | null>>((props, _ref) => {
     const { value, label, valueKey, onUpdate } = props;
     return (
         <React.Fragment>

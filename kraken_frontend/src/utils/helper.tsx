@@ -4,6 +4,7 @@ import { ApiError } from "../api/error";
 import { inspectError } from "../context/user";
 import { Result } from "./result";
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ObjectFns {
     // eslint-disable-next-line jsdoc/require-param, jsdoc/require-returns
     /** {@link ObjectConstructor.keys `Object.keys`} which preserves the keys' type */
@@ -21,7 +22,7 @@ export namespace ObjectFns {
 
     /** {@link ObjectConstructor.fromEntries `Object.fromEntries`} which preserves the keys' type */
     export function fromEntries<Key extends string, Value>(arr: Array<[Key, Value]>): Record<Key, Value> {
-        // @ts-ignore
+        // @ts-ignore: DOM type declaration aren't good enough, that's this function's whole point
         return Object.fromEntries(arr);
     }
 
