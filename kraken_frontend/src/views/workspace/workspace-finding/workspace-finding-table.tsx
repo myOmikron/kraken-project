@@ -148,9 +148,7 @@ export default function WorkspaceFindingTable(props: WorkspaceFindingTableProps)
                                         <SeverityIcon severity={f.severity} />
                                     </span>
                                     <span className="workspace-data-certainty-icon">{f.affectedCount}</span>
-                                    <span>
-                                        {f.sortingWeight} {f.name}
-                                    </span>
+                                    <span>{f.name}</span>
                                     <FindingCategoryList categories={f.categories} />
                                     <span>{f.cve}</span>
                                     <span>{f.createdAt.toLocaleString()}</span>
