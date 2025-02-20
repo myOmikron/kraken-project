@@ -16,6 +16,7 @@ use log::debug;
 use rand::distributions::Alphanumeric;
 use rand::distributions::DistString;
 use rand::thread_rng;
+use rorm::and;
 use rorm::query;
 use rorm::FieldAccess;
 use rorm::Model;
@@ -36,6 +37,8 @@ use crate::chan::global::GLOBAL;
 use crate::models::OAuthDecision;
 use crate::models::OAuthDecisionAction;
 use crate::models::OauthClient;
+use crate::models::User;
+use crate::models::UserPermission;
 use crate::models::Workspace;
 use crate::models::WorkspaceAccessToken;
 use crate::modules::oauth::schemas::AuthError;
@@ -73,8 +76,9 @@ pub async fn auth(
     SessionUser(user_uuid): SessionUser,
 ) -> Result<Redirect, ApiError> {
     let request = request.into_inner();
+    let mut tx = GLOBAL.db.start_transaction().await?;
 
-    let Some(client) = query!(&GLOBAL.db, OauthClient)
+    let Some(client) = query!(&mut tx, OauthClient)
         .condition(OauthClient::F.uuid.equals(request.client_id))
         .optional()
         .await?
@@ -138,6 +142,26 @@ pub async fn auth(
         );
     };
 
+    if !Workspace::is_user_member_or_owner(&mut tx, workspace, user_uuid).await?
+        && !query!(&GLOBAL.db, (User::F.uuid,))
+            .condition(and![
+                User::F.uuid.equals(user_uuid),
+                User::F.permission.equals(UserPermission::Admin)
+            ])
+            .optional()
+            .await?
+            .is_some()
+    {
+        return build_redirect(
+            &client.redirect_uri,
+            AuthError {
+                error: AuthErrorType::AccessDenied,
+                state: None,
+                error_description: Some("The user is not member of this workspace"),
+            },
+        );
+    }
+
     let Some(state) = request.state else {
         return build_redirect(
             &client.redirect_uri,
@@ -178,8 +202,8 @@ pub async fn auth(
         code_challenge,
     };
 
-    if let Some(action) =
-        OAuthDecision::get(&GLOBAL.db, user_uuid, request.client_id, open_request.scope).await?
+    let redirect = if let Some(action) =
+        OAuthDecision::get(&mut tx, user_uuid, request.client_id, open_request.scope).await?
     {
         match action {
             OAuthDecisionAction::Accept => {
@@ -204,7 +228,9 @@ pub async fn auth(
     } else {
         let request_uuid = manager.insert_open(open_request);
         Ok(Redirect::to(format!("/#/oauth-request/{request_uuid}")))
-    }
+    }?;
+    tx.commit().await?;
+    Ok(redirect)
 }
 
 /// Queried by the frontend to display information about the oauth request to the user
