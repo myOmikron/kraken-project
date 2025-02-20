@@ -38,6 +38,7 @@ use crate::models::DomainGlobalTag;
 use crate::models::DomainWorkspaceTag;
 use crate::models::Finding;
 use crate::models::FindingAffected;
+use crate::models::FindingDefinition;
 use crate::models::FindingDefinitionCategoryRelation;
 use crate::models::FindingDetails;
 use crate::models::FindingFindingCategoryRelation;
@@ -152,9 +153,30 @@ pub async fn get_finding_affected(
         return Err(ApiError::NotFound);
     }
 
+    let (finding, finding_details, domain, host, port, service, http_service, details, created_at) =
+        query_finding_affected(
+            &mut tx,
+            (
+                FindingAffected::F.finding.select_as::<Finding>(),
+                FindingAffected::F
+                    .finding
+                    .details
+                    .select_as::<FindingDetails>(),
+                FindingAffected::F.domain,
+                FindingAffected::F.host,
+                FindingAffected::F.port,
+                FindingAffected::F.service,
+                FindingAffected::F.http_service,
+                FindingAffected::F.details,
+                FindingAffected::F.created_at,
+            ),
+            f_uuid,
+            a_uuid,
+        )
+        .await?
+        .ok_or(ApiError::NotFound)?;
+
     let (
-        finding,
-        finding_details,
         finding_definition_uuid,
         finding_definition_name,
         finding_definition_cve,
@@ -162,41 +184,21 @@ pub async fn get_finding_affected(
         finding_definition_summary,
         finding_definition_remediation_duration,
         finding_definition_created_at,
-        domain,
-        host,
-        port,
-        service,
-        http_service,
-        details,
-        created_at,
-    ) = query_finding_affected(
+    ) = query!(
         &mut tx,
         (
-            FindingAffected::F.finding.select_as::<Finding>(),
-            FindingAffected::F
-                .finding
-                .details
-                .select_as::<FindingDetails>(),
-            FindingAffected::F.finding.definition.uuid,
-            FindingAffected::F.finding.definition.name,
-            FindingAffected::F.finding.definition.cve,
-            FindingAffected::F.finding.definition.severity,
-            FindingAffected::F.finding.definition.summary,
-            FindingAffected::F.finding.definition.remediation_duration,
-            FindingAffected::F.finding.definition.created_at,
-            FindingAffected::F.domain,
-            FindingAffected::F.host,
-            FindingAffected::F.port,
-            FindingAffected::F.service,
-            FindingAffected::F.http_service,
-            FindingAffected::F.details,
-            FindingAffected::F.created_at,
-        ),
-        f_uuid,
-        a_uuid,
+            FindingDefinition::F.uuid,
+            FindingDefinition::F.name,
+            FindingDefinition::F.cve,
+            FindingDefinition::F.severity,
+            FindingDefinition::F.summary,
+            FindingDefinition::F.remediation_duration,
+            FindingDefinition::F.created_at,
+        )
     )
-    .await?
-    .ok_or(ApiError::NotFound)?;
+    .condition(FindingDefinition::F.uuid.equals(*finding.definition.key()))
+    .one()
+    .await?;
 
     let mut details = if let Some(details) = details {
         Some(
