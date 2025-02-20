@@ -78,6 +78,11 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                     </div>
 
                     <div>
+                        <h2 className="sub-heading">Remediation Duration</h2>
+                        <Input value={remediationDuration} onChange={setRemediationDuration} />
+                    </div>
+
+                    <div>
                         <h2 className={"sub-heading"}>
                             <InformationIcon />
                             Summary
@@ -110,10 +115,6 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                             <BandageIcon />
                             Remediation
                         </h2>
-                        <label>
-                            Estimated Duration
-                            <Input value={remediationDuration} onChange={setRemediationDuration} />
-                        </label>
                         <GithubMarkdown>{sections.Remediation.value}</GithubMarkdown>
                     </div>
 
