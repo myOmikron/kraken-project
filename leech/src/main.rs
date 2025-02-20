@@ -30,6 +30,7 @@ use clap::Parser;
 use clap::Subcommand;
 use clap::ValueEnum;
 use dehashed_rs::SearchType;
+use hickory_resolver::Name;
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
 use kraken_proto::push_attack_request;
@@ -47,7 +48,6 @@ use rorm::DatabaseConfiguration;
 use rorm::DatabaseDriver;
 use tokio::sync::mpsc;
 use tokio::task;
-use trust_dns_resolver::Name;
 use uuid::Uuid;
 
 use crate::backlog::start_backlog;

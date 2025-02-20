@@ -3,16 +3,16 @@
 use std::fmt::Display;
 use std::fmt::Formatter;
 
+use hickory_resolver::name_server::GenericConnector;
+use hickory_resolver::name_server::TokioRuntimeProvider;
+use hickory_resolver::AsyncResolver;
+use hickory_resolver::TokioAsyncResolver;
 use log::debug;
 use log::info;
 use once_cell::sync::Lazy;
 use regex::bytes::Regex;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinSet;
-use trust_dns_resolver::name_server::GenericConnector;
-use trust_dns_resolver::name_server::TokioRuntimeProvider;
-use trust_dns_resolver::AsyncResolver;
-use trust_dns_resolver::TokioAsyncResolver;
 
 use crate::modules::dns::resolve;
 

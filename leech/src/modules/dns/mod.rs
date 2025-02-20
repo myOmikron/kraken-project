@@ -10,19 +10,19 @@ use std::net::Ipv6Addr;
 
 use futures::stream;
 use futures::StreamExt;
+use hickory_resolver::config::LookupIpStrategy;
+use hickory_resolver::config::ResolverConfig;
+use hickory_resolver::config::ResolverOpts;
+use hickory_resolver::error::ResolveError;
+use hickory_resolver::error::ResolveErrorKind;
+use hickory_resolver::proto::rr::Record;
+use hickory_resolver::proto::rr::RecordType;
+use hickory_resolver::TokioAsyncResolver;
 use log::debug;
 use log::error;
 use log::info;
 use log::warn;
 use tokio::sync::mpsc::Sender;
-use trust_dns_resolver::config::LookupIpStrategy;
-use trust_dns_resolver::config::ResolverConfig;
-use trust_dns_resolver::config::ResolverOpts;
-use trust_dns_resolver::error::ResolveError;
-use trust_dns_resolver::error::ResolveErrorKind;
-use trust_dns_resolver::proto::rr::Record;
-use trust_dns_resolver::proto::rr::RecordType;
-use trust_dns_resolver::TokioAsyncResolver;
 
 use crate::modules::dns::errors::DnsResolutionError;
 use crate::modules::dns::errors::LookupResultStatus;

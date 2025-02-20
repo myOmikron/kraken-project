@@ -11,30 +11,30 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
+use hickory_resolver::config::LookupIpStrategy;
+use hickory_resolver::config::ResolverConfig;
+use hickory_resolver::config::ResolverOpts;
+use hickory_resolver::error::ResolveError;
+use hickory_resolver::error::ResolveErrorKind;
+use hickory_resolver::proto::rr::rdata::A;
+use hickory_resolver::proto::rr::rdata::AAAA;
+use hickory_resolver::proto::rr::rdata::CNAME;
+use hickory_resolver::proto::rr::RData;
+use hickory_resolver::proto::rr::Record;
+use hickory_resolver::proto::rr::RecordType;
+use hickory_resolver::TokioAsyncResolver;
 use itertools::Itertools;
 use log::debug;
 use log::error;
 use log::info;
 use log::trace;
 use log::warn;
-use rand::distributions::Alphanumeric;
-use rand::distributions::DistString;
-use rand::thread_rng;
+use rand::distr::Alphanumeric;
+use rand::distr::SampleString;
+use rand::rng;
 use tokio::sync::mpsc;
 use tokio::task::JoinSet;
 use tokio::time::sleep;
-use trust_dns_resolver::config::LookupIpStrategy;
-use trust_dns_resolver::config::ResolverConfig;
-use trust_dns_resolver::config::ResolverOpts;
-use trust_dns_resolver::error::ResolveError;
-use trust_dns_resolver::error::ResolveErrorKind;
-use trust_dns_resolver::proto::rr::rdata::A;
-use trust_dns_resolver::proto::rr::rdata::AAAA;
-use trust_dns_resolver::proto::rr::rdata::CNAME;
-use trust_dns_resolver::proto::rr::RData;
-use trust_dns_resolver::proto::rr::Record;
-use trust_dns_resolver::proto::rr::RecordType;
-use trust_dns_resolver::TokioAsyncResolver;
 
 use crate::modules::bruteforce_subdomains::error::BruteforceSubdomainError;
 
@@ -301,7 +301,7 @@ impl Wildcards {
         };
         let test_domain = format!(
             "{random}.{domain}.",
-            random = Alphanumeric.sample_string(&mut thread_rng(), 32)
+            random = Alphanumeric.sample_string(&mut rng(), 32)
         );
         debug!("Querying \"{test_domain}\" to detect a wildcard",);
         match resolver.lookup_ip(&test_domain).await {

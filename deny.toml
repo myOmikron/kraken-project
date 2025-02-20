@@ -12,12 +12,12 @@ allow = [
     "Apache-2.0",
     "MPL-2.0",
     "ISC",
-    "Unicode-DFS-2016",
     "BSD-2-Clause",
     "BSD-3-Clause",
     "LicenseRef-ring",
     "Apache-2.0 WITH LLVM-exception",
-    "AGPL-3.0"
+    "AGPL-3.0",
+    "Unicode-3.0",
 ]
 
 # Exception for rings license

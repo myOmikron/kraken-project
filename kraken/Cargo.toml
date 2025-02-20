@@ -81,13 +81,13 @@ futures = { version = "~0.3", optional = true }
 rand = { version = "~0.8", optional = true }
 
 # gRPC implementation
-tonic = { version = "~0.11", features = ["transport", "tls"], optional = true }
+tonic = { version = "~0.12", features = ["transport", "tls"], optional = true }
 # codegenerator
-prost = { version = "~0.12", optional = true }
-prost-types = { version = "~0.12", optional = true }
+prost = { version = "~0.13", optional = true }
+prost-types = { version = "~0.13", optional = true }
 
 # error management
-thiserror = { version = "~1", optional = true }
+thiserror = { version = "~2", optional = true }
 
 # ORM
 rorm = { version = "~0.6", default-features = false, features = ["tokio", "rustls", "cli", "uuid", "postgres-only", "chrono"], optional = true }

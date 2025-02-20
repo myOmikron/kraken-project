@@ -36,13 +36,13 @@ futures = { version = "~0.3" }
 tokio-stream = { version = "~0.1" }
 
 # Expansion of the Iterator trait
-itertools = { version = "~0.13" }
+itertools = { version = "~0.14" }
 
 # gRPC implementation
-tonic = { version = "~0.11", features = ["transport", "tls"] }
+tonic = { version = "~0.12", features = ["transport", "tls"] }
 # codegenerator
-prost = { version = "~0.12" }
-prost-types = { version = "~0.12" }
+prost = { version = "~0.13" }
+prost-types = { version = "~0.13" }
 
 # Serialization library
 serde = { version = "~1", features = ["derive"] }
@@ -57,10 +57,10 @@ url = { version = "~2", features = ["serde"] }
 once_cell = { version = "~1" }
 
 # RNG library
-rand = { version = "~0.8" }
+rand = { version = "~0.9" }
 
 # Error handling
-thiserror = { version = "~1" }
+thiserror = { version = "~2" }
 ssl-errors = { path = "ssl-errors" }
 
 # ORM
@@ -69,7 +69,7 @@ rorm = { version = "~0.6", default-features = false, features = ["tokio", "rustl
 # Needed because of modules
 
 # DNS resolver
-trust-dns-resolver = { version = "~0.23", features = ["dns-over-https-rustls", "tokio-rustls", "tokio"] }
+hickory-resolver = { version = "~0.24", features = ["dns-over-https-rustls", "tokio-rustls", "tokio"] }
 
 # icmp library
 surge-ping = { version = "~0.8" }
@@ -87,10 +87,10 @@ tokio-native-tls = { version = "~0.3" }
 
 # raw sockets
 socket2 = { version = "~0.5" }
-etherparse = { version = "~0.15" }
+etherparse = { version = "~0.17" }
 nix = { version = "~0.29", features = ["net"] }
-strum = { version = "~0.26" }
-strum_macros = { version = "~0.26" }
+strum = { version = "~0.27" }
+strum_macros = { version = "~0.27" }
 
 tempfile = "~3"
 

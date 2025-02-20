@@ -17,8 +17,8 @@ tokio = { version = ">=1.23.1", features = ["sync"] }
 futures = { version = "~0.3" }
 
 # Tokio websockets
-tokio-tungstenite = { version = "~0.23", features = ["native-tls"] }
-tungstenite = { version = "~0.23", features = ["url"] }
+tokio-tungstenite = { version = "~0.26", features = ["native-tls"] }
+tungstenite = { version = "~0.26", features = ["url"] }
 tokio-native-tls = { version = "~0.3" }
 
 # HTTP client library
@@ -31,7 +31,7 @@ uuid = { version = "~1", features = ["serde", "v4"] }
 ipnetwork = { version = "~0.20" }
 
 # Error management
-thiserror = { version = "~1" }
+thiserror = { version = "~2" }
 
 # Kraken datatypes
 kraken = { version = "*", path = "../../kraken" }

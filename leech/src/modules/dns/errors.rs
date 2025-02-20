@@ -3,16 +3,16 @@
 use std::fmt::Display;
 use std::fmt::Formatter;
 
+use hickory_resolver::error::ResolveError;
 use itertools::Itertools;
 use thiserror::Error;
-use trust_dns_resolver::error::ResolveError;
 
 /// DNS Resolution error types
 #[derive(Debug, Error)]
 pub enum DnsResolutionError {
     /// Error creating the system resolver
     #[error("Could not create system resolver: {0}")]
-    CreateSystemResolver(#[from] trust_dns_resolver::error::ResolveError),
+    CreateSystemResolver(#[from] ResolveError),
     /// Failed at least parts of the input
     #[error("Failed resolving the following domains:\n{}", format_list(.0))]
     SomeFailed(Vec<ResolutionStatus>),

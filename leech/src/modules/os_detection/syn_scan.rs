@@ -23,8 +23,8 @@ use futures::stream;
 use futures::StreamExt;
 use futures::TryFutureExt;
 use log::trace;
+use rand::rng;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
 use socket2::Domain;
 use socket2::Protocol;
 use tokio::net::UdpSocket;
@@ -213,7 +213,7 @@ pub async fn find_open_and_closed_port(
     let mut remaining_ports: Vec<_> = (1u16..=65535u16)
         .filter(|p| !common_ports.contains(p))
         .collect();
-    remaining_ports.shuffle(&mut thread_rng());
+    remaining_ports.shuffle(&mut rng());
 
     let mut all = stream::iter(common_ports.iter().copied().chain(remaining_ports))
         .map(|port| SocketAddr::new(ip_addr, port))
