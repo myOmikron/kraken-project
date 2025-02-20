@@ -252,6 +252,9 @@ pub struct AggregatedFinding {
     /// The finding's severity
     pub severity: FindingSeverity,
 
+    /// A weight without semantic used to sort findings
+    pub sorting_weight: i32,
+
     /// The details of this finding
     pub details: String,
 

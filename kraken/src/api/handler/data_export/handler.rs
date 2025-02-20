@@ -323,14 +323,13 @@ pub(crate) async fn export_workspace(
             Finding::F.definition.name,
             Finding::F.definition.cve,
             Finding::F.severity,
+            Finding::F.sorting_weight,
             Finding::F.created_at,
         )
     )
     .condition(Finding::F.workspace.equals(path.uuid))
-    .order_desc(Finding::F.severity)
-    .order_desc(Finding::F.sorting_weight)
     .stream()
-    .and_then(|(uuid, name, cve, severity, created_at)| {
+    .and_then(|(uuid, name, cve, severity, sorting_weight, created_at)| {
         let affected = affected.remove(&uuid).unwrap_or_default();
         let categories = categories.remove(&uuid).unwrap_or_default();
         async move {
@@ -347,6 +346,7 @@ pub(crate) async fn export_workspace(
                     name,
                     cve,
                     severity: FromDb::from_db(severity),
+                    sorting_weight,
                     details,
                     affected,
                     created_at,
