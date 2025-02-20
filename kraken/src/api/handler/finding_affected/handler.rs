@@ -457,6 +457,7 @@ pub async fn get_finding_affected(
                 categories: finding_definition_categories,
             },
             severity: FromDb::from_db(finding.severity),
+            sorting_weight: finding.sorting_weight,
             affected: finding_affected,
             #[rustfmt::skip]
             export_details: GLOBAL.editor_cache.finding_export_details.get(finding.uuid).await?.unwrap_or_default().0,

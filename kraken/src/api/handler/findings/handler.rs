@@ -179,18 +179,22 @@ pub async fn get_all_findings(
             Finding::F.definition.name,
             Finding::F.definition.cve,
             Finding::F.severity,
+            Finding::F.sorting_weight,
             Finding::F.created_at,
         )
     )
     .condition(Finding::F.workspace.equals(workspace_uuid))
+    .order_desc(Finding::F.severity)
+    .order_desc(Finding::F.sorting_weight)
     .stream()
     .map_ok(
-        |(uuid, definition, name, cve, severity, created_at)| SimpleFinding {
+        |(uuid, definition, name, cve, severity, sorting_weight, created_at)| SimpleFinding {
             uuid,
             definition,
             name,
             cve,
             severity: FromDb::from_db(severity),
+            sorting_weight,
             affected_count: *affected_lookup.get(&uuid).unwrap_or(&0),
             created_at,
             categories: categories.remove(&uuid).unwrap_or_default(),
@@ -295,6 +299,7 @@ pub async fn get_finding(
             categories: definition_categories,
         },
         severity: FromDb::from_db(finding.severity),
+        sorting_weight: finding.sorting_weight,
         affected,
         #[rustfmt::skip]
         export_details: GLOBAL.editor_cache.finding_export_details.get(finding.uuid).await?.unwrap_or_default().0,
@@ -339,6 +344,7 @@ pub async fn update_finding(
         UpdateFindingRequest {
             definition: None,
             severity: None,
+            sorting_weight: None,
             screenshot: None,
             log_file: None,
             categories: None,
@@ -363,6 +369,7 @@ pub async fn update_finding(
             request.definition.map(ForeignModelByField::Key),
         )
         .set_if(Finding::F.severity, request.severity.map(IntoDb::into_db))
+        .set_if(Finding::F.sorting_weight, request.sorting_weight)
         .finish_dyn_set()
     {
         update.await?;

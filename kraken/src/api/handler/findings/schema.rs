@@ -62,6 +62,10 @@ pub struct UpdateFindingRequest {
     #[serde(skip_serializing_if = "Option::is_none")] // see above
     pub severity: Option<FindingSeverity>,
 
+    /// A weight without semantic used to sort findings
+    #[serde(skip_serializing_if = "Option::is_none")] // see above
+    pub sorting_weight: Option<i32>,
+
     /// A screenshot
     ///
     /// The file must have been uploaded through the image upload.
@@ -97,6 +101,9 @@ pub struct SimpleFinding {
     /// The severity of the finding
     pub severity: FindingSeverity,
 
+    /// A weight without semantic used to sort findings
+    pub sorting_weight: i32,
+
     /// The count of affected aggregations
     pub affected_count: u64,
 
@@ -118,6 +125,9 @@ pub struct FullFinding {
 
     /// The severity of the finding
     pub severity: FindingSeverity,
+
+    /// A weight without semantic used to sort findings
+    pub sorting_weight: i32,
 
     /// List of all affected objects
     pub affected: Vec<SimpleFindingAffected>,

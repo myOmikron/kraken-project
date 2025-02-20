@@ -1,0 +1,20 @@
+[Migration]
+Hash = "10093839565147065550"
+Initial = false
+Dependency = 21
+Replaces = []
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "finding"
+
+[Migration.Operations.Field]
+Name = "sorting_weight"
+Type = "int32"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "default_value"
+Value = 0
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"

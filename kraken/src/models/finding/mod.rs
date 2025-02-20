@@ -113,6 +113,10 @@ pub struct Finding {
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
     pub workspace: ForeignModel<Workspace>,
 
+    /// A weight without semantic used to sort findings
+    #[rorm(default = 0)]
+    pub sorting_weight: i32,
+
     /// The point in time this finding was created
     #[rorm(auto_create_time)]
     pub created_at: DateTime<Utc>,

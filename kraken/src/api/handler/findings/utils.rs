@@ -117,6 +117,7 @@ impl ListFindings {
                 FindingAffected::F.finding.definition.name,
                 FindingAffected::F.finding.definition.cve,
                 FindingAffected::F.finding.severity,
+                FindingAffected::F.finding.sorting_weight,
                 FindingAffected::F.finding.created_at,
             )
         )
@@ -161,15 +162,18 @@ impl ListFindings {
         let simple_findings = findings
             .into_iter()
             .map(
-                |(uuid, definition, name, cve, severity, created_at)| SimpleFinding {
-                    uuid,
-                    definition,
-                    name,
-                    cve,
-                    severity: FromDb::from_db(severity),
-                    created_at,
-                    affected_count: affected_lookup.get(&uuid).copied().unwrap_or(0),
-                    categories: categories.remove(&uuid).unwrap_or_default(),
+                |(uuid, definition, name, cve, severity, sorting_weight, created_at)| {
+                    SimpleFinding {
+                        uuid,
+                        definition,
+                        name,
+                        cve,
+                        severity: FromDb::from_db(severity),
+                        sorting_weight,
+                        created_at,
+                        affected_count: affected_lookup.get(&uuid).copied().unwrap_or(0),
+                        categories: categories.remove(&uuid).unwrap_or_default(),
+                    }
                 },
             )
             .collect();

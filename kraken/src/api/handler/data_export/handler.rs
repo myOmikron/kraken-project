@@ -327,6 +327,8 @@ pub(crate) async fn export_workspace(
         )
     )
     .condition(Finding::F.workspace.equals(path.uuid))
+    .order_desc(Finding::F.severity)
+    .order_desc(Finding::F.sorting_weight)
     .stream()
     .and_then(|(uuid, name, cve, severity, created_at)| {
         let affected = affected.remove(&uuid).unwrap_or_default();
