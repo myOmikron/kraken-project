@@ -63,6 +63,12 @@ export interface SimpleFindingDefinition {
      */
     summary: string;
     /**
+     * Expected time duration required for the remediation
+     * @type {string}
+     * @memberof SimpleFindingDefinition
+     */
+    remediationDuration: string;
+    /**
      * The point in time this finding definition was created
      * @type {Date}
      * @memberof SimpleFindingDefinition
@@ -85,6 +91,7 @@ export function instanceOfSimpleFindingDefinition(value: object): boolean {
     isInstance = isInstance && "name" in value;
     isInstance = isInstance && "severity" in value;
     isInstance = isInstance && "summary" in value;
+    isInstance = isInstance && "remediationDuration" in value;
     isInstance = isInstance && "createdAt" in value;
     isInstance = isInstance && "categories" in value;
 
@@ -106,6 +113,7 @@ export function SimpleFindingDefinitionFromJSONTyped(json: any, ignoreDiscrimina
         'cve': !exists(json, 'cve') ? undefined : json['cve'],
         'severity': FindingSeverityFromJSON(json['severity']),
         'summary': json['summary'],
+        'remediationDuration': json['remediation_duration'],
         'createdAt': (new Date(json['created_at'])),
         'categories': ((json['categories'] as Array<any>).map(SimpleFindingCategoryFromJSON)),
     };
@@ -125,6 +133,7 @@ export function SimpleFindingDefinitionToJSON(value?: SimpleFindingDefinition | 
         'cve': value.cve,
         'severity': FindingSeverityToJSON(value.severity),
         'summary': value.summary,
+        'remediation_duration': value.remediationDuration,
         'created_at': (value.createdAt.toISOString()),
         'categories': ((value.categories as Array<any>).map(SimpleFindingCategoryToJSON)),
     };

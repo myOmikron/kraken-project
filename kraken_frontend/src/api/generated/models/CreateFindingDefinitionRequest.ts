@@ -86,6 +86,12 @@ export interface CreateFindingDefinitionRequest {
      */
     references: string;
     /**
+     * Expected time duration required for the remediation
+     * @type {string}
+     * @memberof CreateFindingDefinitionRequest
+     */
+    remediationDuration: string;
+    /**
      * List of categories
      * @type {Array<string>}
      * @memberof CreateFindingDefinitionRequest
@@ -105,6 +111,7 @@ export function instanceOfCreateFindingDefinitionRequest(value: object): boolean
     isInstance = isInstance && "impact" in value;
     isInstance = isInstance && "remediation" in value;
     isInstance = isInstance && "references" in value;
+    isInstance = isInstance && "remediationDuration" in value;
     isInstance = isInstance && "categories" in value;
 
     return isInstance;
@@ -128,6 +135,7 @@ export function CreateFindingDefinitionRequestFromJSONTyped(json: any, ignoreDis
         'impact': json['impact'],
         'remediation': json['remediation'],
         'references': json['references'],
+        'remediationDuration': json['remediation_duration'],
         'categories': json['categories'],
     };
 }
@@ -149,6 +157,7 @@ export function CreateFindingDefinitionRequestToJSON(value?: CreateFindingDefini
         'impact': value.impact,
         'remediation': value.remediation,
         'references': value.references,
+        'remediation_duration': value.remediationDuration,
         'categories': value.categories,
     };
 }

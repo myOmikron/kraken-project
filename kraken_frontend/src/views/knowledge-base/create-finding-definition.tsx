@@ -47,6 +47,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
     const [name, setName] = React.useState(props.initialName ?? "");
     const [severity, setSeverity] = React.useState<FindingSeverity>(FindingSeverity.Medium);
     const [cve, setCve] = React.useState("");
+    const [remediationDuration, setRemediationDuration] = React.useState("");
     const [categories, setCategories] = React.useState<SimpleFindingCategory[]>([]);
 
     const sections = useSectionsState();
@@ -109,6 +110,10 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                             <BandageIcon />
                             Remediation
                         </h2>
+                        <label>
+                            Estimated Duration
+                            <Input value={remediationDuration} onChange={setRemediationDuration} />
+                        </label>
                         <GithubMarkdown>{sections.Remediation.value}</GithubMarkdown>
                     </div>
 
@@ -133,6 +138,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                                     impact: sections.Impact.value,
                                     remediation: sections.Remediation.value,
                                     references: sections.References.value,
+                                    remediationDuration,
                                     categories: categories.map((c) => c.uuid),
                                 })
                                 .then(
@@ -147,6 +153,7 @@ export function CreateFindingDefinition(props: CreateFindingDefinitionProps) {
                                                 severity,
                                                 cve: cve.length > 0 ? cve : null,
                                                 summary: sections.Summary.value,
+                                                remediationDuration,
                                                 createdAt: new Date(),
                                                 categories,
                                             });

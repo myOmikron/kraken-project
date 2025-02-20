@@ -64,6 +64,7 @@ pub async fn create_finding_definition(
         impact,
         remediation,
         references,
+        remediation_duration,
         categories,
     } = req.into_inner();
 
@@ -89,6 +90,7 @@ pub async fn create_finding_definition(
             impact,
             remediation,
             references,
+            remediation_duration,
         })
         .await?;
 
@@ -177,6 +179,7 @@ pub async fn get_finding_definition(
         remediation: GLOBAL.editor_cache.fd_remediation.get(uuid).await?.ok_or(ApiError::InvalidUuid)?.0,
         #[rustfmt::skip]
         references: GLOBAL.editor_cache.fd_references.get(uuid).await?.ok_or(ApiError::InvalidUuid)?.0,
+        remediation_duration: finding_definition.remediation_duration,
         created_at: finding_definition.created_at,
         categories,
     }))
@@ -229,6 +232,7 @@ pub async fn get_all_finding_definitions() -> ApiResult<Json<ListFindingDefiniti
             summary: fd.summary,
             severity: FromDb::from_db(fd.severity),
             created_at: fd.created_at,
+            remediation_duration: fd.remediation_duration,
             categories: categories.remove(&fd.uuid).unwrap_or_default(),
         })
         .try_collect()
@@ -278,6 +282,7 @@ pub async fn update_finding_definition(
             name: None,
             severity: None,
             cve: None,
+            remediation_duration: None,
             categories: None,
         }
     ) {
@@ -314,6 +319,10 @@ pub async fn update_finding_definition(
         .set_if(
             FindingDefinition::F.severity,
             request.severity.map(IntoDb::into_db),
+        )
+        .set_if(
+            FindingDefinition::F.remediation_duration,
+            request.remediation_duration.clone(),
         )
         .finish_dyn_set()
     {

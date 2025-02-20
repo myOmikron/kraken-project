@@ -80,6 +80,10 @@ pub struct FindingDefinition {
     #[rorm(max_length = 65535)]
     pub references: String,
 
+    /// Expected time duration required for the remediation
+    #[rorm(max_length = 255, default = "")]
+    pub remediation_duration: String,
+
     /// The point in time this finding was created
     #[rorm(auto_create_time)]
     pub created_at: DateTime<Utc>,

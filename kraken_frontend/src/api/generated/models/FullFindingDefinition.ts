@@ -87,6 +87,12 @@ export interface FullFindingDefinition {
      */
     references: string;
     /**
+     * Expected time duration required for the remediation
+     * @type {string}
+     * @memberof FullFindingDefinition
+     */
+    remediationDuration: string;
+    /**
      * The point in time this finding definition was created
      * @type {Date}
      * @memberof FullFindingDefinition
@@ -113,6 +119,7 @@ export function instanceOfFullFindingDefinition(value: object): boolean {
     isInstance = isInstance && "impact" in value;
     isInstance = isInstance && "remediation" in value;
     isInstance = isInstance && "references" in value;
+    isInstance = isInstance && "remediationDuration" in value;
     isInstance = isInstance && "createdAt" in value;
     isInstance = isInstance && "categories" in value;
 
@@ -138,6 +145,7 @@ export function FullFindingDefinitionFromJSONTyped(json: any, ignoreDiscriminato
         'impact': json['impact'],
         'remediation': json['remediation'],
         'references': json['references'],
+        'remediationDuration': json['remediation_duration'],
         'createdAt': (new Date(json['created_at'])),
         'categories': ((json['categories'] as Array<any>).map(SimpleFindingCategoryFromJSON)),
     };
@@ -161,6 +169,7 @@ export function FullFindingDefinitionToJSON(value?: FullFindingDefinition | null
         'impact': value.impact,
         'remediation': value.remediation,
         'references': value.references,
+        'remediation_duration': value.remediationDuration,
         'created_at': (value.createdAt.toISOString()),
         'categories': ((value.categories as Array<any>).map(SimpleFindingCategoryToJSON)),
     };

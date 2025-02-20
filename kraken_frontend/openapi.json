@@ -10338,6 +10338,7 @@
                     "impact",
                     "remediation",
                     "references",
+                    "remediation_duration",
                     "categories"
                 ],
                 "properties": {
@@ -10372,6 +10373,10 @@
                     "references": {
                         "type": "string",
                         "description": "Any references to get more information about the definition of a finding.\n\nCan link to resources like Mitre's Attack or CME explanations, etc."
+                    },
+                    "remediation_duration": {
+                        "type": "string",
+                        "description": "Expected time duration required for the remediation"
                     },
                     "categories": {
                         "type": "array",
@@ -11834,6 +11839,7 @@
                     "impact",
                     "remediation",
                     "references",
+                    "remediation_duration",
                     "created_at",
                     "categories"
                 ],
@@ -11874,6 +11880,10 @@
                     "references": {
                         "type": "string",
                         "description": "Any references to get more information about the definition of a finding."
+                    },
+                    "remediation_duration": {
+                        "type": "string",
+                        "description": "Expected time duration required for the remediation"
                     },
                     "created_at": {
                         "type": "string",
@@ -15482,6 +15492,7 @@
                     "name",
                     "severity",
                     "summary",
+                    "remediation_duration",
                     "created_at",
                     "categories"
                 ],
@@ -15506,6 +15517,10 @@
                     "summary": {
                         "type": "string",
                         "description": "Short summary of the finding"
+                    },
+                    "remediation_duration": {
+                        "type": "string",
+                        "description": "Expected time duration required for the remediation"
                     },
                     "created_at": {
                         "type": "string",
@@ -16731,6 +16746,11 @@
                     "cve": {
                         "type": "string",
                         "description": "Optional linked CVE",
+                        "nullable": true
+                    },
+                    "remediation_duration": {
+                        "type": "string",
+                        "description": "Expected time duration required for the remediation",
                         "nullable": true
                     },
                     "categories": {

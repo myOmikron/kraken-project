@@ -47,6 +47,12 @@ export interface UpdateFindingDefinitionRequest {
      */
     cve?: string | null;
     /**
+     * Expected time duration required for the remediation
+     * @type {string}
+     * @memberof UpdateFindingDefinitionRequest
+     */
+    remediationDuration?: string | null;
+    /**
      * List of categories
      * @type {Array<string>}
      * @memberof UpdateFindingDefinitionRequest
@@ -76,6 +82,7 @@ export function UpdateFindingDefinitionRequestFromJSONTyped(json: any, ignoreDis
         'name': !exists(json, 'name') ? undefined : json['name'],
         'severity': !exists(json, 'severity') ? undefined : FindingSeverityFromJSON(json['severity']),
         'cve': !exists(json, 'cve') ? undefined : json['cve'],
+        'remediationDuration': !exists(json, 'remediation_duration') ? undefined : json['remediation_duration'],
         'categories': !exists(json, 'categories') ? undefined : json['categories'],
     };
 }
@@ -92,6 +99,7 @@ export function UpdateFindingDefinitionRequestToJSON(value?: UpdateFindingDefini
         'name': value.name,
         'severity': FindingSeverityToJSON(value.severity),
         'cve': value.cve,
+        'remediation_duration': value.remediationDuration,
         'categories': value.categories,
     };
 }

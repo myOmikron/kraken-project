@@ -99,6 +99,7 @@ pub async fn get_finding_factory_entries() -> ApiResult<Json<GetFindingFactoryEn
                         cve: finding.cve,
                         severity: FromDb::from_db(finding.severity),
                         summary: finding.summary,
+                        remediation_duration: finding.remediation_duration,
                         created_at: finding.created_at,
                         categories,
                     }),

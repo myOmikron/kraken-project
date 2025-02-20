@@ -82,6 +82,7 @@ export const EditingTreeGraph = forwardRef<EditingTreeGraphRef, EditingTreeGraph
                     severity: props.severity,
                     summary: "",
                     uuid: "local-undefined",
+                    remediationDuration: "",
                     categories: [],
                 },
                 userDetails: "",

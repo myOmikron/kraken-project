@@ -20,6 +20,7 @@ pub(crate) struct InsertFindingDefinition {
     pub(crate) impact: String,
     pub(crate) remediation: String,
     pub(crate) references: String,
+    pub(crate) remediation_duration: String,
 }
 
 #[derive(Patch)]

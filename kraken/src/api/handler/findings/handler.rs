@@ -295,6 +295,7 @@ pub async fn get_finding(
             severity: FromDb::from_db(definition.severity),
             #[rustfmt::skip]
             summary: GLOBAL.editor_cache.fd_summary.get(*finding.definition.key()).await?.ok_or(ApiError::InvalidUuid)?.0,
+            remediation_duration: definition.remediation_duration,
             created_at: definition.created_at,
             categories: definition_categories,
         },

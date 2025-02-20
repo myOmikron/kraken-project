@@ -42,6 +42,8 @@ pub struct CreateFindingDefinitionRequest {
     ///
     /// Can link to resources like Mitre's Attack or CME explanations, etc.
     pub references: String,
+    /// Expected time duration required for the remediation
+    pub remediation_duration: String,
     /// List of categories
     pub categories: Vec<Uuid>,
 }
@@ -67,6 +69,8 @@ pub struct FullFindingDefinition {
     pub remediation: String,
     /// Any references to get more information about the definition of a finding.
     pub references: String,
+    /// Expected time duration required for the remediation
+    pub remediation_duration: String,
     /// The point in time this finding definition was created
     pub created_at: DateTime<Utc>,
     /// The list of categories this finding definition falls into
@@ -86,6 +90,8 @@ pub struct SimpleFindingDefinition {
     pub severity: FindingSeverity,
     /// Short summary of the finding
     pub summary: String,
+    /// Expected time duration required for the remediation
+    pub remediation_duration: String,
     /// The point in time this finding definition was created
     pub created_at: DateTime<Utc>,
     /// The list of categories this finding falls into
@@ -154,6 +160,10 @@ pub struct UpdateFindingDefinitionRequest {
     #[serde(skip_serializing_if = "Option::is_none")] // see above
     #[serde(default, deserialize_with = "de_optional")]
     pub cve: Option<Option<String>>,
+
+    /// Expected time duration required for the remediation
+    #[serde(skip_serializing_if = "Option::is_none")] // see above
+    pub remediation_duration: Option<String>,
 
     /// List of categories
     #[serde(skip_serializing_if = "Option::is_none")] // see above

@@ -46,10 +46,18 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
     const [name, setName] = React.useState("");
     const [severity, setSeverity] = React.useState<FindingSeverity>(FindingSeverity.Medium);
     const [cve, setCve] = React.useState("");
+    const [remediationDuration, setRemediationDuration] = React.useState("");
     const [categories, setCategories] = React.useState<Array<SimpleFindingCategory>>([]);
 
-    useTimeoutOnChange([name, severity, cve], [props.uuid], 1000, () => {
-        Api.knowledgeBase.findingDefinitions.update(props.uuid, { name, severity, cve }).then(handleApiError);
+    useTimeoutOnChange([name, severity, cve, remediationDuration], [props.uuid], 1000, () => {
+        Api.knowledgeBase.findingDefinitions
+            .update(props.uuid, {
+                name,
+                severity,
+                cve,
+                remediationDuration,
+            })
+            .then(handleApiError);
     });
 
     const sections = useSectionsState();
@@ -82,6 +90,7 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                 setName(finding.name);
                 setSeverity(finding.severity);
                 setCve(finding.cve || "");
+                setRemediationDuration(finding.remediationDuration || "");
                 setCategories(finding.categories);
 
                 /**
@@ -116,6 +125,9 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                 }
                 if (update.cve !== undefined) {
                     setCve(update.cve || "");
+                }
+                if (update.remediationDuration !== undefined) {
+                    setRemediationDuration(update.remediationDuration || "");
                 }
                 if (Array.isArray(update.categories)) {
                     const uuids = update.categories;
@@ -215,6 +227,10 @@ export function EditFindingDefinition(props: EditFindingDefinitionProps) {
                             <BandageIcon />
                             Remediation
                         </h2>
+                        <label>
+                            Estimated Duration
+                            <Input value={remediationDuration} onChange={setRemediationDuration} />
+                        </label>
                         <GithubMarkdown>{sections.Remediation.value}</GithubMarkdown>
                     </div>
 
