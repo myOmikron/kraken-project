@@ -408,7 +408,7 @@ function UsageList(props: UsageListProps) {
  * For example, reacting to keystroke (changes to a controlled string) with an API request.
  *
  * **Differences from {@link React.useEffect `React.useEffect`}:**
- * - The effect will not when the component mounted
+ * - The effect will not run when the component mounted
  * - The effect won't run each time `trigger` changed.
  *
  *     Instead, the first time will start a timeout and any subsequent change will be ignored
@@ -430,7 +430,7 @@ function UsageList(props: UsageListProps) {
  *     The function last passed before the actual execution is used.
  *     I.e. It will use the variables it captured before the timeout not the ones it captured before the trigger changed.
  */
-function useTimeoutOnChange(
+export function useTimeoutOnChange(
     trigger: React.DependencyList,
     commit: React.DependencyList,
     timeout: number,

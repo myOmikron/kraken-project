@@ -17,6 +17,7 @@ import {
 import { FullHttpService } from "../../../api/generated/models/FullHttpService";
 import FindingCategoryList from "../../../components/finding-category-list";
 import { GithubMarkdown } from "../../../components/github-markdown";
+import Input from "../../../components/input";
 import { SelectPrimitive } from "../../../components/select-menu";
 import { ROUTES } from "../../../routes";
 import ArrowLeftIcon from "../../../svg/arrow-left";
@@ -98,6 +99,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
     const [section, setSection] = React.useState<Section>("definition");
 
     const [severity, setSeverity] = React.useState<FindingSeverity>("Medium");
+    const [remediationDuration, setRemediationDuration] = React.useState("");
     const [findingDef, setFindingDef] = React.useState<SimpleFindingDefinition>();
     const [hoveredFindingDef, setHoveredFindingDef] = React.useState<SimpleFindingDefinition>();
     const [userDetails, setUserDetails] = React.useState<string>("");
@@ -300,6 +302,7 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                 onSelect={(newDef) => {
                                     setFindingDef(newDef);
                                     setSeverity(newDef.severity);
+                                    setRemediationDuration(newDef.remediationDuration);
                                     setCategories(newDef.categories);
                                 }}
                                 onHover={setHoveredFindingDef}
@@ -308,8 +311,16 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                             <div className="categories">
                                 <h2 className="sub-heading">Categories</h2>
                                 <EditableCategories
-                                    categories={hoveredFindingDef?.categories || categories}
+                                    categories={hoveredFindingDef?.categories ?? categories}
                                     onChange={setCategories}
+                                />
+                            </div>
+
+                            <div>
+                                <h2 className="sub-heading">Remediation Duration</h2>
+                                <Input
+                                    value={hoveredFindingDef?.remediationDuration ?? remediationDuration}
+                                    onChange={setRemediationDuration}
                                 />
                             </div>
                         </div>
@@ -487,8 +498,9 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
 
                                 Api.workspaces.findings
                                     .create(workspace, {
-                                        severity: severity,
                                         definition: findingDef.uuid,
+                                        severity: severity,
+                                        remediationDuration,
                                         userDetails,
                                         exportDetails,
                                         logFile: logFileUuid,

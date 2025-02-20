@@ -10394,6 +10394,7 @@
                 "required": [
                     "definition",
                     "severity",
+                    "remediation_duration",
                     "export_details",
                     "user_details",
                     "categories"
@@ -10406,6 +10407,10 @@
                     },
                     "severity": {
                         "$ref": "#/components/schemas/FindingSeverity"
+                    },
+                    "remediation_duration": {
+                        "type": "string",
+                        "description": "Expected time duration required for the remediation"
                     },
                     "export_details": {
                         "type": "string",
@@ -11700,6 +11705,7 @@
                     "uuid",
                     "definition",
                     "severity",
+                    "remediation_duration",
                     "sorting_weight",
                     "affected",
                     "export_details",
@@ -11718,6 +11724,10 @@
                     },
                     "severity": {
                         "$ref": "#/components/schemas/FindingSeverity"
+                    },
+                    "remediation_duration": {
+                        "type": "string",
+                        "description": "Expected time duration required for the remediation"
                     },
                     "sorting_weight": {
                         "type": "integer",
@@ -16798,6 +16808,11 @@
                                 "$ref": "#/components/schemas/FindingSeverity"
                             }
                         ],
+                        "nullable": true
+                    },
+                    "remediation_duration": {
+                        "type": "string",
+                        "description": "Expected time duration required for the remediation",
                         "nullable": true
                     },
                     "sorting_weight": {

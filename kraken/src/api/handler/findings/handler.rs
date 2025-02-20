@@ -76,6 +76,7 @@ pub async fn create_finding(
         workspace_uuid,
         request.definition,
         request.severity.into_db(),
+        request.remediation_duration,
         request.export_details,
         request.user_details,
         None,
@@ -300,6 +301,7 @@ pub async fn get_finding(
             categories: definition_categories,
         },
         severity: FromDb::from_db(finding.severity),
+        remediation_duration: finding.remediation_duration,
         sorting_weight: finding.sorting_weight,
         affected,
         #[rustfmt::skip]
@@ -345,6 +347,7 @@ pub async fn update_finding(
         UpdateFindingRequest {
             definition: None,
             severity: None,
+            remediation_duration: None,
             sorting_weight: None,
             screenshot: None,
             log_file: None,
@@ -370,6 +373,10 @@ pub async fn update_finding(
             request.definition.map(ForeignModelByField::Key),
         )
         .set_if(Finding::F.severity, request.severity.map(IntoDb::into_db))
+        .set_if(
+            Finding::F.remediation_duration,
+            request.remediation_duration.clone(),
+        )
         .set_if(Finding::F.sorting_weight, request.sorting_weight)
         .finish_dyn_set()
     {

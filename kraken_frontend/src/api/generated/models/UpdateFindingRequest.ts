@@ -41,6 +41,12 @@ export interface UpdateFindingRequest {
      */
     severity?: FindingSeverity | null;
     /**
+     * Expected time duration required for the remediation
+     * @type {string}
+     * @memberof UpdateFindingRequest
+     */
+    remediationDuration?: string | null;
+    /**
      * A weight without semantic used to sort findings
      * @type {number}
      * @memberof UpdateFindingRequest
@@ -89,6 +95,7 @@ export function UpdateFindingRequestFromJSONTyped(json: any, ignoreDiscriminator
         
         'definition': !exists(json, 'definition') ? undefined : json['definition'],
         'severity': !exists(json, 'severity') ? undefined : FindingSeverityFromJSON(json['severity']),
+        'remediationDuration': !exists(json, 'remediation_duration') ? undefined : json['remediation_duration'],
         'sortingWeight': !exists(json, 'sorting_weight') ? undefined : json['sorting_weight'],
         'screenshot': !exists(json, 'screenshot') ? undefined : json['screenshot'],
         'logFile': !exists(json, 'log_file') ? undefined : json['log_file'],
@@ -107,6 +114,7 @@ export function UpdateFindingRequestToJSON(value?: UpdateFindingRequest | null):
         
         'definition': value.definition,
         'severity': FindingSeverityToJSON(value.severity),
+        'remediation_duration': value.remediationDuration,
         'sorting_weight': value.sortingWeight,
         'screenshot': value.screenshot,
         'log_file': value.logFile,

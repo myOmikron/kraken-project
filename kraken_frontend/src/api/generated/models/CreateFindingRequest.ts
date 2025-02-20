@@ -41,6 +41,12 @@ export interface CreateFindingRequest {
      */
     severity: FindingSeverity;
     /**
+     * Expected time duration required for the remediation
+     * @type {string}
+     * @memberof CreateFindingRequest
+     */
+    remediationDuration: string;
+    /**
      * Notes about the finding included in the data export
      * 
      * May be used for documenting details about the finding
@@ -87,6 +93,7 @@ export function instanceOfCreateFindingRequest(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "definition" in value;
     isInstance = isInstance && "severity" in value;
+    isInstance = isInstance && "remediationDuration" in value;
     isInstance = isInstance && "exportDetails" in value;
     isInstance = isInstance && "userDetails" in value;
     isInstance = isInstance && "categories" in value;
@@ -106,6 +113,7 @@ export function CreateFindingRequestFromJSONTyped(json: any, ignoreDiscriminator
         
         'definition': json['definition'],
         'severity': FindingSeverityFromJSON(json['severity']),
+        'remediationDuration': json['remediation_duration'],
         'exportDetails': json['export_details'],
         'userDetails': json['user_details'],
         'screenshot': !exists(json, 'screenshot') ? undefined : json['screenshot'],
@@ -125,6 +133,7 @@ export function CreateFindingRequestToJSON(value?: CreateFindingRequest | null):
         
         'definition': value.definition,
         'severity': FindingSeverityToJSON(value.severity),
+        'remediation_duration': value.remediationDuration,
         'export_details': value.exportDetails,
         'user_details': value.userDetails,
         'screenshot': value.screenshot,

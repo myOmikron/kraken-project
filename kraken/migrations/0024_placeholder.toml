@@ -1,0 +1,24 @@
+[Migration]
+Hash = "16214129463165444321"
+Initial = false
+Dependency = 23
+Replaces = []
+
+[[Migration.Operations]]
+Type = "CreateField"
+Model = "finding"
+
+[Migration.Operations.Field]
+Name = "remediation_duration"
+Type = "varchar"
+
+[[Migration.Operations.Field.Annotations]]
+Type = "default_value"
+Value = ""
+
+[[Migration.Operations.Field.Annotations]]
+Type = "max_length"
+Value = 255
+
+[[Migration.Operations.Field.Annotations]]
+Type = "not_null"

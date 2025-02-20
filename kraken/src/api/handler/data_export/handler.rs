@@ -323,38 +323,42 @@ pub(crate) async fn export_workspace(
             Finding::F.definition.name,
             Finding::F.definition.cve,
             Finding::F.severity,
+            Finding::F.remediation_duration,
             Finding::F.sorting_weight,
             Finding::F.created_at,
         )
     )
     .condition(Finding::F.workspace.equals(path.uuid))
     .stream()
-    .and_then(|(uuid, name, cve, severity, sorting_weight, created_at)| {
-        let affected = affected.remove(&uuid).unwrap_or_default();
-        let categories = categories.remove(&uuid).unwrap_or_default();
-        async move {
-            let (details, _) = GLOBAL
-                .editor_cache
-                .finding_export_details
-                .get(uuid)
-                .await?
-                .unwrap_or_default();
-            Ok((
-                uuid,
-                AggregatedFinding {
+    .and_then(
+        |(uuid, name, cve, severity, remediation_duration, sorting_weight, created_at)| {
+            let affected = affected.remove(&uuid).unwrap_or_default();
+            let categories = categories.remove(&uuid).unwrap_or_default();
+            async move {
+                let (details, _) = GLOBAL
+                    .editor_cache
+                    .finding_export_details
+                    .get(uuid)
+                    .await?
+                    .unwrap_or_default();
+                Ok((
                     uuid,
-                    name,
-                    cve,
-                    severity: FromDb::from_db(severity),
-                    sorting_weight,
-                    details,
-                    affected,
-                    created_at,
-                    categories,
-                },
-            ))
-        }
-    })
+                    AggregatedFinding {
+                        uuid,
+                        name,
+                        cve,
+                        severity: FromDb::from_db(severity),
+                        remediation_duration,
+                        sorting_weight,
+                        details,
+                        affected,
+                        created_at,
+                        categories,
+                    },
+                ))
+            }
+        },
+    )
     .try_collect()
     .await?;
 

@@ -113,6 +113,10 @@ pub struct Finding {
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
     pub details: ForeignModel<FindingDetails>,
 
+    /// Expected time duration required for the remediation
+    #[rorm(max_length = 255, default = "")]
+    pub remediation_duration: String,
+
     /// The workspace the finding was found in
     #[rorm(on_update = "Cascade", on_delete = "Cascade")]
     pub workspace: ForeignModel<Workspace>,

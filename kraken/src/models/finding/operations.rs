@@ -36,6 +36,7 @@ impl Finding {
         workspace: Uuid,
         definition: Uuid,
         severity: FindingSeverity,
+        remediation_duration: String,
         export_details: String,
         user_details: String,
         tool_details: Option<String>,
@@ -63,6 +64,7 @@ impl Finding {
                 definition: ForeignModelByField::Key(definition),
                 severity,
                 details: ForeignModelByField::Key(details_uuid),
+                remediation_duration,
                 workspace: ForeignModelByField::Key(workspace),
             })
             .await?;

@@ -30,5 +30,6 @@ pub(crate) struct InsertFinding {
     pub(crate) definition: ForeignModel<FindingDefinition>,
     pub(crate) severity: FindingSeverity,
     pub(crate) details: ForeignModel<FindingDetails>,
+    pub(crate) remediation_duration: String,
     pub(crate) workspace: ForeignModel<Workspace>,
 }

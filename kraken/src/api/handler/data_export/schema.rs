@@ -252,6 +252,9 @@ pub struct AggregatedFinding {
     /// The finding's severity
     pub severity: FindingSeverity,
 
+    /// Expected time duration required for the remediation
+    pub remediation_duration: String,
+
     /// A weight without semantic used to sort findings
     pub sorting_weight: i32,
 

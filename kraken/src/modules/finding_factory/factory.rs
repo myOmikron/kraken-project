@@ -232,7 +232,11 @@ impl FindingFactory {
             let mut findings_to_create = Vec::new();
             let mut stream = query!(
                 guard.get_transaction(),
-                (FindingDefinition::F.uuid, FindingDefinition::F.severity,)
+                (
+                    FindingDefinition::F.uuid,
+                    FindingDefinition::F.severity,
+                    FindingDefinition::F.remediation_duration,
+                )
             )
             .condition(DynamicCollection::or(
                 definitions
@@ -241,9 +245,16 @@ impl FindingFactory {
                     .collect(),
             ))
             .stream();
-            while let Some((definition, severity)) = stream.try_next().await? {
+            while let Some((definition, severity, remediation_duration)) = stream.try_next().await?
+            {
                 if let Some((affected, categories)) = definitions.remove(&definition) {
-                    findings_to_create.push((definition, severity, categories, affected));
+                    findings_to_create.push((
+                        definition,
+                        severity,
+                        remediation_duration,
+                        categories,
+                        affected,
+                    ));
                 }
             }
             Ok(findings_to_create)
@@ -269,12 +280,15 @@ impl FindingFactory {
                     .iter()
                     .zip(inserted_details.into_iter())
                     .map(
-                        |((definition, severity, _, _), details_uuid)| InsertFinding {
-                            uuid: Uuid::new_v4(),
-                            definition: ForeignModelByField::Key(*definition),
-                            severity: *severity,
-                            details: ForeignModelByField::Key(details_uuid),
-                            workspace: ForeignModelByField::Key(workspace_uuid),
+                        |((definition, severity, remediation_duration, _, _), details_uuid)| {
+                            InsertFinding {
+                                uuid: Uuid::new_v4(),
+                                definition: ForeignModelByField::Key(*definition),
+                                severity: *severity,
+                                details: ForeignModelByField::Key(details_uuid),
+                                remediation_duration: remediation_duration.clone(),
+                                workspace: ForeignModelByField::Key(workspace_uuid),
+                            }
                         },
                     ),
             )
@@ -286,7 +300,7 @@ impl FindingFactory {
                 findings_to_create
                     .iter()
                     .zip(inserted_findings.iter())
-                    .flat_map(|((_, _, categories, _), finding_uuid)| {
+                    .flat_map(|((_, _, _, categories, _), finding_uuid)| {
                         categories
                             .iter()
                             .cloned()
@@ -299,7 +313,7 @@ impl FindingFactory {
             )
             .await?;
 
-        for ((_, _, _, affected), finding_uuid) in findings_to_create
+        for ((_, _, _, _, affected), finding_uuid) in findings_to_create
             .into_iter()
             .zip(inserted_findings.into_iter())
         {

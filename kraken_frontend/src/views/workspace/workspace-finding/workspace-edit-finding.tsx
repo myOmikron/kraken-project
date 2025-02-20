@@ -24,6 +24,7 @@ import { SimpleHttpService } from "../../../api/generated/models/SimpleHttpServi
 import WS from "../../../api/websocket";
 import FindingCategoryList from "../../../components/finding-category-list";
 import { GithubMarkdown } from "../../../components/github-markdown";
+import Input from "../../../components/input";
 import ModelEditor from "../../../components/model-editor";
 import { SelectPrimitive } from "../../../components/select-menu";
 import { ROUTES } from "../../../routes";
@@ -51,6 +52,7 @@ import {
 import { ObjectFns, handleApiError } from "../../../utils/helper";
 import { useModel, useModelStore } from "../../../utils/model-controller";
 import { useSyncedCursors } from "../../../utils/monaco-cursor";
+import { useTimeoutOnChange } from "../../knowledge-base/edit-finding-definition";
 import CollapsibleSection from "../components/collapsible-section";
 import Domain from "../components/domain";
 import EditableCategories from "../components/editable-categories";
@@ -86,6 +88,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     const [section, setSection] = React.useState<Section>("definition");
 
     const [severity, setSeverity] = React.useState<FindingSeverity>("Medium");
+    const [remediationDuration, setRemediationDuration] = React.useState("");
     const [categories, setCategories] = React.useState<Array<SimpleFindingCategory>>([]);
     const [findingDef, setFindingDef] = React.useState<SimpleFindingDefinition>();
     const [hoveredFindingDef, setHoveredFindingDef] = React.useState<SimpleFindingDefinition>();
@@ -108,6 +111,14 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     React.useEffect(() => {
         Api.findingCategories.all().then(handleApiError((v) => setAllCategories(v.categories)));
     }, []);
+
+    useTimeoutOnChange([remediationDuration], [finding], 1000, () => {
+        Api.workspaces.findings
+            .update(workspace, finding, {
+                remediationDuration,
+            })
+            .then(handleApiError);
+    });
 
     // Upload to API with changes
     const [pendingApiChanges, setPendingApiChanges] = React.useState<
@@ -144,6 +155,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
             handleApiError((fullFinding) => {
                 setFindingDef(fullFinding.definition);
                 setSeverity(fullFinding.severity);
+                setRemediationDuration(fullFinding.remediationDuration);
                 setCategories(fullFinding.categories);
                 setUserDetails(fullFinding.userDetails || "", {
                     finding: {
@@ -214,6 +226,9 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                 const { severity, categories: newCategoriesUuids, definition, screenshot, logFile } = update;
                 if (severity) {
                     setSeverity(severity);
+                }
+                if (remediationDuration !== undefined) {
+                    setRemediationDuration(remediationDuration);
                 }
                 if (Array.isArray(newCategoriesUuids)) {
                     let missing = false;
@@ -353,6 +368,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             onSelect={(newDef) => {
                                 setFindingDef(newDef);
                                 setSeverity(newDef.severity);
+                                setRemediationDuration(newDef.remediationDuration);
                                 Api.workspaces.findings
                                     .update(workspace, finding, { definition: newDef.uuid })
                                     .then(handleApiError);
@@ -370,6 +386,14 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                         .update(workspace, finding, { categories: newCat.map((c) => c.uuid) })
                                         .then(handleApiError);
                                 }}
+                            />
+                        </div>
+
+                        <div>
+                            <h2 className="sub-heading">Remediation Duration</h2>
+                            <Input
+                                value={hoveredFindingDef?.remediationDuration ?? remediationDuration}
+                                onChange={setRemediationDuration}
                             />
                         </div>
                     </div>

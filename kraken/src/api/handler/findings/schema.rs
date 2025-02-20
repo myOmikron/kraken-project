@@ -22,6 +22,9 @@ pub struct CreateFindingRequest {
     /// The severity of this specific instance of the finding
     pub severity: FindingSeverity,
 
+    /// Expected time duration required for the remediation
+    pub remediation_duration: String,
+
     /// Notes about the finding included in the data export
     ///
     /// May be used for documenting details about the finding
@@ -61,6 +64,10 @@ pub struct UpdateFindingRequest {
     /// The severity of this specific instance of the finding
     #[serde(skip_serializing_if = "Option::is_none")] // see above
     pub severity: Option<FindingSeverity>,
+
+    /// Expected time duration required for the remediation
+    #[serde(skip_serializing_if = "Option::is_none")] // see above
+    pub remediation_duration: Option<String>,
 
     /// A weight without semantic used to sort findings
     #[serde(skip_serializing_if = "Option::is_none")] // see above
@@ -125,6 +132,9 @@ pub struct FullFinding {
 
     /// The severity of the finding
     pub severity: FindingSeverity,
+
+    /// Expected time duration required for the remediation
+    pub remediation_duration: String,
 
     /// A weight without semantic used to sort findings
     pub sorting_weight: i32,
