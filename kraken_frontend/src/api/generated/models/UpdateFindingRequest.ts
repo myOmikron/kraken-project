@@ -41,6 +41,12 @@ export interface UpdateFindingRequest {
      */
     severity?: FindingSeverity | null;
     /**
+     * A weight without semantic used to sort findings
+     * @type {number}
+     * @memberof UpdateFindingRequest
+     */
+    sortingWeight?: number | null;
+    /**
      * A screenshot
      * 
      * The file must have been uploaded through the image upload.
@@ -83,6 +89,7 @@ export function UpdateFindingRequestFromJSONTyped(json: any, ignoreDiscriminator
         
         'definition': !exists(json, 'definition') ? undefined : json['definition'],
         'severity': !exists(json, 'severity') ? undefined : FindingSeverityFromJSON(json['severity']),
+        'sortingWeight': !exists(json, 'sorting_weight') ? undefined : json['sorting_weight'],
         'screenshot': !exists(json, 'screenshot') ? undefined : json['screenshot'],
         'logFile': !exists(json, 'log_file') ? undefined : json['log_file'],
         'categories': !exists(json, 'categories') ? undefined : json['categories'],
@@ -100,6 +107,7 @@ export function UpdateFindingRequestToJSON(value?: UpdateFindingRequest | null):
         
         'definition': value.definition,
         'severity': FindingSeverityToJSON(value.severity),
+        'sorting_weight': value.sortingWeight,
         'screenshot': value.screenshot,
         'log_file': value.logFile,
         'categories': value.categories,

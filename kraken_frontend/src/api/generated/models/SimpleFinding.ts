@@ -63,6 +63,12 @@ export interface SimpleFinding {
      */
     severity: FindingSeverity;
     /**
+     * A weight without semantic used to sort findings
+     * @type {number}
+     * @memberof SimpleFinding
+     */
+    sortingWeight: number;
+    /**
      * The count of affected aggregations
      * @type {number}
      * @memberof SimpleFinding
@@ -91,6 +97,7 @@ export function instanceOfSimpleFinding(value: object): boolean {
     isInstance = isInstance && "definition" in value;
     isInstance = isInstance && "name" in value;
     isInstance = isInstance && "severity" in value;
+    isInstance = isInstance && "sortingWeight" in value;
     isInstance = isInstance && "affectedCount" in value;
     isInstance = isInstance && "createdAt" in value;
     isInstance = isInstance && "categories" in value;
@@ -113,6 +120,7 @@ export function SimpleFindingFromJSONTyped(json: any, ignoreDiscriminator: boole
         'name': json['name'],
         'cve': !exists(json, 'cve') ? undefined : json['cve'],
         'severity': FindingSeverityFromJSON(json['severity']),
+        'sortingWeight': json['sorting_weight'],
         'affectedCount': json['affected_count'],
         'createdAt': (new Date(json['created_at'])),
         'categories': ((json['categories'] as Array<any>).map(SimpleFindingCategoryFromJSON)),
@@ -133,6 +141,7 @@ export function SimpleFindingToJSON(value?: SimpleFinding | null): any {
         'name': value.name,
         'cve': value.cve,
         'severity': FindingSeverityToJSON(value.severity),
+        'sorting_weight': value.sortingWeight,
         'affected_count': value.affectedCount,
         'created_at': (value.createdAt.toISOString()),
         'categories': ((value.categories as Array<any>).map(SimpleFindingCategoryToJSON)),

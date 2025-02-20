@@ -1,5 +1,6 @@
 import React from "react";
 import Select from "react-select";
+import { toast } from "react-toastify";
 import { Api } from "../../../api/api";
 import { SimpleFinding, SimpleFindingCategory } from "../../../api/generated";
 import FindingCategory from "../../../components/finding-category";
@@ -7,18 +8,35 @@ import FindingCategoryList from "../../../components/finding-category-list";
 import Input from "../../../components/input";
 import { selectStyles } from "../../../components/select-menu";
 import { ROUTES } from "../../../routes";
+import MinusIcon from "../../../svg/minus";
 import PlusIcon from "../../../svg/plus";
 import { handleApiError } from "../../../utils/helper";
 import SeverityIcon from "../components/severity-icon";
 import { WORKSPACE_CONTEXT } from "../workspace";
 
 export type WorkspaceFindingTableProps = {
+    /** An optional filter which is applied in addition to any user definded filter */
     filter?: (finding: SimpleFinding) => boolean;
+
+    /** Callback invoked if the user clicks on a finding (left-click) */
     onClickRow?: (finding: SimpleFinding, e: { ctrlKey: boolean; altKey: boolean; shiftKey: boolean }) => void;
+
+    /** Callback invoked if the user clicks on a finding (middle-click) */
     onAuxClickRow?: (finding: SimpleFinding, e: { ctrlKey: boolean; altKey: boolean; shiftKey: boolean }) => void;
+
+    /** Should sorting weights be visible and editable? */
+    sortingWeights?: true;
 };
 
-export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filter }: WorkspaceFindingTableProps) {
+/**
+ * A table which lists all findings in a specific workspace
+ *
+ * It includes a simple searchbar.
+ *
+ * Its primary use is in `<WorkspaceFindings />` but it can also be embedded in other views.
+ */
+export default function WorkspaceFindingTable(props: WorkspaceFindingTableProps) {
+    const { onClickRow, onAuxClickRow, filter } = props;
     const {
         workspace: { uuid: workspace },
     } = React.useContext(WORKSPACE_CONTEXT);
@@ -29,7 +47,7 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
     // Categories currently selected to be filtered by
     const [filteredCategories, setFilteredCategories] = React.useState<ReadonlyArray<SimpleFindingCategory>>([]);
 
-    React.useEffect(() => {
+    function fetchFindings() {
         Api.workspaces.findings.all(workspace).then(
             handleApiError(({ findings }): void => {
                 setFindings(findings);
@@ -43,7 +61,9 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
                 setUsedCategories(Object.values(categories));
             }),
         );
-    }, [workspace]);
+    }
+
+    React.useEffect(fetchFindings, [workspace]);
 
     return (
         <>
@@ -70,7 +90,12 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
             </div>
             <div
                 className="workspace-findings-table"
-                style={{ "--columns": "4em 6em 1fr 1fr 12em 0.5fr" } as Record<string, string>}
+                style={
+                    { "--columns": `4em 6em 1fr 1fr 12em 0.5fr ${props.sortingWeights ? "10em" : ""}` } as Record<
+                        string,
+                        string
+                    >
+                }
             >
                 <div className={"workspace-table-header"}>
                     <span className={"workspace-data-certainty-icon"}>Severity</span>
@@ -79,6 +104,7 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
                     <span>Categories</span>
                     <span>CVE</span>
                     <span>Created At</span>
+                    {props.sortingWeights && <span>Sorting Weights</span>}
                 </div>
                 <div className="workspace-table-body">
                     {findings
@@ -97,23 +123,75 @@ export default function WorkspaceFindingTable({ onClickRow, onAuxClickRow, filte
                                     : true)
                             );
                         })
-                        .map((f) => (
-                            <div
-                                key={f.uuid}
-                                className="workspace-table-row"
-                                onClick={(e) => onClickRow?.(f, e)}
-                                onAuxClick={(e) => onAuxClickRow?.(f, e)}
-                            >
-                                <span className="workspace-data-certainty-icon">
-                                    <SeverityIcon severity={f.severity} />
-                                </span>
-                                <span className="workspace-data-certainty-icon">{f.affectedCount}</span>
-                                <span>{f.name}</span>
-                                <FindingCategoryList categories={f.categories} />
-                                <span>{f.cve}</span>
-                                <span>{f.createdAt.toLocaleString()}</span>
-                            </div>
-                        ))}
+                        .map((f) => {
+                            function setSortingWeight(newValue: number) {
+                                Api.workspaces.findings
+                                    .update(workspace, f.uuid, {
+                                        sortingWeight: newValue,
+                                    })
+                                    .then((result) =>
+                                        result.match(
+                                            () => fetchFindings(),
+                                            (error) => toast.error(error.message),
+                                        ),
+                                    );
+                            }
+
+                            return (
+                                <div
+                                    key={f.uuid}
+                                    className="workspace-table-row"
+                                    onClick={(e) => onClickRow?.(f, e)}
+                                    onAuxClick={(e) => onAuxClickRow?.(f, e)}
+                                >
+                                    <span className="workspace-data-certainty-icon">
+                                        <SeverityIcon severity={f.severity} />
+                                    </span>
+                                    <span className="workspace-data-certainty-icon">{f.affectedCount}</span>
+                                    <span>
+                                        {f.sortingWeight} {f.name}
+                                    </span>
+                                    <FindingCategoryList categories={f.categories} />
+                                    <span>{f.cve}</span>
+                                    <span>{f.createdAt.toLocaleString()}</span>
+                                    {props.sortingWeights && (
+                                        <span
+                                            className="workspace-findings-table-sort-weight"
+                                            onClick={(event) => event.stopPropagation()}
+                                        >
+                                            <button
+                                                className={"icon-button"}
+                                                onClick={() => setSortingWeight(f.sortingWeight + 1)}
+                                            >
+                                                <PlusIcon />
+                                            </button>
+                                            <input
+                                                className={"input"}
+                                                key={String(f.sortingWeight)}
+                                                defaultValue={String(f.sortingWeight)}
+                                                onKeyUp={(event) => {
+                                                    if (event.key !== "Enter") return;
+
+                                                    const newValue = Number(event.currentTarget.value);
+                                                    if (!Number.isInteger(newValue)) {
+                                                        event.currentTarget.value = event.currentTarget.defaultValue;
+                                                        return;
+                                                    }
+
+                                                    setSortingWeight(newValue);
+                                                }}
+                                            />
+                                            <button
+                                                className={"icon-button"}
+                                                onClick={() => setSortingWeight(f.sortingWeight - 1)}
+                                            >
+                                                <MinusIcon />
+                                            </button>
+                                        </span>
+                                    )}
+                                </div>
+                            );
+                        })}
                 </div>
             </div>
         </>

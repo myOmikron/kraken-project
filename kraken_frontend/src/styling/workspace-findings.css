@@ -42,6 +42,15 @@
     height: 100%;
 }
 
+.workspace-findings-table-sort-weight {
+    display: flex;
+    flex-direction: row;
+}
+
+.workspace-findings-table-sort-weight > .input {
+    width: 2em;
+}
+
 .workspace-findings-table-pre-header > div:nth-child(2) {
     flex-grow: 0.5;
 }

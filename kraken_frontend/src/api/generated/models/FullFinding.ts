@@ -63,6 +63,12 @@ export interface FullFinding {
      */
     severity: FindingSeverity;
     /**
+     * A weight without semantic used to sort findings
+     * @type {number}
+     * @memberof FullFinding
+     */
+    sortingWeight: number;
+    /**
      * List of all affected objects
      * @type {Array<SimpleFindingAffected>}
      * @memberof FullFinding
@@ -128,6 +134,7 @@ export function instanceOfFullFinding(value: object): boolean {
     isInstance = isInstance && "uuid" in value;
     isInstance = isInstance && "definition" in value;
     isInstance = isInstance && "severity" in value;
+    isInstance = isInstance && "sortingWeight" in value;
     isInstance = isInstance && "affected" in value;
     isInstance = isInstance && "exportDetails" in value;
     isInstance = isInstance && "userDetails" in value;
@@ -150,6 +157,7 @@ export function FullFindingFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'uuid': json['uuid'],
         'definition': SimpleFindingDefinitionFromJSON(json['definition']),
         'severity': FindingSeverityFromJSON(json['severity']),
+        'sortingWeight': json['sorting_weight'],
         'affected': ((json['affected'] as Array<any>).map(SimpleFindingAffectedFromJSON)),
         'exportDetails': json['export_details'],
         'userDetails': json['user_details'],
@@ -173,6 +181,7 @@ export function FullFindingToJSON(value?: FullFinding | null): any {
         'uuid': value.uuid,
         'definition': SimpleFindingDefinitionToJSON(value.definition),
         'severity': FindingSeverityToJSON(value.severity),
+        'sorting_weight': value.sortingWeight,
         'affected': ((value.affected as Array<any>).map(SimpleFindingAffectedToJSON)),
         'export_details': value.exportDetails,
         'user_details': value.userDetails,

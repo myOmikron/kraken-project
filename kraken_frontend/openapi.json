@@ -11695,6 +11695,7 @@
                     "uuid",
                     "definition",
                     "severity",
+                    "sorting_weight",
                     "affected",
                     "export_details",
                     "user_details",
@@ -11712,6 +11713,11 @@
                     },
                     "severity": {
                         "$ref": "#/components/schemas/FindingSeverity"
+                    },
+                    "sorting_weight": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "A weight without semantic used to sort findings"
                     },
                     "affected": {
                         "type": "array",
@@ -12491,7 +12497,6 @@
                     "created_at",
                     "ip",
                     "port",
-                    "rdns",
                     "service",
                     "findings"
                 ],
@@ -12526,10 +12531,6 @@
                         "format": "int32",
                         "description": "The scanned port",
                         "minimum": 0
-                    },
-                    "rdns": {
-                        "type": "string",
-                        "description": "The ip address' rDNS name"
                     },
                     "service": {
                         "type": "string",
@@ -15373,6 +15374,7 @@
                     "definition",
                     "name",
                     "severity",
+                    "sorting_weight",
                     "affected_count",
                     "created_at",
                     "categories"
@@ -15399,6 +15401,11 @@
                     },
                     "severity": {
                         "$ref": "#/components/schemas/FindingSeverity"
+                    },
+                    "sorting_weight": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "A weight without semantic used to sort findings"
                     },
                     "affected_count": {
                         "type": "integer",
@@ -16771,6 +16778,12 @@
                                 "$ref": "#/components/schemas/FindingSeverity"
                             }
                         ],
+                        "nullable": true
+                    },
+                    "sorting_weight": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "A weight without semantic used to sort findings",
                         "nullable": true
                     },
                     "screenshot": {

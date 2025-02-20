@@ -63,12 +63,6 @@ export interface FullTestSSLResult {
      */
     port: number;
     /**
-     * The ip address' rDNS name
-     * @type {string}
-     * @memberof FullTestSSLResult
-     */
-    rdns: string;
-    /**
      * The detected service
      * @type {string}
      * @memberof FullTestSSLResult
@@ -94,7 +88,6 @@ export function instanceOfFullTestSSLResult(value: object): boolean {
     isInstance = isInstance && "createdAt" in value;
     isInstance = isInstance && "ip" in value;
     isInstance = isInstance && "port" in value;
-    isInstance = isInstance && "rdns" in value;
     isInstance = isInstance && "service" in value;
     isInstance = isInstance && "findings" in value;
 
@@ -117,7 +110,6 @@ export function FullTestSSLResultFromJSONTyped(json: any, ignoreDiscriminator: b
         'domain': !exists(json, 'domain') ? undefined : json['domain'],
         'ip': json['ip'],
         'port': json['port'],
-        'rdns': json['rdns'],
         'service': json['service'],
         'findings': ((json['findings'] as Array<any>).map(TestSSLFindingFromJSON)),
     };
@@ -138,7 +130,6 @@ export function FullTestSSLResultToJSON(value?: FullTestSSLResult | null): any {
         'domain': value.domain,
         'ip': value.ip,
         'port': value.port,
-        'rdns': value.rdns,
         'service': value.service,
         'findings': ((value.findings as Array<any>).map(TestSSLFindingToJSON)),
     };

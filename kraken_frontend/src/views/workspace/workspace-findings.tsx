@@ -34,6 +34,7 @@ export default function WorkspaceFindings(props: WorkspaceFindingsProps) {
             case "table":
                 return (
                     <WorkspaceFindingTable
+                        sortingWeights
                         onClickRow={(f) =>
                             ROUTES.WORKSPACE_FINDINGS_EDIT.visit({
                                 wUuid: workspace,
