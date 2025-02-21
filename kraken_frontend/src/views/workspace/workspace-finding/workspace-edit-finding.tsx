@@ -223,12 +223,12 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
             }),
             WS.addEventListener("message.UpdatedFinding", ({ workspace: w, finding: f, update }) => {
                 if (w !== workspace || f !== finding) return;
-                const { severity, categories: newCategoriesUuids, definition, screenshot, logFile } = update;
-                if (severity) {
-                    setSeverity(severity);
+                const { categories: newCategoriesUuids } = update;
+                if (update.severity) {
+                    setSeverity(update.severity);
                 }
-                if (remediationDuration !== undefined) {
-                    setRemediationDuration(remediationDuration);
+                if (typeof update.remediationDuration === "string") {
+                    setRemediationDuration(update.remediationDuration);
                 }
                 if (Array.isArray(newCategoriesUuids)) {
                     let missing = false;
@@ -255,14 +255,14 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                         );
                     }
                 }
-                if (definition) {
-                    Api.knowledgeBase.findingDefinitions.get(definition).then(handleApiError(setFindingDef));
+                if (typeof update.definition === "string") {
+                    Api.knowledgeBase.findingDefinitions.get(update.definition).then(handleApiError(setFindingDef));
                 }
-                if (screenshot) {
-                    setScreenshot(screenshot);
+                if (typeof update.screenshot === "string") {
+                    setScreenshot(update.screenshot);
                 }
-                if (logFile) {
-                    setLogFile(logFile);
+                if (typeof update.logFile === "string") {
+                    setLogFile(update.logFile);
                 }
             }),
             WS.addEventListener("message.AddedFindingAffected", ({ workspace: w, finding: f, affectedUuid }) => {
