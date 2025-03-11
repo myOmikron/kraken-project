@@ -69,7 +69,7 @@ rorm = { version = "~0.6", default-features = false, features = ["tokio", "rustl
 # Needed because of modules
 
 # DNS resolver
-hickory-resolver = { version = "~0.24", features = ["dns-over-https-rustls", "tokio-rustls", "tokio"] }
+hickory-resolver = { version = "~0.24", features = ["dns-over-https-rustls", "tokio-rustls", "tokio", "webpki-roots"] }
 
 # icmp library
 surge-ping = { version = "~0.8" }
