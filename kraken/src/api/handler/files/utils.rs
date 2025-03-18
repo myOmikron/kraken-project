@@ -24,11 +24,13 @@ use crate::config::VAR_DIR;
 const MAX_FILE_SIZE: usize = 100 * 1024 * 1024; // 100MiB
 
 pub fn media_file_path(uuid: Uuid) -> PathBuf {
-    Path::new(VAR_DIR).join("media").join(uuid.to_string())
+    Path::new(VAR_DIR.get())
+        .join("media")
+        .join(uuid.to_string())
 }
 
 pub fn media_thumbnail_path(uuid: Uuid) -> PathBuf {
-    Path::new(VAR_DIR)
+    Path::new(VAR_DIR.get())
         .join("media")
         .join("thumbnails")
         .join(uuid.to_string())
