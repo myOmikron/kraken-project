@@ -4,6 +4,7 @@ venv/
 __pycache__/
 
 vagrant/vars.yml
+galvyn.env
 .models.json
 
 /target
