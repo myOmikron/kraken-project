@@ -98,7 +98,7 @@ export default function KrakenNetwork() {
 
                                 let config = "";
                                 handleApiError(result, ({ ca, cert, key, sni, secret }) => {
-                                    config = `KrakenSni = "${sni}"\nKrakenCa = """\n${ca}"""\nLeechCert = """\n${cert}"""\nLeechKey="""\n${key}"""\nLeechSecret="${secret}"`;
+                                    config = `KRAKEN_SNI="${sni}"\nKRAKEN_CA="\n${ca}"\nLEECH_CERT="\n${cert}"\nLEECH_KEY="\n${key}"\nLEECH_SECRET="${secret}"`;
                                 });
                                 if (config.length == 0) return;
 
