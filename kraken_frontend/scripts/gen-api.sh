@@ -8,6 +8,8 @@ GENERATED="${PROJECT_ROOT}/src/api/generated"
 CONFIG="${GENERATED}/config.json"
 TMP="${PROJECT_ROOT}/tmp"
 
+wget --no-check-certificate "http://nginx-dev/api-doc/frontend-api.json" -O "$SPEC"
+
 mkdir -p "${TMP}"
 mv "${GENERATED}/config.json" "${GENERATED}/.openapi-generator-ignore" "${GENERATED}/.openapi-generator" "${GENERATED}/README.md" "${TMP}"
 rm -rf "$GENERATED"
