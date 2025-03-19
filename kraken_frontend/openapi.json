@@ -5785,6 +5785,77 @@
                 ]
             }
         },
+        "/api/v1/workspace/{w_uuid}/findings/{f_uuid}/affected-bulk": {
+            "post": {
+                "tags": [
+                    "Findings"
+                ],
+                "summary": "Add new affected objects in a bulk to a finding",
+                "operationId": "create_finding_affected_bulk",
+                "parameters": [
+                    {
+                        "name": "w_uuid",
+                        "in": "path",
+                        "description": "Workspace uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "f_uuid",
+                        "in": "path",
+                        "description": "Finding uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateFindingAffectedBulkRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Affected objects were added successfully"
+                    },
+                    "400": {
+                        "description": "Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "api_key": []
+                    }
+                ]
+            }
+        },
         "/api/v1/workspace/{w_uuid}/findings/{f_uuid}/affected/{a_uuid}": {
             "get": {
                 "tags": [
@@ -10267,6 +10338,40 @@
                         "type": "string",
                         "description": "The domain to add",
                         "example": "kraken.test"
+                    }
+                }
+            },
+            "CreateFindingAffectedBulkRequest": {
+                "type": "object",
+                "description": "The request to add new objects affected by a finding",
+                "required": [
+                    "affected"
+                ],
+                "properties": {
+                    "affected": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CreateFindingAffectedBulkRequestItem"
+                        },
+                        "description": "List of objects to add as affected"
+                    }
+                }
+            },
+            "CreateFindingAffectedBulkRequestItem": {
+                "type": "object",
+                "description": "A single affected object to create as part of a bulk",
+                "required": [
+                    "uuid",
+                    "type"
+                ],
+                "properties": {
+                    "uuid": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The object's uuid"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/AggregationType"
                     }
                 }
             },

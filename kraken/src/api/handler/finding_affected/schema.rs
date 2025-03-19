@@ -46,6 +46,23 @@ pub struct CreateFindingAffectedRequest {
     pub log_file: Option<Uuid>,
 }
 
+/// The request to add new objects affected by a finding
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateFindingAffectedBulkRequest {
+    /// List of objects to add as affected
+    pub affected: Vec<CreateFindingAffectedBulkRequestItem>,
+}
+
+/// A single affected object to create as part of a bulk
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct CreateFindingAffectedBulkRequestItem {
+    /// The object's uuid
+    pub uuid: Uuid,
+
+    /// The object's type
+    pub r#type: AggregationType,
+}
+
 /// The request to update an affected object's details
 // The `#[serde(skip_serializing_if = "Option::is_none")]` is required by the frontend.
 // The update is echoed over the websocket to allow live editing

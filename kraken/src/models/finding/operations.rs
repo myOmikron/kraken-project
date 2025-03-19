@@ -168,6 +168,54 @@ impl FindingAffected {
         Ok(uuid)
     }
 
+    /// Insert a bulk of detail-less [`FindingAffected`]
+    pub async fn insert_bulk(
+        executor: impl Executor<'_>,
+        finding: Uuid,
+        objects: impl IntoIterator<Item = (Uuid, AggregationType)>,
+        workspace: Uuid,
+    ) -> Result<(), rorm::Error> {
+        let mut guard = executor.ensure_transaction().await?;
+
+        insert!(guard.get_transaction(), FindingAffected)
+            .return_nothing()
+            .bulk(objects.into_iter().map(|(object_uuid, object_type)| {
+                let mut patch = InsertFindingAffected {
+                    uuid: object_uuid,
+                    finding: ForeignModelByField::Key(finding),
+                    domain: None,
+                    host: None,
+                    port: None,
+                    service: None,
+                    http_service: None,
+                    details: None,
+                    workspace: ForeignModelByField::Key(workspace),
+                };
+                match object_type {
+                    AggregationType::Domain => {
+                        patch.domain = Some(ForeignModelByField::Key(object_uuid))
+                    }
+                    AggregationType::Host => {
+                        patch.host = Some(ForeignModelByField::Key(object_uuid))
+                    }
+                    AggregationType::Service => {
+                        patch.service = Some(ForeignModelByField::Key(object_uuid))
+                    }
+                    AggregationType::Port => {
+                        patch.port = Some(ForeignModelByField::Key(object_uuid))
+                    }
+                    AggregationType::HttpService => {
+                        patch.http_service = Some(ForeignModelByField::Key(object_uuid))
+                    }
+                }
+                patch
+            }))
+            .await?;
+
+        guard.commit().await?;
+        Ok(())
+    }
+
     /// Insert a few [`FindingAffected`]s in a bulk.
     ///
     /// To reduce the complexity of the iterator,

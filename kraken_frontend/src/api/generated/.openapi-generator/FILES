@@ -43,6 +43,8 @@ models/CreateApiKeyRequest.ts
 models/CreateAppRequest.ts
 models/CreateBearerTokenRequest.ts
 models/CreateDomainRequest.ts
+models/CreateFindingAffectedBulkRequest.ts
+models/CreateFindingAffectedBulkRequestItem.ts
 models/CreateFindingAffectedRequest.ts
 models/CreateFindingCategoryRequest.ts
 models/CreateFindingDefinitionRequest.ts

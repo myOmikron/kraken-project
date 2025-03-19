@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   ApiErrorResponse,
+  CreateFindingAffectedBulkRequest,
   CreateFindingAffectedRequest,
   CreateFindingRequest,
   FullFinding,
@@ -28,6 +29,8 @@ import type {
 import {
     ApiErrorResponseFromJSON,
     ApiErrorResponseToJSON,
+    CreateFindingAffectedBulkRequestFromJSON,
+    CreateFindingAffectedBulkRequestToJSON,
     CreateFindingAffectedRequestFromJSON,
     CreateFindingAffectedRequestToJSON,
     CreateFindingRequestFromJSON,
@@ -55,6 +58,12 @@ export interface CreateFindingAffectedOperationRequest {
     wUuid: string;
     fUuid: string;
     createFindingAffectedRequest: CreateFindingAffectedRequest;
+}
+
+export interface CreateFindingAffectedBulkOperationRequest {
+    wUuid: string;
+    fUuid: string;
+    createFindingAffectedBulkRequest: CreateFindingAffectedBulkRequest;
 }
 
 export interface DeleteFindingRequest {
@@ -176,6 +185,46 @@ export class FindingsApi extends runtime.BaseAPI {
      */
     async createFindingAffected(requestParameters: CreateFindingAffectedOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.createFindingAffectedRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Add new affected objects in a bulk to a finding
+     */
+    async createFindingAffectedBulkRaw(requestParameters: CreateFindingAffectedBulkOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.wUuid === null || requestParameters.wUuid === undefined) {
+            throw new runtime.RequiredError('wUuid','Required parameter requestParameters.wUuid was null or undefined when calling createFindingAffectedBulk.');
+        }
+
+        if (requestParameters.fUuid === null || requestParameters.fUuid === undefined) {
+            throw new runtime.RequiredError('fUuid','Required parameter requestParameters.fUuid was null or undefined when calling createFindingAffectedBulk.');
+        }
+
+        if (requestParameters.createFindingAffectedBulkRequest === null || requestParameters.createFindingAffectedBulkRequest === undefined) {
+            throw new runtime.RequiredError('createFindingAffectedBulkRequest','Required parameter requestParameters.createFindingAffectedBulkRequest was null or undefined when calling createFindingAffectedBulk.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/v1/workspace/{w_uuid}/findings/{f_uuid}/affected-bulk`.replace(`{${"w_uuid"}}`, encodeURIComponent(String(requestParameters.wUuid))).replace(`{${"f_uuid"}}`, encodeURIComponent(String(requestParameters.fUuid))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CreateFindingAffectedBulkRequestToJSON(requestParameters.createFindingAffectedBulkRequest),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Add new affected objects in a bulk to a finding
+     */
+    async createFindingAffectedBulk(requestParameters: CreateFindingAffectedBulkOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.createFindingAffectedBulkRaw(requestParameters, initOverrides);
     }
 
     /**

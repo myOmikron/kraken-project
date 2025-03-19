@@ -13,6 +13,8 @@ export * from './CreateApiKeyRequest';
 export * from './CreateAppRequest';
 export * from './CreateBearerTokenRequest';
 export * from './CreateDomainRequest';
+export * from './CreateFindingAffectedBulkRequest';
+export * from './CreateFindingAffectedBulkRequestItem';
 export * from './CreateFindingAffectedRequest';
 export * from './CreateFindingCategoryRequest';
 export * from './CreateFindingDefinitionRequest';

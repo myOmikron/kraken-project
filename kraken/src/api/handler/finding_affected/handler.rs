@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use actix_web::delete;
 use actix_web::get;
 use actix_web::post;
@@ -15,6 +17,7 @@ use crate::api::handler::common::error::ApiError;
 use crate::api::handler::common::error::ApiResult;
 use crate::api::handler::common::schema::SimpleTag;
 use crate::api::handler::domains::schema::SimpleDomain;
+use crate::api::handler::finding_affected::schema::CreateFindingAffectedBulkRequest;
 use crate::api::handler::finding_affected::schema::CreateFindingAffectedRequest;
 use crate::api::handler::finding_affected::schema::FindingAffectedObject;
 use crate::api::handler::finding_affected::schema::FullFindingAffected;
@@ -31,6 +34,7 @@ use crate::api::handler::http_services::schema::SimpleHttpService;
 use crate::api::handler::ports::schema::SimplePort;
 use crate::api::handler::services::schema::SimpleService;
 use crate::chan::global::GLOBAL;
+use crate::chan::ws_manager::schema::AggregationType;
 use crate::chan::ws_manager::schema::WsMessage;
 use crate::models::convert::FromDb;
 use crate::models::Domain;
@@ -125,6 +129,86 @@ pub async fn create_finding_affected(
             },
         )
         .await;
+    Ok(HttpResponse::Ok().finish())
+}
+
+/// Add new affected objects in a bulk to a finding
+#[utoipa::path(
+    tag = "Findings",
+    context_path = "/api/v1",
+    responses(
+        (status = 200, description = "Affected objects were added successfully"),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    request_body = CreateFindingAffectedBulkRequest,
+    params(PathFinding),
+    security(("api_key" = []))
+)]
+#[post("/workspace/{w_uuid}/findings/{f_uuid}/affected-bulk")]
+pub async fn create_finding_affected_bulk(
+    path: Path<PathFinding>,
+    Json(request): Json<CreateFindingAffectedBulkRequest>,
+    SessionUser(u_uuid): SessionUser,
+) -> ApiResult<HttpResponse> {
+    let PathFinding { w_uuid, f_uuid } = path.into_inner();
+
+    let mut tx = GLOBAL.db.start_transaction().await?;
+    if !Workspace::is_user_member_or_owner(&mut tx, w_uuid, u_uuid).await? {
+        return Err(ApiError::NotFound);
+    }
+
+    query!(&mut tx, (Finding::F.uuid,))
+        .condition(Finding::F.uuid.equals(f_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::NotFound)?;
+
+    let mut to_create: HashSet<_> = request
+        .affected
+        .into_iter()
+        .map(|req| (req.uuid, req.r#type))
+        .collect();
+
+    let mut stream = query!(&mut tx, FindingAffected)
+        .condition(FindingAffected::F.finding.equals(f_uuid))
+        .stream();
+    while let Some(affected) = stream.try_next().await? {
+        if let Some(domain_fm) = affected.domain {
+            to_create.remove(&(*domain_fm.key(), AggregationType::Domain));
+        }
+        if let Some(host_fm) = affected.host {
+            to_create.remove(&(*host_fm.key(), AggregationType::Host));
+        }
+        if let Some(port_fm) = affected.port {
+            to_create.remove(&(*port_fm.key(), AggregationType::Port));
+        }
+        if let Some(service_fm) = affected.service {
+            to_create.remove(&(*service_fm.key(), AggregationType::Service));
+        }
+        if let Some(http_service_fm) = affected.http_service {
+            to_create.remove(&(*http_service_fm.key(), AggregationType::HttpService));
+        }
+    }
+    drop(stream);
+
+    FindingAffected::insert_bulk(&mut tx, f_uuid, to_create.iter().copied(), w_uuid).await?;
+
+    tx.commit().await?;
+    for (affected_uuid, affected_type) in to_create {
+        GLOBAL
+            .ws
+            .message_workspace(
+                w_uuid,
+                WsMessage::AddedFindingAffected {
+                    workspace: w_uuid,
+                    finding: f_uuid,
+                    affected_uuid,
+                    affected_type,
+                },
+            )
+            .await;
+    }
     Ok(HttpResponse::Ok().finish())
 }
 

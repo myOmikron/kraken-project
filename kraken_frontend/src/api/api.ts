@@ -65,6 +65,7 @@ import {
     WorkspaceInvitationsApi,
     WorkspaceTagsApi,
     WorkspacesApi,
+    type CreateFindingAffectedBulkRequestItem,
     type FindingFactoryIdentifier,
 } from "./generated";
 
@@ -262,6 +263,14 @@ export const Api = {
                         wUuid: workspace,
                         fUuid: finding,
                         createFindingAffectedRequest: affected,
+                    }),
+                ),
+            addAffectedBulk: (workspace: UUID, finding: UUID, affected: Array<CreateFindingAffectedBulkRequestItem>) =>
+                handleError(
+                    findings.createFindingAffectedBulk({
+                        wUuid: workspace,
+                        fUuid: finding,
+                        createFindingAffectedBulkRequest: { affected },
                     }),
                 ),
             getAffected: (workspace: UUID, finding: UUID, affected: UUID) =>

@@ -301,6 +301,7 @@ pub async fn start_server() -> Result<(), StartServerError> {
                     .service(findings::handler::update_finding)
                     .service(findings::handler::delete_finding)
                     .service(finding_affected::handler::create_finding_affected)
+                    .service(finding_affected::handler::create_finding_affected_bulk)
                     .service(finding_affected::handler::get_finding_affected)
                     .service(finding_affected::handler::update_finding_affected)
                     .service(finding_affected::handler::delete_finding_affected)
