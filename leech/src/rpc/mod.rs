@@ -16,7 +16,10 @@ use tonic::transport::Server;
 use tonic::transport::ServerTlsConfig;
 
 use crate::backlog::Backlog;
-use crate::config::Config;
+use crate::config::GRPC_LISTEN_ADDRESS;
+use crate::config::GRPC_LISTEN_PORT;
+use crate::config::LEECH_CERT;
+use crate::config::LEECH_KEY;
 use crate::rpc::attacks::Attacks;
 
 pub mod attacks;
@@ -25,18 +28,14 @@ pub mod attacks;
 ///
 /// **Parameter**:
 /// - `config`: Reference to [Config]
-pub async fn start_rpc_server(config: &Config, backlog: Backlog) -> Result<(), Box<dyn Error>> {
+pub async fn start_rpc_server(backlog: Backlog) -> Result<(), Box<dyn Error>> {
     info!("Starting Server");
     Server::builder()
-        .tls_config(ServerTlsConfig::new().identity(Identity::from_pem(
-            &config.kraken.leech_cert,
-            &config.kraken.leech_key,
-        )))?
+        .tls_config(
+            ServerTlsConfig::new().identity(Identity::from_pem(LEECH_CERT.get(), LEECH_KEY.get())),
+        )?
         .add_service(ReqAttackServiceServer::new(Attacks { backlog }))
-        .serve(SocketAddr::new(
-            config.server.listen_address.parse().unwrap(),
-            config.server.listen_port,
-        ))
+        .serve(SocketAddr::new(*GRPC_LISTEN_ADDRESS, *GRPC_LISTEN_PORT))
         .await?;
 
     Ok(())

@@ -16,15 +16,14 @@ services:
     labels:
       - webserver
     restart: unless-stopped
-    depends_on: [ postgres-dev ]
+    depends_on: [ postgres-kraken-dev ]
     networks: [ net-kraken ]
     volumes:
       - kraken-vol:/var/lib/kraken
-      - kraken-logs-vol:/var/log/kraken
       - ./kraken/migrations:/migrations
     env_file: [ .env ]
     environment:
-      - POSTGRES_HOST=postgres-dev
+      - POSTGRES_HOST=postgres-kraken-dev
       - POSTGRES_PORT=5432
       - POSTGRES_DB=kraken
       - POSTGRES_USER=kraken
@@ -45,19 +44,56 @@ services:
     build:
       dockerfile: ./build/dockerfiles/frontend-dev.Dockerfile
 
-  postgres-dev:
+  postgres-kraken-dev:
     restart: unless-stopped
     # set shared memory limit when using docker-compose
     shm_size: 128mb
     networks: [ net-kraken ]
     volumes:
-      - postgres-vol:/var/lib/postgresql/data/
+      - postgres-kraken-vol:/var/lib/postgresql/data/
     env_file: [ .env ]
     environment:
-      - POSTGRES_HOST=postgres-dev
+      - POSTGRES_HOST=postgres-kraken-dev
       - POSTGRES_PORT=5432
       - POSTGRES_DB=kraken
       - POSTGRES_USER=kraken
+      - POSTGRES_PASSWORD=password
+    image: registry:443/kraken-dev/postgres:${DEV_TAG}
+    build:
+      dockerfile: ./build/dockerfiles/postgres.Dockerfile
+
+  leech-dev:
+    restart: unless-stopped
+    depends_on: [ postgres-leech-dev, webserver-dev ]
+    networks: [ net-kraken ]
+    volumes:
+      - ./leech/migrations:/migrations
+    env_file: [ .env ]
+    environment:
+      - POSTGRES_HOST=postgres-leech-dev
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=leech
+      - POSTGRES_USER=leech
+      - POSTGRES_PASSWORD=password
+      - KRAKEN_URI=https://kraken-dev:31337
+    user: "${UID}:${GID}"
+    image: registry:443/kraken-dev/leech:${DEV_TAG}
+    build:
+      dockerfile: ./build/dockerfiles/leech-dev.Dockerfile
+
+  postgres-leech-dev:
+    restart: unless-stopped
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    networks: [ net-kraken ]
+    volumes:
+      - postgres-leech-vol:/var/lib/postgresql/data/
+    env_file: [ .env ]
+    environment:
+      - POSTGRES_HOST=postgres-leech-dev
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=leech
+      - POSTGRES_USER=leech
       - POSTGRES_PASSWORD=password
     image: registry:443/kraken-dev/postgres:${DEV_TAG}
     build:
@@ -68,7 +104,8 @@ networks:
     driver: bridge
 
 volumes:
-  postgres-vol:
-    name: ${COMPOSE_PROJECT_NAME}-postgres-vol-${DEV_TAG}
+  postgres-kraken-vol:
+    name: ${COMPOSE_PROJECT_NAME}-postgres-kraken-vol-${DEV_TAG}
+  postgres-leech-vol:
+    name: ${COMPOSE_PROJECT_NAME}-postgres-leech-vol-${DEV_TAG}
   kraken-vol:
-  kraken-logs-vol:

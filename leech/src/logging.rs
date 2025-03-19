@@ -98,11 +98,27 @@ pub struct LoggingConfig {
 
 /// Sets up logging with the given parameter.
 ///
-/// **Parameter**:
-/// - `config`: [LoggingConfig]: Reference to the configuration to use for setup.
-///
 /// **Returns** a handle for changing the logger at runtime
-pub fn setup_logging(config: &LoggingConfig) -> Result<Handle, String> {
+pub fn setup_logging() -> Result<Handle, String> {
+    let config = LoggingConfig {
+        log_level: LevelFilter::Debug,
+        path: "/var/log/leech/main.log".to_string(),
+        rotation_file_size: "10 MB".parse().unwrap(),
+        max_rotation_count: 10,
+        alternative_pattern: None,
+        additional_file_loggers: vec![AdditionalFileLogger {
+            name: "requests".to_string(),
+            path: "/var/log/leech/requests.log".to_string(),
+            add_to_main_logger: None,
+            rotation_file_size: "10 MB".parse().unwrap(),
+            max_rotation_count: 5,
+            log_level: None,
+            alternative_pattern: Some(
+                "{h([{d(%Y-%m-%d %H:%M:%S)} | {({l}):5.5}])} {m}{n}".to_string(),
+            ),
+        }],
+    };
+
     let stdout_uuid = Uuid::new_v4().to_string();
     let main_pattern: &str = config
         .alternative_pattern

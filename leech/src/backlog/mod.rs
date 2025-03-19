@@ -23,7 +23,8 @@ use tonic::transport::Endpoint;
 use tonic::Request;
 use uuid::Uuid;
 
-use crate::config::KrakenConfig;
+use crate::config::KRAKEN;
+use crate::config::LEECH_SECRET;
 use crate::models::BacklogEntry;
 use crate::models::Proto;
 use crate::utils::kraken_endpoint;
@@ -64,12 +65,9 @@ const DB_QUERY_PAUSE: Duration = Duration::from_secs(10);
 const DB_QUERY_LIMIT: usize = 1000;
 
 /// Starts the backlog upload server
-pub async fn start_backlog(
-    db: Database,
-    kraken_config: &KrakenConfig,
-) -> Result<Backlog, Box<dyn Error>> {
-    let secret = kraken_config.leech_secret.parse()?;
-    let endpoint = kraken_endpoint(kraken_config)?;
+pub async fn start_backlog(db: Database) -> Result<Backlog, Box<dyn Error>> {
+    let secret = LEECH_SECRET.parse()?;
+    let endpoint = kraken_endpoint(&*KRAKEN)?;
     let notify = Arc::new(Notify::new());
 
     tokio::spawn({
