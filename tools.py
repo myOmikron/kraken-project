@@ -87,6 +87,7 @@ def main():
     subparsers.add_parser("db")
     subparsers.add_parser("make-migrations")
     subparsers.add_parser("gen-api")
+    subparsers.add_parser("create-admin-user")
     prod = subparsers.add_parser("prod")
 
     prod_subparsers = prod.add_subparsers(dest='prod_command')
@@ -96,6 +97,7 @@ def main():
     for c in DOCKER_COMMANDS:
         prod_subparsers.add_parser(c)
     prod_subparsers.add_parser("db")
+    prod_subparsers.add_parser("create-admin-user")
 
     args, unknown_args = parser.parse_known_args()
 
@@ -114,6 +116,11 @@ def main():
                 "exec",
                 ["-it", "postgres", "su", "-c", "psql -U $POSTGRES_USER $POSTGRES_DB"],
             )
+        elif args.prod_command == "create-admin-user":
+            docker_compose_prod(
+                "exec",
+                ["-it", "webserver", "server", "create-admin-user"],
+            )
         else:
             docker_compose_prod(args.prod_command, unknown_args)
     elif args.command == "db":
@@ -127,6 +134,12 @@ def main():
             print("No service is running. Please run `up` first")
             exit(1)
         docker_compose_dev("exec", ["-it", webserver_name, "server", "make-migrations", *unknown_args])
+    elif args.command == "create-admin-user":
+        webserver_name = get_webserver_service()
+        if webserver_name is None:
+            print("No service is running. Please run `up` first")
+            exit(1)
+        docker_compose_dev("exec", ["-it", webserver_name, "server", "create-admin-user", *unknown_args])
     elif args.command == "gen-api":
         docker_compose_dev("exec", ["-it", "frontend-dev", "npm", "run", "gen-api"])
     else:
