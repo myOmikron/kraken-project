@@ -23,6 +23,7 @@ services:
       - ./kraken/migrations:/migrations
     env_file: [ .env ]
     environment:
+      - RUST_LOG=kraken=debug,requests=debug,info
       - POSTGRES_HOST=postgres-kraken-dev
       - POSTGRES_PORT=5432
       - POSTGRES_DB=kraken
@@ -70,12 +71,13 @@ services:
       - ./leech/migrations:/migrations
     env_file: [ .env ]
     environment:
+      - RUST_LOG=leech=debug,requests=debug,info
+      - KRAKEN_URI=https://kraken-dev:31337
       - POSTGRES_HOST=postgres-leech-dev
       - POSTGRES_PORT=5432
       - POSTGRES_DB=leech
       - POSTGRES_USER=leech
       - POSTGRES_PASSWORD=password
-      - KRAKEN_URI=https://kraken-dev:31337
     user: "${UID}:${GID}"
     image: registry:443/kraken-dev/leech:${DEV_TAG}
     build:

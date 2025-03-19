@@ -3,9 +3,7 @@
 use std::io;
 
 use actix_toolbox::tb_middleware::actix_session::config::TtlExtensionPolicy;
-use actix_toolbox::tb_middleware::setup_logging_mw;
 use actix_toolbox::tb_middleware::DBSessionStore;
-use actix_toolbox::tb_middleware::LoggingMiddlewareConfig;
 use actix_toolbox::tb_middleware::PersistentSession;
 use actix_toolbox::tb_middleware::SessionMiddleware;
 use actix_web::cookie::time::Duration;
@@ -14,6 +12,7 @@ use actix_web::cookie::KeyError;
 use actix_web::http::StatusCode;
 use actix_web::middleware::Compress;
 use actix_web::middleware::ErrorHandlers;
+use actix_web::middleware::Logger;
 use actix_web::web::scope;
 use actix_web::web::Data;
 use actix_web::web::JsonConfig;
@@ -95,7 +94,10 @@ pub async fn start_server() -> Result<(), StartServerError> {
             .app_data(PayloadConfig::default())
             .app_data(webauthn.clone())
             .app_data(oauth.clone())
-            .wrap(setup_logging_mw(LoggingMiddlewareConfig::default()))
+            .wrap(
+                Logger::new(r#"%a "%r" %s %b "%{Referer}i" "%{User-Agent}i" %T"#)
+                    .log_target("requests"),
+            )
             .wrap(
                 SessionMiddleware::builder(DBSessionStore::new(GLOBAL.db.clone()), key.clone())
                     .session_lifecycle(

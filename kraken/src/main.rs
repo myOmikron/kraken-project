@@ -20,9 +20,6 @@ use std::io::Write;
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use actix_toolbox::logging::setup_logging;
-use actix_toolbox::logging::AdditionalFileLogger;
-use actix_toolbox::logging::LoggingConfig;
 use actix_web::cookie::Key;
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
@@ -48,7 +45,6 @@ use kraken::modules::editor::EditorSync;
 use kraken::modules::media_files::start_file_cleanup;
 use kraken::modules::tls::TlsManager;
 use kraken::rpc::server::start_rpc_server;
-use log::LevelFilter;
 use rorm::cli;
 use rorm::Database;
 use rorm::DatabaseConfiguration;
@@ -94,24 +90,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let cli = Cli::parse();
 
-    setup_logging(&LoggingConfig {
-        log_level: LevelFilter::Debug,
-        path: "/var/log/kraken/main.log".to_string(),
-        rotation_file_size: "10 MB".parse().unwrap(),
-        max_rotation_count: 10,
-        alternative_pattern: None,
-        additional_file_loggers: vec![AdditionalFileLogger {
-            name: "requests".to_string(),
-            path: "/var/log/kraken/requests.log".to_string(),
-            add_to_main_logger: None,
-            rotation_file_size: "10 MB".parse().unwrap(),
-            max_rotation_count: 5,
-            log_level: None,
-            alternative_pattern: Some(
-                "{h([{d(%Y-%m-%d %H:%M:%S)} | {({l}):5.5}])} {m}{n}".to_string(),
-            ),
-        }],
-    })?;
+    env_logger::init();
 
     match cli.command {
         Command::Migrate { migration_dir } => cli::migrate::run_migrate_custom(

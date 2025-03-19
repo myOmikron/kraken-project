@@ -79,7 +79,6 @@ use crate::utils::kraken_endpoint;
 
 pub mod backlog;
 pub mod config;
-pub mod logging;
 pub mod models;
 pub mod modules;
 pub mod rpc;
@@ -360,7 +359,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     match cli.commands {
         Command::Migrate { migration_dir } => migrate(migration_dir).await?,
         Command::Server => {
-            logging::setup_logging()?;
+            env_logger::init();
 
             let db = get_db().await?;
             let backlog = start_backlog(db).await?;
