@@ -741,46 +741,7 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                             finding,
                                             objects.map(({ uuid }) => ({ uuid, type })),
                                         )
-                                        .then(
-                                            handleApiError(() => {
-                                                for (const obj of objects) {
-                                                    Api.workspaces.findings
-                                                        .getAffected(workspace, finding, obj.uuid)
-                                                        .then(
-                                                            handleApiError(
-                                                                ({ userDetails, exportDetails, ...fullAffected }) => {
-                                                                    setAffected((affected) => ({
-                                                                        ...affected,
-                                                                        [obj.uuid]: fullAffected,
-                                                                    }));
-                                                                    affectedModels.addModel(obj.uuid, {
-                                                                        value: userDetails,
-                                                                        language: "markdown",
-                                                                        syncTarget: {
-                                                                            findingAffected: {
-                                                                                finding,
-                                                                                affected: obj.uuid,
-                                                                                findingDetails: "User",
-                                                                            },
-                                                                        },
-                                                                    });
-                                                                    affectedModels.addModel(obj.uuid, {
-                                                                        value: exportDetails,
-                                                                        language: "text",
-                                                                        syncTarget: {
-                                                                            findingAffected: {
-                                                                                finding,
-                                                                                affected: obj.uuid,
-                                                                                findingDetails: "Export",
-                                                                            },
-                                                                        },
-                                                                    });
-                                                                },
-                                                            ),
-                                                        );
-                                                }
-                                            }),
-                                        );
+                                        .then(handleApiError);
                                 return (
                                     <div className="workspace-finding-data-table">
                                         <WorkspaceFindingDataTable
