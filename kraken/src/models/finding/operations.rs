@@ -181,7 +181,7 @@ impl FindingAffected {
             .return_nothing()
             .bulk(objects.into_iter().map(|(object_uuid, object_type)| {
                 let mut patch = InsertFindingAffected {
-                    uuid: object_uuid,
+                    uuid: Uuid::new_v4(),
                     finding: ForeignModelByField::Key(finding),
                     domain: None,
                     host: None,
