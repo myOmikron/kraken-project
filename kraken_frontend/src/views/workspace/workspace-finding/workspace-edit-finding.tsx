@@ -108,6 +108,21 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
     >({});
     const affectedModels = useModelStore();
 
+    /** Small wrapper around `affectedModels.addModel` prefilling most parameters */
+    const addAffectedModel = (uuid: string, type: "Export" | "User", value: string) => {
+        affectedModels.addModel(`${uuid}-${type.toLowerCase()}`, {
+            value,
+            language: "markdown",
+            syncTarget: {
+                findingAffected: {
+                    finding: finding,
+                    affected: uuid,
+                    findingDetails: type,
+                },
+            },
+        });
+    };
+
     const dataTableRef = React.useRef<WorkspaceFindingDataTableRef>(null);
     const graphRef = React.useRef<EditingTreeGraphRef>(null);
 
@@ -187,28 +202,8 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                 )
                     .then((affected) =>
                         affected.map(([uuid, { userDetails, exportDetails, ...fullAffected }]) => {
-                            affectedModels.addModel(`${uuid}-user`, {
-                                value: userDetails,
-                                language: "markdown",
-                                syncTarget: {
-                                    findingAffected: {
-                                        finding: finding,
-                                        affected: uuid,
-                                        findingDetails: "User",
-                                    },
-                                },
-                            });
-                            affectedModels.addModel(`${uuid}-export`, {
-                                value: exportDetails,
-                                language: "text",
-                                syncTarget: {
-                                    findingAffected: {
-                                        finding: finding,
-                                        affected: uuid,
-                                        findingDetails: "Export",
-                                    },
-                                },
-                            });
+                            addAffectedModel(uuid, "User", userDetails);
+                            addAffectedModel(uuid, "Export", exportDetails);
                             return [uuid, fullAffected];
                         }),
                     )
@@ -278,20 +273,8 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             ...affected,
                             [affectedUuid]: newAffected,
                         }));
-                        affectedModels.addModel(`${affectedUuid}-user`, {
-                            value: userDetails,
-                            language: "markdown",
-                            syncTarget: {
-                                findingAffected: { finding, affected: affectedUuid, findingDetails: "User" },
-                            },
-                        });
-                        affectedModels.addModel(`${affectedUuid}-export`, {
-                            value: exportDetails,
-                            language: "text",
-                            syncTarget: {
-                                findingAffected: { finding, affected: affectedUuid, findingDetails: "Export" },
-                            },
-                        });
+                        addAffectedModel(affectedUuid, "User", userDetails);
+                        addAffectedModel(affectedUuid, "Export", exportDetails);
                     }),
                 );
             }),
