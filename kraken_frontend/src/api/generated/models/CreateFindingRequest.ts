@@ -13,6 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { CreateFindingAffectedRequest } from './CreateFindingAffectedRequest';
+import {
+    CreateFindingAffectedRequestFromJSON,
+    CreateFindingAffectedRequestFromJSONTyped,
+    CreateFindingAffectedRequestToJSON,
+} from './CreateFindingAffectedRequest';
 import type { FindingSeverity } from './FindingSeverity';
 import {
     FindingSeverityFromJSON,
@@ -84,6 +90,12 @@ export interface CreateFindingRequest {
      * @memberof CreateFindingRequest
      */
     categories: Array<string>;
+    /**
+     * List of affected to attach upon creation
+     * @type {Array<CreateFindingAffectedRequest>}
+     * @memberof CreateFindingRequest
+     */
+    affected?: Array<CreateFindingAffectedRequest>;
 }
 
 /**
@@ -119,6 +131,7 @@ export function CreateFindingRequestFromJSONTyped(json: any, ignoreDiscriminator
         'screenshot': !exists(json, 'screenshot') ? undefined : json['screenshot'],
         'logFile': !exists(json, 'log_file') ? undefined : json['log_file'],
         'categories': json['categories'],
+        'affected': !exists(json, 'affected') ? undefined : ((json['affected'] as Array<any>).map(CreateFindingAffectedRequestFromJSON)),
     };
 }
 
@@ -139,6 +152,7 @@ export function CreateFindingRequestToJSON(value?: CreateFindingRequest | null):
         'screenshot': value.screenshot,
         'log_file': value.logFile,
         'categories': value.categories,
+        'affected': value.affected === undefined ? undefined : ((value.affected as Array<any>).map(CreateFindingAffectedRequestToJSON)),
     };
 }
 

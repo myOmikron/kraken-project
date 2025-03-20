@@ -99,6 +99,22 @@ pub async fn create_finding(
         )
         .await?;
 
+    for affected in request.affected {
+        FindingAffected::insert(
+            &mut tx,
+            uuid,
+            affected.uuid,
+            affected.r#type,
+            workspace_uuid,
+            affected.export_details,
+            affected.user_details,
+            None,
+            affected.screenshot,
+            affected.log_file,
+        )
+        .await?;
+    }
+
     tx.commit().await?;
     Ok(Json(UuidResponse { uuid }))
 }

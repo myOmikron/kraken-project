@@ -10544,6 +10544,13 @@
                             "format": "uuid"
                         },
                         "description": "List of categories"
+                    },
+                    "affected": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CreateFindingAffectedRequest"
+                        },
+                        "description": "List of affected to attach upon creation"
                     }
                 }
             },

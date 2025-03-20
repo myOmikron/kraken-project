@@ -7,6 +7,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::handler::common::de_optional;
+use crate::api::handler::finding_affected::schema::CreateFindingAffectedRequest;
 use crate::api::handler::finding_categories::schema::SimpleFindingCategory;
 use crate::api::handler::finding_definitions::schema::SimpleFindingDefinition;
 use crate::chan::ws_manager::schema::AggregationType;
@@ -47,6 +48,10 @@ pub struct CreateFindingRequest {
 
     /// List of categories
     pub categories: Vec<Uuid>,
+
+    /// List of affected to attach upon creation
+    #[serde(default)]
+    pub affected: Vec<CreateFindingAffectedRequest>,
 }
 
 /// The request to update an existing finding

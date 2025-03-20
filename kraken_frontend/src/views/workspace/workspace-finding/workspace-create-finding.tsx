@@ -506,16 +506,10 @@ export function WorkspaceCreateFinding(props: CreateFindingProps) {
                                         logFile: logFileUuid,
                                         screenshot: screenshotUuid,
                                         categories: categories.map((c) => c.uuid),
+                                        affected: affectedUploaded,
                                     })
                                     .then(
-                                        handleApiError(async ({ uuid }) => {
-                                            await Promise.all(
-                                                affectedUploaded.map((a) => {
-                                                    Api.workspaces.findings
-                                                        .addAffected(workspace, uuid, a)
-                                                        .then(handleApiError());
-                                                }),
-                                            );
+                                        handleApiError(() => {
                                             ROUTES.WORKSPACE_FINDINGS_LIST.visit({ uuid: workspace });
                                             toast.success("Created finding");
                                         }),
