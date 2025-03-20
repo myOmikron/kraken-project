@@ -3,9 +3,7 @@
 use std::io;
 
 use actix_toolbox::tb_middleware::actix_session::config::TtlExtensionPolicy;
-use actix_toolbox::tb_middleware::setup_logging_mw;
 use actix_toolbox::tb_middleware::DBSessionStore;
-use actix_toolbox::tb_middleware::LoggingMiddlewareConfig;
 use actix_toolbox::tb_middleware::PersistentSession;
 use actix_toolbox::tb_middleware::SessionMiddleware;
 use actix_web::cookie::time::Duration;
@@ -14,6 +12,7 @@ use actix_web::cookie::KeyError;
 use actix_web::http::StatusCode;
 use actix_web::middleware::Compress;
 use actix_web::middleware::ErrorHandlers;
+use actix_web::middleware::Logger;
 use actix_web::web::scope;
 use actix_web::web::Data;
 use actix_web::web::JsonConfig;
@@ -25,7 +24,6 @@ use base64::Engine;
 use thiserror::Error;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
-use webauthn_rs::prelude::Url;
 use webauthn_rs::prelude::WebauthnError;
 use webauthn_rs::WebauthnBuilder;
 
@@ -67,26 +65,22 @@ use crate::api::swagger::ExternalApi;
 use crate::api::swagger::FrontendApi;
 use crate::api::swagger::ServiceApi;
 use crate::chan::global::GLOBAL;
-use crate::config::Config;
+use crate::config::HTTP_LISTEN_ADDRESS;
+use crate::config::HTTP_LISTEN_PORT;
+use crate::config::ORIGIN_URL;
+use crate::config::SESSION_KEY;
 use crate::modules::oauth::OauthManager;
 
 const ORIGIN_NAME: &str = "Kraken";
 
 /// Start the web server
-pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
-    let key = Key::try_from(
-        BASE64_STANDARD
-            .decode(&config.server.secret_key)?
-            .as_slice(),
-    )?;
-
-    let rp_origin =
-        Url::parse(&config.server.origin_uri).map_err(|_| StartServerError::InvalidOrigin)?;
+pub async fn start_server() -> Result<(), StartServerError> {
+    let key = Key::try_from(BASE64_STANDARD.decode(SESSION_KEY.get())?.as_slice())?;
 
     let webauthn = Data::new(
         WebauthnBuilder::new(
-            rp_origin.domain().ok_or(StartServerError::InvalidOrigin)?,
-            &rp_origin,
+            ORIGIN_URL.domain().ok_or(StartServerError::InvalidOrigin)?,
+            ORIGIN_URL.get(),
         )?
         .rp_name(ORIGIN_NAME)
         .build()?,
@@ -100,7 +94,10 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
             .app_data(PayloadConfig::default())
             .app_data(webauthn.clone())
             .app_data(oauth.clone())
-            .wrap(setup_logging_mw(LoggingMiddlewareConfig::default()))
+            .wrap(
+                Logger::new(r#"%a "%r" %s %b "%{Referer}i" "%{User-Agent}i" %T"#)
+                    .log_target("requests"),
+            )
             .wrap(
                 SessionMiddleware::builder(DBSessionStore::new(GLOBAL.db.clone()), key.clone())
                     .session_lifecycle(
@@ -314,10 +311,7 @@ pub async fn start_server(config: &Config) -> Result<(), StartServerError> {
                     .service(finding_definitions::handler::update_finding_definition),
             )
     })
-    .bind((
-        config.server.api_listen_address.as_str(),
-        config.server.api_listen_port,
-    ))?
+    .bind((*HTTP_LISTEN_ADDRESS, *HTTP_LISTEN_PORT))?
     .run()
     .await?;
 

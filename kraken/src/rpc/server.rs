@@ -34,7 +34,8 @@ use tonic::Status;
 use uuid::Uuid;
 
 use crate::chan::global::GLOBAL;
-use crate::config::Config;
+use crate::config::GRPC_LISTEN_ADDRESS;
+use crate::config::GRPC_LISTEN_PORT;
 use crate::models::AttackType;
 use crate::models::InsertAttackError;
 use crate::models::Leech;
@@ -253,9 +254,7 @@ pub async fn auth_leech<T>(request: &Request<T>) -> Result<(), Status> {
 /// - `config`: Reference to [Config]
 ///
 /// Returns an error if the rpc listen address is invalid
-pub fn start_rpc_server(config: &Config) -> Result<JoinHandle<()>, AddrParseError> {
-    let listen_address = config.server.rpc_listen_address.parse()?;
-    let listen_port = config.server.rpc_listen_port;
+pub fn start_rpc_server() -> Result<JoinHandle<()>, AddrParseError> {
     let tls_config = GLOBAL.tls.tonic_server();
 
     let handle = tokio::spawn(async move {
@@ -267,7 +266,7 @@ pub fn start_rpc_server(config: &Config) -> Result<JoinHandle<()>, AddrParseErro
             .expect("The tls config should be valid")
             .add_service(PushAttackServiceServer::new(Results))
             .add_service(BacklogServiceServer::new(Results))
-            .serve(SocketAddr::new(listen_address, listen_port))
+            .serve(SocketAddr::new(*GRPC_LISTEN_ADDRESS, *GRPC_LISTEN_PORT))
             .await
         {
             // TODO: add loop to continuously restart the gRPC server

@@ -1,0 +1,113 @@
+services:
+  nginx-dev:
+    restart: unless-stopped
+    stop_signal: SIGKILL
+    depends_on: [ frontend-dev, webserver-dev ]
+    networks: [ net-kraken ]
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./data/conf/nginx/kraken-dev.conf:/etc/nginx/conf.d/default.conf:ro
+    image: registry:443/kraken-dev/nginx:${DEV_TAG}
+    build:
+      dockerfile: ./build/dockerfiles/nginx-dev.Dockerfile
+
+  webserver-dev:
+    labels:
+      - webserver
+    restart: unless-stopped
+    depends_on: [ postgres-kraken-dev ]
+    networks: [ net-kraken ]
+    volumes:
+      - kraken-vol:/var/lib/kraken
+      - ./kraken/migrations:/migrations
+    env_file: [ .env ]
+    environment:
+      - RUST_LOG=kraken=debug,requests=debug,info
+      - POSTGRES_HOST=postgres-kraken-dev
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=kraken
+      - POSTGRES_USER=kraken
+      - POSTGRES_PASSWORD=password
+    user: "${UID}:${GID}"
+    image: registry:443/kraken-dev/webserver:${DEV_TAG}
+    build:
+      dockerfile: ./build/dockerfiles/webserver-dev.Dockerfile
+
+  frontend-dev:
+    restart: unless-stopped
+    volumes:
+      - ./kraken_frontend:/app
+    env_file: [ .env ]
+    networks: [ net-kraken ]
+    image: registry:443/kraken-dev/frontend:${DEV_TAG}
+    user: "${UID}:${GID}"
+    build:
+      dockerfile: ./build/dockerfiles/frontend-dev.Dockerfile
+
+  postgres-kraken-dev:
+    restart: unless-stopped
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    networks: [ net-kraken ]
+    volumes:
+      - postgres-kraken-vol:/var/lib/postgresql/data/
+    env_file: [ .env ]
+    environment:
+      - POSTGRES_HOST=postgres-kraken-dev
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=kraken
+      - POSTGRES_USER=kraken
+      - POSTGRES_PASSWORD=password
+    image: registry:443/kraken-dev/postgres:${DEV_TAG}
+    build:
+      dockerfile: ./build/dockerfiles/postgres.Dockerfile
+
+  leech-dev:
+    restart: unless-stopped
+    depends_on: [ postgres-leech-dev, webserver-dev ]
+    networks: [ net-kraken ]
+    volumes:
+      - ./leech/migrations:/migrations
+    env_file: [ .env ]
+    environment:
+      - RUST_LOG=leech=debug,requests=debug,info
+      - KRAKEN_URI=https://kraken-dev:31337
+      - POSTGRES_HOST=postgres-leech-dev
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=leech
+      - POSTGRES_USER=leech
+      - POSTGRES_PASSWORD=password
+    user: "${UID}:${GID}"
+    image: registry:443/kraken-dev/leech:${DEV_TAG}
+    build:
+      dockerfile: ./build/dockerfiles/leech-dev.Dockerfile
+
+  postgres-leech-dev:
+    restart: unless-stopped
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    networks: [ net-kraken ]
+    volumes:
+      - postgres-leech-vol:/var/lib/postgresql/data/
+    env_file: [ .env ]
+    environment:
+      - POSTGRES_HOST=postgres-leech-dev
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=leech
+      - POSTGRES_USER=leech
+      - POSTGRES_PASSWORD=password
+    image: registry:443/kraken-dev/postgres:${DEV_TAG}
+    build:
+      dockerfile: ./build/dockerfiles/postgres.Dockerfile
+
+networks:
+  net-kraken:
+    driver: bridge
+
+volumes:
+  postgres-kraken-vol:
+    name: ${COMPOSE_PROJECT_NAME}-postgres-kraken-vol-${DEV_TAG}
+  postgres-leech-vol:
+    name: ${COMPOSE_PROJECT_NAME}-postgres-leech-vol-${DEV_TAG}
+  kraken-vol:

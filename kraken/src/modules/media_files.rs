@@ -22,7 +22,7 @@ use crate::models::MediaFile;
 
 /// Spawn a task which deletes files without a workspace each 10 minutes.
 pub async fn start_file_cleanup() -> io::Result<()> {
-    let media_dir = Path::new(VAR_DIR).join("media");
+    let media_dir = Path::new(VAR_DIR.get()).join("media");
     let thumbnails_dir = media_dir.join("thumbnails");
 
     for dir in [&media_dir, &thumbnails_dir] {

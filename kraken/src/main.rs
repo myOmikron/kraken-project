@@ -15,13 +15,11 @@
     allow(dead_code, unused_variables, unused_imports)
 )]
 
-use std::fs::read_to_string;
 use std::io;
 use std::io::Write;
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use actix_toolbox::logging::setup_logging;
 use actix_web::cookie::Key;
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
@@ -34,7 +32,8 @@ use kraken::chan::global::GLOBAL;
 use kraken::chan::leech_manager::LeechManager;
 use kraken::chan::settings_manager::start_settings_manager;
 use kraken::chan::ws_manager::chan::start_ws_manager;
-use kraken::config::Config;
+use kraken::config;
+use kraken::config::DB;
 use kraken::config::VAR_DIR;
 use kraken::models::User;
 use kraken::models::UserPermission;
@@ -49,7 +48,6 @@ use kraken::rpc::server::start_rpc_server;
 use rorm::cli;
 use rorm::Database;
 use rorm::DatabaseConfiguration;
-use rorm::DatabaseDriver;
 
 /// The subcommands of kraken
 #[derive(Subcommand)]
@@ -83,26 +81,22 @@ pub struct Cli {
 #[rorm::rorm_main]
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    if let Err(errors) = config::load_env() {
+        for error in errors {
+            eprintln!("{error}");
+        }
+        return Err("Failed to load configuration".into());
+    }
+
     let cli = Cli::parse();
 
-    let config_content =
-        read_to_string(&cli.config_path).map_err(|e| format!("Error reading config file: {e}"))?;
-    let config: Config =
-        toml::from_str(&config_content).map_err(|e| format!("Error parsing config file: {e}"))?;
-
-    setup_logging(&config.logging)?;
+    env_logger::init();
 
     match cli.command {
         Command::Migrate { migration_dir } => cli::migrate::run_migrate_custom(
             cli::config::DatabaseConfig {
                 last_migration_table_name: None,
-                driver: DatabaseDriver::Postgres {
-                    host: config.database.host,
-                    port: config.database.port,
-                    name: config.database.name,
-                    user: config.database.user,
-                    password: config.database.password,
-                },
+                driver: DB.clone(),
             },
             migration_dir,
             false,
@@ -111,7 +105,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .map_err(|e| e.to_string())?,
         Command::Start => {
-            let db = get_db(&config).await?;
+            let db = get_db().await?;
 
             let settings = start_settings_manager(&db)
                 .await
@@ -120,7 +114,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let dehashed = RwLock::new(start_dehashed_manager(&settings).await?);
 
             let tls = Arc::new(
-                TlsManager::load(VAR_DIR).map_err(|e| format!("Failed to initialize tls: {e}"))?,
+                TlsManager::load(VAR_DIR.get())
+                    .map_err(|e| format!("Failed to initialize tls: {e}"))?,
             );
 
             let leeches = LeechManager::start(db.clone(), tls.clone())
@@ -154,10 +149,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 editor_sync,
             });
 
-            let rpc_handle = start_rpc_server(&config)
-                .map_err(|e| format!("RPC listen address is invalid: {e}"))?;
+            let rpc_handle =
+                start_rpc_server().map_err(|e| format!("RPC listen address is invalid: {e}"))?;
 
-            server::start_server(&config).await?;
+            server::start_server().await?;
 
             // Stop the RPC server as the webserver has already shut down
             rpc_handle.abort();
@@ -168,7 +163,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("{}", BASE64_STANDARD.encode(key.master()));
         }
         Command::CreateAdminUser => {
-            let db = get_db(&config).await?;
+            let db = get_db().await?;
 
             create_user(db).await?;
         }
@@ -223,27 +218,16 @@ async fn create_user(db: Database) -> Result<(), String> {
     Ok(())
 }
 
-/// Opens a connection to the database using the provided config
-///
-/// **Parameter**:
-/// - `config`: Reference to [Config]
-async fn get_db(config: &Config) -> Result<Database, String> {
-    let db_config = DatabaseConfiguration {
-        driver: DatabaseDriver::Postgres {
-            host: config.database.host.clone(),
-            port: config.database.port,
-            user: config.database.user.clone(),
-            password: config.database.password.clone(),
-            name: config.database.name.clone(),
-        },
+/// Opens a connection to the database
+async fn get_db() -> Result<Database, String> {
+    Database::connect(DatabaseConfiguration {
+        driver: DB.clone(),
         min_connections: 2,
         max_connections: 20,
         disable_logging: Some(true),
         statement_log_level: None,
         slow_statement_log_level: None,
-    };
-
-    Database::connect(db_config)
-        .await
-        .map_err(|e| format!("Error connecting to the database: {e}"))
+    })
+    .await
+    .map_err(|e| format!("Error connecting to the database: {e}"))
 }

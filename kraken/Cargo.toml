@@ -32,7 +32,7 @@ kraken-proto = { path = "../kraken-proto", optional = true }
 # Webframework
 actix-web = { version = "~4", optional = true }
 # Extensions for actix-web
-actix-toolbox = { version = "~0.13", features = ["ws", "logging", "session-postgres-only"], optional = true }
+actix-toolbox = { version = "~0.13", features = ["ws", "session-postgres-only"], optional = true }
 actix-files = { version = "~0.6", optional = true }
 # Webauthn library
 webauthn-rs = { version = "~0.5", features = ["danger-allow-state-serialisation"] }
@@ -53,6 +53,8 @@ rpassword = { version = "~7", optional = true }
 
 # Logging facade
 log = { version = "~0.4" }
+# Logging implementation
+env_logger = { version = "~0.11" }
 
 # Serialization
 serde = { version = "~1", features = ["derive"] }
@@ -102,6 +104,9 @@ url = { version = "~2", features = ["serde"] } # Parsing ip / domain when fillin
 
 # Image processing
 image = { version = "~0.25", optional = true }
+
+# Not our dependency but requires feature to support docker build
+rust-embed = { version = "*", features = ["debug-embed"] }
 
 [features]
 rorm-main = []

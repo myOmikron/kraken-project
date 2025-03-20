@@ -15,6 +15,7 @@
 
 use std::env;
 use std::error::Error;
+use std::fs;
 use std::io::Write;
 use std::net::IpAddr;
 use std::net::SocketAddr;
@@ -45,14 +46,13 @@ use prost_types::Timestamp;
 use rorm::cli;
 use rorm::Database;
 use rorm::DatabaseConfiguration;
-use rorm::DatabaseDriver;
 use tokio::sync::mpsc;
 use tokio::task;
 use uuid::Uuid;
 
 use crate::backlog::start_backlog;
-use crate::config::get_config;
 use crate::config::Config;
+use crate::config::DB;
 use crate::modules::bruteforce_subdomains::bruteforce_subdomains;
 use crate::modules::bruteforce_subdomains::BruteforceSubdomainResult;
 use crate::modules::bruteforce_subdomains::BruteforceSubdomainsSettings;
@@ -79,7 +79,6 @@ use crate::utils::kraken_endpoint;
 
 pub mod backlog;
 pub mod config;
-pub mod logging;
 pub mod models;
 pub mod modules;
 pub mod rpc;
@@ -303,6 +302,11 @@ pub enum Command {
     Server,
     /// Execute a command via CLI
     Execute {
+        /// Specify an alternative path to the config file
+        #[clap(long = "config-path")]
+        #[clap(default_value = "/etc/leech/config.toml")]
+        config_path: PathBuf,
+
         /// Specifies the verbosity of the output
         #[clap(short = 'v', global = true, action = ArgAction::Count)]
         verbosity: u8,
@@ -330,11 +334,6 @@ pub enum Command {
 #[derive(Parser)]
 #[clap(version)]
 pub struct Cli {
-    /// Specify an alternative path to the config file
-    #[clap(long = "config-path")]
-    #[clap(default_value_t = String::from("/etc/leech/config.toml"))]
-    config_path: String,
-
     /// Subcommands
     #[clap(subcommand)]
     commands: Command,
@@ -345,18 +344,30 @@ pub struct Cli {
 async fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
+    match &cli.commands {
+        Command::Execute { .. } => {}
+        Command::Migrate { .. } | Command::Server => {
+            if let Err(errors) = config::load_env() {
+                for error in errors {
+                    eprintln!("{error}");
+                }
+                return Err("Failed to load configuration".into());
+            }
+        }
+    }
+
     match cli.commands {
-        Command::Migrate { migration_dir } => migrate(&cli.config_path, migration_dir).await?,
+        Command::Migrate { migration_dir } => migrate(migration_dir).await?,
         Command::Server => {
-            let config = get_config(&cli.config_path)?;
-            logging::setup_logging(&config.logging)?;
+            env_logger::init();
 
-            let db = get_db(&config).await?;
-            let backlog = start_backlog(db, &config.kraken).await?;
+            let db = get_db().await?;
+            let backlog = start_backlog(db).await?;
 
-            start_rpc_server(&config, backlog).await?;
+            start_rpc_server(backlog).await?;
         }
         Command::Execute {
+            config_path,
             command,
             verbosity,
             push,
@@ -372,7 +383,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
             env_logger::init();
 
             if let Some(workspace) = push {
-                let config = get_config(&cli.config_path)?;
+                if !config_path.exists() {
+                    return Err("The config file does not exist at the specified path".into());
+                }
+
+                if !config_path.is_file() {
+                    return Err("The config file is a directory".into());
+                }
+
+                let config: Config = toml::from_str(
+                    &fs::read_to_string(&config_path)
+                        .map_err(|e| format!("io error while reading the config file: {e}"))?,
+                )
+                .map_err(|e| format!("The config file contains invalid TOML: {e}"))?;
 
                 let api_key = if let Some(api_key) = api_key {
                     api_key
@@ -794,18 +817,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-async fn migrate(config_path: &str, migration_dir: String) -> Result<(), Box<dyn Error>> {
-    let config = get_config(config_path)?;
+async fn migrate(migration_dir: String) -> Result<(), Box<dyn Error>> {
     cli::migrate::run_migrate_custom(
         cli::config::DatabaseConfig {
             last_migration_table_name: None,
-            driver: cli::config::DatabaseDriver::Postgres {
-                host: config.database.host,
-                port: config.database.port,
-                name: config.database.name,
-                user: config.database.user,
-                password: config.database.password,
-            },
+            driver: DB.clone(),
         },
         migration_dir,
         false,
@@ -815,16 +831,10 @@ async fn migrate(config_path: &str, migration_dir: String) -> Result<(), Box<dyn
     Ok(())
 }
 
-async fn get_db(config: &Config) -> Result<Database, String> {
+async fn get_db() -> Result<Database, String> {
     // TODO: make driver configurable...?
     let db_config = DatabaseConfiguration {
-        driver: DatabaseDriver::Postgres {
-            host: config.database.host.clone(),
-            port: config.database.port,
-            user: config.database.user.clone(),
-            password: config.database.password.clone(),
-            name: config.database.name.clone(),
-        },
+        driver: DB.clone(),
         min_connections: 2,
         max_connections: 20,
         disable_logging: Some(true),
