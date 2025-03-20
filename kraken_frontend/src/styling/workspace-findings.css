@@ -39,7 +39,7 @@
 .workspace-findings-table {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: calc(100% - 4em);
 }
 
 .workspace-findings-table-sort-weight {
