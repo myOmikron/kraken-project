@@ -11,7 +11,12 @@ import {
     FindingAffectedObjectOneOf3,
     FindingAffectedObjectOneOf4,
     FindingSeverity,
+    FullDomain,
     FullFindingAffected,
+    FullHost,
+    FullHttpService,
+    FullPort,
+    FullService,
     SimpleDomain,
     SimpleFindingCategory,
     SimpleFindingDefinition,
@@ -723,70 +728,69 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                     </>
                                 );
                             case "affected":
-                                const addAffected = (uuid: UUID, type: AggregationType) =>
+                                const addAffected: {
+                                    (type: "Domain", domains: Array<FullDomain>): void;
+                                    (type: "Host", hosts: Array<FullHost>): void;
+                                    (type: "Port", ports: Array<FullPort>): void;
+                                    (type: "Service", services: Array<FullService>): void;
+                                    (type: "HttpService", httpServices: Array<FullHttpService>): void;
+                                } = (type: AggregationType, objects) =>
                                     Api.workspaces.findings
-                                        .addAffected(workspace, finding, {
-                                            type,
-                                            uuid,
-                                            userDetails: "",
-                                            exportDetails: "",
-                                        })
+                                        .addAffectedBulk(
+                                            workspace,
+                                            finding,
+                                            objects.map(({ uuid }) => ({ uuid, type })),
+                                        )
                                         .then(
-                                            handleApiError(() =>
-                                                Api.workspaces.findings.getAffected(workspace, finding, uuid).then(
-                                                    handleApiError(
-                                                        ({ userDetails, exportDetails, ...fullAffected }) => {
-                                                            setAffected((affected) => ({
-                                                                ...affected,
-                                                                [uuid]: fullAffected,
-                                                            }));
-                                                            affectedModels.addModel(uuid, {
-                                                                value: userDetails,
-                                                                language: "markdown",
-                                                                syncTarget: {
-                                                                    findingAffected: {
-                                                                        finding,
-                                                                        affected: uuid,
-                                                                        findingDetails: "User",
-                                                                    },
+                                            handleApiError(() => {
+                                                for (const obj of objects) {
+                                                    Api.workspaces.findings
+                                                        .getAffected(workspace, finding, obj.uuid)
+                                                        .then(
+                                                            handleApiError(
+                                                                ({ userDetails, exportDetails, ...fullAffected }) => {
+                                                                    setAffected((affected) => ({
+                                                                        ...affected,
+                                                                        [obj.uuid]: fullAffected,
+                                                                    }));
+                                                                    affectedModels.addModel(obj.uuid, {
+                                                                        value: userDetails,
+                                                                        language: "markdown",
+                                                                        syncTarget: {
+                                                                            findingAffected: {
+                                                                                finding,
+                                                                                affected: obj.uuid,
+                                                                                findingDetails: "User",
+                                                                            },
+                                                                        },
+                                                                    });
+                                                                    affectedModels.addModel(obj.uuid, {
+                                                                        value: exportDetails,
+                                                                        language: "text",
+                                                                        syncTarget: {
+                                                                            findingAffected: {
+                                                                                finding,
+                                                                                affected: obj.uuid,
+                                                                                findingDetails: "Export",
+                                                                            },
+                                                                        },
+                                                                    });
                                                                 },
-                                                            });
-                                                            affectedModels.addModel(uuid, {
-                                                                value: exportDetails,
-                                                                language: "text",
-                                                                syncTarget: {
-                                                                    findingAffected: {
-                                                                        finding,
-                                                                        affected: uuid,
-                                                                        findingDetails: "Export",
-                                                                    },
-                                                                },
-                                                            });
-                                                        },
-                                                    ),
-                                                ),
-                                            ),
+                                                            ),
+                                                        );
+                                                }
+                                            }),
                                         );
                                 return (
                                     <div className="workspace-finding-data-table">
                                         <WorkspaceFindingDataTable
                                             ref={dataTableRef}
                                             hideUuids={Object.keys(affected)}
-                                            onAddDomains={(v) =>
-                                                v.map(({ uuid }) => addAffected(uuid, AggregationType.Domain))
-                                            }
-                                            onAddHosts={(v) =>
-                                                v.map(({ uuid }) => addAffected(uuid, AggregationType.Host))
-                                            }
-                                            onAddPorts={(v) =>
-                                                v.map(({ uuid }) => addAffected(uuid, AggregationType.Port))
-                                            }
-                                            onAddServices={(v) =>
-                                                v.map(({ uuid }) => addAffected(uuid, AggregationType.Service))
-                                            }
-                                            onAddHttpServices={(v) =>
-                                                v.map(({ uuid }) => addAffected(uuid, AggregationType.HttpService))
-                                            }
+                                            onAddDomains={(v) => addAffected(AggregationType.Domain, v)}
+                                            onAddHosts={(v) => addAffected(AggregationType.Host, v)}
+                                            onAddPorts={(v) => addAffected(AggregationType.Port, v)}
+                                            onAddServices={(v) => addAffected(AggregationType.Service, v)}
+                                            onAddHttpServices={(v) => addAffected(AggregationType.HttpService, v)}
                                         />
                                     </div>
                                 );
