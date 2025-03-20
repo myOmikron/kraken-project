@@ -2,21 +2,101 @@
 //!
 //! For technical information, see [here](https://certificate.transparency.dev/)
 
+use std::collections::BTreeSet;
 use std::str::FromStr;
 use std::time::Duration;
 
+use chrono::Datelike;
+use chrono::Timelike;
 use itertools::Itertools;
+use kraken_proto::shared::CertEntry;
+use kraken_proto::CertificateTransparencyRequest;
+use kraken_proto::CertificateTransparencyResponse;
 use log::error;
 use log::info;
+use prost_types::Timestamp;
 use rorm::Database;
 use rorm::DatabaseConfiguration;
 use rorm::DatabaseDriver;
 use tokio::time::sleep;
+use tonic::Status;
 use url::Url;
 
 use crate::modules::certificate_transparency::crt_sh_db::get_query;
 use crate::modules::certificate_transparency::crt_sh_types::CertLogEntry;
 use crate::modules::certificate_transparency::error::CertificateTransparencyError;
+use crate::modules::Attack;
+
+pub struct CertificateTransparency;
+#[tonic::async_trait]
+impl Attack for CertificateTransparency {
+    type Settings = CertificateTransparencySettings;
+    type Output = Vec<CertLogEntry>;
+    type Error = CertificateTransparencyError;
+    async fn execute(settings: Self::Settings) -> Result<Self::Output, Self::Error> {
+        query_ct_api(settings).await
+    }
+
+    type Request = CertificateTransparencyRequest;
+    fn decode_settings(request: Self::Request) -> Result<Self::Settings, Status> {
+        Ok(CertificateTransparencySettings {
+            target: request.target,
+            include_expired: request.include_expired,
+            max_retries: request.max_retries,
+            retry_interval: Duration::from_millis(request.retry_interval),
+        })
+    }
+
+    type Response = CertificateTransparencyResponse;
+    fn encode_output(output: Self::Output) -> Self::Response {
+        CertificateTransparencyResponse {
+            entries: output
+                .into_iter()
+                .map(|cert_entry| CertEntry {
+                    issuer_name: cert_entry.issuer_name,
+                    common_name: cert_entry.common_name,
+                    value_names: cert_entry.name_value,
+                    not_before: cert_entry.not_before.map(|nb| {
+                        Timestamp::date_time_nanos(
+                            nb.year() as i64,
+                            nb.month() as u8,
+                            nb.day() as u8,
+                            nb.hour() as u8,
+                            nb.minute() as u8,
+                            nb.second() as u8,
+                            nb.nanosecond(),
+                        )
+                        .unwrap()
+                    }),
+                    not_after: cert_entry.not_after.map(|na| {
+                        Timestamp::date_time_nanos(
+                            na.year() as i64,
+                            na.month() as u8,
+                            na.day() as u8,
+                            na.hour() as u8,
+                            na.minute() as u8,
+                            na.second() as u8,
+                            na.nanosecond(),
+                        )
+                        .unwrap()
+                    }),
+                    serial_number: cert_entry.serial_number,
+                })
+                .collect(),
+        }
+    }
+
+    fn print_output(output: &Self::Output) {
+        let values = BTreeSet::from_iter(output.iter().flat_map(|entry| {
+            [&entry.common_name]
+                .into_iter()
+                .chain(entry.name_value.iter())
+        }));
+        for value in values {
+            info!("{value}");
+        }
+    }
+}
 
 pub mod crt_sh_db;
 pub mod crt_sh_types;
@@ -25,6 +105,7 @@ pub mod error;
 const CT_URI: &str = "https://crt.sh";
 
 /// Settings for a certificate transparency search request
+#[derive(Debug)]
 pub struct CertificateTransparencySettings {
     /// The target domain to query
     pub target: String,

@@ -7,7 +7,7 @@
 //!
 //! You can also use the leech as a cli utility without a kraken attached for manual
 //! execution and testing. See the subcommand `run` for further information.
-#![warn(missing_docs)]
+// #![warn(missing_docs)]
 #![cfg_attr(
     feature = "rorm-main",
     allow(dead_code, unused_variables, unused_imports)
@@ -751,37 +751,39 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         port_timeout,
                         ssh_port,
                     } => {
-                        let os = tokio::time::timeout(
-                            Duration::from_millis(total_timeout),
-                            os_detection(OsDetectionSettings {
-                                ip_addr: ip,
-                                fingerprint_port: None,
-                                fingerprint_timeout: Duration::from_millis(timeout),
-                                ssh_port: Some(ssh_port),
-                                ssh_connect_timeout: Duration::from_millis(timeout) / 2,
-                                ssh_timeout: Duration::from_millis(timeout),
-                                port_ack_timeout: Duration::from_millis(port_timeout),
-                                port_parallel_syns: 8,
-                            }),
-                        )
-                        .await?;
-
-                        match os {
-                            Ok(os) => {
-                                println!("OS detection result:");
-                                println!("- likely OS: {}", os);
-                                let hints = os.hints();
-                                if !hints.is_empty() {
-                                    println!("- hints:");
-                                    for hint in hints {
-                                        println!("\t- {hint}");
-                                    }
-                                }
-                            }
-                            Err(err) => {
-                                println!("Failed detecting OS: {err}")
-                            }
-                        }
+                        // TODO: replaced in next commit
+                        // let os = tokio::time::timeout(
+                        //     Duration::from_millis(total_timeout),
+                        //     os_detection(OsDetectionSettings {
+                        //         addresses: vec![ip.into()],
+                        //         fingerprint_port: None,
+                        //         fingerprint_timeout: Duration::from_millis(timeout),
+                        //         ssh_port: Some(ssh_port),
+                        //         ssh_connect_timeout: Duration::from_millis(timeout) / 2,
+                        //         ssh_timeout: Duration::from_millis(timeout),
+                        //         port_ack_timeout: Duration::from_millis(port_timeout),
+                        //         port_parallel_syns: 8,
+                        //         concurrent_limit: 0,
+                        //     }),
+                        // )
+                        // .await?;
+                        //
+                        // match os {
+                        //     Ok(os) => {
+                        //         println!("OS detection result:");
+                        //         println!("- likely OS: {}", os);
+                        //         let hints = os.hints();
+                        //         if !hints.is_empty() {
+                        //             println!("- hints:");
+                        //             for hint in hints {
+                        //                 println!("\t- {hint}");
+                        //             }
+                        //         }
+                        //     }
+                        //     Err(err) => {
+                        //         println!("Failed detecting OS: {err}")
+                        //     }
+                        // }
                     }
                     RunCommand::TestSSL { domain, ip, port } => {
                         let json = testssl::run_testssl(TestSSLSettings {

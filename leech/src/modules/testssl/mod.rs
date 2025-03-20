@@ -3,6 +3,15 @@
 use std::io;
 use std::net::IpAddr;
 
+use kraken_proto::test_ssl_scans;
+use kraken_proto::test_ssl_service;
+use kraken_proto::StartTlsProtocol;
+use kraken_proto::TestSslFinding;
+use kraken_proto::TestSslRequest;
+use kraken_proto::TestSslResponse;
+use kraken_proto::TestSslScanResult;
+use kraken_proto::TestSslService;
+use kraken_proto::TestSslSeverity;
 use log::debug;
 use log::error;
 use log::trace;
@@ -12,11 +21,175 @@ use thiserror::Error;
 use tokio::fs::File as TokioFile;
 use tokio::io::AsyncReadExt;
 use tokio::process::Command;
+use tonic::async_trait;
+use tonic::Status;
+
+use crate::modules::testssl;
+use crate::modules::Attack;
 
 pub mod finding_id;
 mod json;
 mod json_pretty;
 pub use self::json_pretty::*;
+
+pub struct TestSSL;
+#[async_trait]
+impl Attack for TestSSL {
+    type Settings = TestSSLSettings;
+    type Output = json_pretty::File;
+    type Error = TestSSLError;
+
+    async fn execute(settings: Self::Settings) -> Result<Self::Output, Self::Error> {
+        run_testssl(settings).await
+    }
+
+    type Request = TestSslRequest;
+
+    fn decode_settings(request: Self::Request) -> Result<Self::Settings, Status> {
+        let TestSslRequest {
+            attack_uuid: _,
+            domain,
+            ip,
+            port,
+            connect_timeout,
+            openssl_timeout,
+            v6,
+            basic_auth,
+            starttls,
+            scans,
+        } = request;
+        Ok(TestSSLSettings {
+            domain,
+            ip: IpAddr::try_from(ip.ok_or(Status::invalid_argument("Missing ip"))?)?,
+            port: port as u16,
+            connect_timeout,
+            openssl_timeout,
+            v6: v6.unwrap_or(false),
+            basic_auth: basic_auth.map(|x| (x.username, x.password)),
+            starttls: starttls
+                .map(|x| {
+                    StartTlsProtocol::try_from(x).map_err(|_| {
+                        Status::invalid_argument(format!(
+                            "Invalid enum value {x} for StartTlsProtocol"
+                        ))
+                    })
+                })
+                .transpose()?
+                .map(|x| match x {
+                    StartTlsProtocol::Ftp => StartTLSProtocol::FTP,
+                    StartTlsProtocol::Smtp => StartTLSProtocol::SMTP,
+                    StartTlsProtocol::Pop3 => StartTLSProtocol::POP3,
+                    StartTlsProtocol::Imap => StartTLSProtocol::IMAP,
+                    StartTlsProtocol::Xmpp => StartTLSProtocol::XMPP,
+                    StartTlsProtocol::Lmtp => StartTLSProtocol::LMTP,
+                    StartTlsProtocol::Nntp => StartTLSProtocol::NNTP,
+                    StartTlsProtocol::Postgres => StartTLSProtocol::Postgres,
+                    StartTlsProtocol::MySql => StartTLSProtocol::MySQL,
+                }),
+            scans: scans
+                .and_then(|x| x.testssl_scans)
+                .map(|x| match x {
+                    test_ssl_scans::TestsslScans::All(true) => TestSSLScans::All,
+                    test_ssl_scans::TestsslScans::All(false) => TestSSLScans::Default,
+                    test_ssl_scans::TestsslScans::Manual(x) => TestSSLScans::Manual {
+                        protocols: x.protocols,
+                        grease: x.grease,
+                        ciphers: x.ciphers,
+                        pfs: x.pfs,
+                        server_preferences: x.server_preferences,
+                        server_defaults: x.server_defaults,
+                        header_response: x.header_response,
+                        vulnerabilities: x.vulnerabilities,
+                        cipher_tests_all: x.cipher_tests_all,
+                        cipher_tests_per_proto: x.cipher_tests_per_proto,
+                        browser_simulations: x.browser_simulations,
+                    },
+                })
+                .unwrap_or_default(),
+        })
+    }
+
+    type Response = TestSslResponse;
+
+    fn encode_output(output: Self::Output) -> Self::Response {
+        fn conv_finding(finding: Finding) -> TestSslFinding {
+            TestSslFinding {
+                id: finding.id,
+                severity: match finding.severity {
+                    Severity::Debug => TestSslSeverity::Debug,
+                    Severity::Info => TestSslSeverity::Info,
+                    Severity::Warn => TestSslSeverity::Warn,
+                    Severity::Fatal => TestSslSeverity::Fatal,
+                    Severity::Ok => TestSslSeverity::Ok,
+                    Severity::Low => TestSslSeverity::Low,
+                    Severity::Medium => TestSslSeverity::Medium,
+                    Severity::High => TestSslSeverity::High,
+                    Severity::Critical => TestSslSeverity::Critical,
+                }
+                .into(),
+                finding: finding.finding,
+                cve: finding.cve,
+                cwe: finding.cwe,
+            }
+        }
+        fn conv_findings(findings: Vec<Finding>) -> Vec<TestSslFinding> {
+            findings.into_iter().map(conv_finding).collect()
+        }
+
+        TestSslResponse {
+            services: output
+                .scan_result
+                .into_iter()
+                .map(|service| TestSslService {
+                    testssl_service: Some(match service {
+                        Service::Result(service) => {
+                            test_ssl_service::TestsslService::Result(TestSslScanResult {
+                                target_host: service.target_host,
+                                ip: service.ip,
+                                port: service.port,
+                                service: service.service,
+                                pretest: conv_findings(service.pretest),
+                                protocols: conv_findings(service.protocols),
+                                grease: conv_findings(service.grease),
+                                ciphers: conv_findings(service.ciphers),
+                                pfs: conv_findings(service.pfs),
+                                server_preferences: conv_findings(service.server_preferences),
+                                server_defaults: conv_findings(service.server_defaults),
+                                header_response: conv_findings(service.header_response),
+                                vulnerabilities: conv_findings(service.vulnerabilities),
+                                cipher_tests: conv_findings(service.cipher_tests),
+                                browser_simulations: conv_findings(service.browser_simulations),
+                            })
+                        }
+                        Service::Error(finding) => {
+                            test_ssl_service::TestsslService::Error(conv_finding(finding))
+                        }
+                    }),
+                })
+                .collect(),
+        }
+    }
+
+    fn print_output(output: &Self::Output) {
+        for result in &output.scan_result {
+            if let Service::Result(service) = result {
+                for (_section, findings) in service.iter() {
+                    for finding in findings {
+                        let finding_id = testssl::finding_id::FindingId::from(finding.id.as_str());
+                        if let finding_id::FindingId::Unknown(id) = finding_id {
+                            warn!("Unknown finding_id: {id}");
+                        }
+                    }
+                }
+            }
+        }
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&output)
+                .unwrap_or_else(|error| format!("<Error: {error}>"))
+        );
+    }
+}
 
 /// The settings of a `testssl.sh` invocation
 #[derive(Debug)]
