@@ -65,7 +65,7 @@ services:
 
   leech-dev:
     restart: unless-stopped
-    depends_on: [ postgres-leech-dev, webserver-dev ]
+    depends_on: [ postgres-leech-dev ]
     networks: [ net-kraken ]
     volumes:
       - ./leech/migrations:/migrations
