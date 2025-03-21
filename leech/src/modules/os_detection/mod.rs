@@ -18,6 +18,7 @@ use kraken_proto::OsDetectionRequest;
 use kraken_proto::OsDetectionResponse;
 use kraken_proto::RepeatedOsDetectionResponse;
 use log::debug;
+use serde::Serialize;
 use strum_macros::EnumString;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinSet;
@@ -200,7 +201,7 @@ impl StreamedAttack for OsDetection {
 }
 
 /// A detected OS and the address it was detected on
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct OsDetectionResult {
     /// The address that the os was detected on.
     pub address: IpAddr,
@@ -210,7 +211,7 @@ pub struct OsDetectionResult {
 
 /// Various known linux distribution names. Version is stored outside of this enum, e.g. in the tuple in
 /// OperatingSystemInfo.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash, EnumString)]
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, PartialOrd, Hash, EnumString)]
 #[allow(missing_docs)]
 pub enum LinuxDistro {
     // independent non-android linux distros
@@ -248,7 +249,7 @@ pub enum LinuxDistro {
 }
 
 /// Various known Windows / Windows Server versions.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash, EnumString)]
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, PartialOrd, Hash, EnumString)]
 #[allow(missing_docs)]
 pub enum WindowsVersion {
     WindowsXP,
@@ -291,7 +292,7 @@ impl Display for WindowsVersion {
 }
 
 /// Information about a detected operating system.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Serialize, Clone, PartialEq)]
 pub enum OperatingSystemInfo {
     /// Unknown OS, but possibly containing human-readable hints
     Unknown {

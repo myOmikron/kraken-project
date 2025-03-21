@@ -32,7 +32,6 @@ use std::time::Duration;
 use clap::ArgAction;
 use clap::Parser;
 use clap::Subcommand;
-use clap::ValueEnum;
 use dehashed_rs::SearchType;
 use hickory_resolver::Name;
 use ipnetwork::IpNetwork;
@@ -82,15 +81,6 @@ pub mod models;
 pub mod modules;
 pub mod rpc;
 pub mod utils;
-
-/// The technique to use for the port scan
-#[derive(Debug, ValueEnum, Copy, Clone)]
-pub enum PortScanTechnique {
-    /// A tcp connect scan
-    TcpCon,
-    /// A icmp scan
-    Icmp,
-}
 
 /// The execution commands
 #[derive(Subcommand)]
@@ -315,6 +305,10 @@ pub enum Command {
         #[clap(long)]
         api_key: Option<String>,
 
+        /// Output the results as json
+        #[clap(long)]
+        json: bool,
+
         /// the subcommand to execute
         #[clap(subcommand)]
         command: RunCommand,
@@ -364,6 +358,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         Command::Execute {
             config_path,
+            json,
             command,
             verbosity,
             push,
@@ -422,6 +417,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 concurrent_limit: u32::from(concurrent_limit),
                             },
                             push,
+                            json,
                         )
                         .await?;
                     }
@@ -431,6 +427,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 domains: Vec::from([target.to_string()]),
                             },
                             push,
+                            json,
                         )
                         .await?;
                     }
@@ -448,6 +445,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 retry_interval: Duration::from_millis(retry_interval as u64),
                             },
                             push,
+                            json,
                         )
                         .await?;
                     }
@@ -466,6 +464,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 concurrent_limit: u32::from(concurrent_limit),
                             },
                             push,
+                            json,
                         )
                         .await?;
                     }
@@ -532,6 +531,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 just_scan,
                             },
                             push,
+                            json,
                         )
                         .await?;
                     }
@@ -556,6 +556,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 concurrent_limit: u32::from(concurrent_limit),
                             },
                             push,
+                            json,
                         )
                         .await?;
                     }
@@ -586,6 +587,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 concurrent_limit: 0,
                             },
                             push,
+                            json,
                         )
                         .await?;
                     }
@@ -598,6 +600,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 ..Default::default()
                             },
                             push,
+                            json,
                         )
                         .await?;
                     }
@@ -642,10 +645,15 @@ async fn get_db() -> Result<Database, String> {
 async fn run_normal_attack<A: Attack>(
     settings: A::Settings,
     push: Option<(Endpoint, Uuid, String)>,
+    json: bool,
 ) -> Result<(), Box<dyn Error>> {
     let output = A::execute(settings).await?;
 
-    A::print_output(&output);
+    if json {
+        println!("{}", serde_json::to_string(&output)?);
+    } else {
+        A::print_output(&output);
+    }
 
     if let Some((endpoint, workspace, api_key)) = push {
         if ask_push_confirmation(&output)?.is_continue() {
@@ -666,14 +674,17 @@ async fn run_normal_attack<A: Attack>(
 async fn run_streamed_attack<A: StreamedAttack>(
     settings: A::Settings,
     push: Option<(Endpoint, Uuid, String)>,
+    json: bool,
 ) -> Result<(), Box<dyn Error>> {
     let (tx, mut rx) = mpsc::channel::<A::Output>(1);
 
-    let should_collect = push.is_some();
+    let should_collect = push.is_some() || json;
     let collector = task::spawn(async move {
         let mut outputs = Vec::new();
         while let Some(output) = rx.recv().await {
-            A::print_output(&output);
+            if !json {
+                A::print_output(&output);
+            }
             if should_collect {
                 outputs.push(output);
             }
@@ -683,6 +694,10 @@ async fn run_streamed_attack<A: StreamedAttack>(
 
     A::execute(settings, tx).await?;
     let outputs = collector.await?;
+
+    if json {
+        println!("{}", serde_json::to_string(&outputs)?);
+    }
 
     if let Some((endpoint, workspace, api_key)) = push {
         if ask_push_confirmation(&outputs)?.is_continue() {

@@ -2,6 +2,8 @@
 
 use std::collections::BTreeSet;
 
+use serde::Serialize;
+
 mod error;
 
 mod probe_impls;
@@ -16,7 +18,7 @@ type DynError = Box<dyn std::error::Error + Send + Sync + 'static>;
 type DynResult<T> = Result<T, DynError>;
 
 /// The detected service or a list of possible candidates
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub enum Service {
     /// The service is unknown
     Unknown,

@@ -29,6 +29,7 @@ use log::debug;
 use log::error;
 use log::info;
 use log::warn;
+use serde::Serialize;
 use tokio::sync::mpsc::Sender;
 use tonic::Status;
 
@@ -149,7 +150,7 @@ impl StreamedAttack for DnsResolution {
 }
 
 /// Result of a subdomain
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub enum DnsRecordResult {
     /// A record
     A {

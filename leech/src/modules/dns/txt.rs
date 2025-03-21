@@ -38,6 +38,7 @@ use log::debug;
 use log::info;
 use once_cell::sync::Lazy;
 use regex::bytes::Regex;
+use serde::Serialize;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinSet;
 use tonic::Status;
@@ -260,7 +261,7 @@ pub struct DnsTxtScanSettings {
 }
 
 /// Represents a single parsed DNS TXT entry.
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub enum TxtScanInfo {
     /// Aggregation of all well-known service hint patterns in all the TXT entries for the domain.
     ServiceHints {
@@ -276,7 +277,7 @@ pub enum TxtScanInfo {
 
 /// A simple service hint with no complex information other than it existing. Indicates possible ownership of third
 /// party service accounts or possible control over external services.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Serialize, Clone, Copy)]
 pub enum TxtServiceHint {
     /// regex: /^GOOGLE-SITE-VERIFICATION=/i
     /// Google Search Console
@@ -432,7 +433,7 @@ impl Display for TxtScanInfo {
 }
 
 /// Contains a single parsed TXT line along with the domain it was found on.
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct DnsTxtScanResult {
     /// The domain this DNS entry was found on
     pub domain: String,

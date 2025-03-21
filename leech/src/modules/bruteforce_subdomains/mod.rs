@@ -41,6 +41,7 @@ use log::warn;
 use rand::distr::Alphanumeric;
 use rand::distr::SampleString;
 use rand::rng;
+use serde::Serialize;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinSet;
@@ -152,7 +153,7 @@ pub struct BruteforceSubdomainsSettings {
 }
 
 /// Result of a subdomain
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub enum BruteforceSubdomainResult {
     /// A record
     A {

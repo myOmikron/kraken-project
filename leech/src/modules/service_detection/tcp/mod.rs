@@ -18,6 +18,7 @@ use kraken_proto::ServiceDetectionRequest;
 use kraken_proto::ServiceDetectionResponse;
 use log::info;
 use log::warn;
+use serde::Serialize;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
 use tokio_stream::wrappers::ReceiverStream;
@@ -193,7 +194,7 @@ pub struct TcpServiceDetectionSettings {
 }
 
 /// A found open port and the potentially detected service
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct TcpServiceDetectionResult {
     /// The socket address found to be open
     pub addr: SocketAddr,

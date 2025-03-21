@@ -17,6 +17,7 @@ use kraken_proto::UdpServiceDetectionRequest;
 use kraken_proto::UdpServiceDetectionResponse;
 use log::debug;
 use log::info;
+use serde::Serialize;
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinSet;
@@ -199,7 +200,7 @@ async fn single_probe_udp(
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 /// A found open or detected UDP service on a specific port.
 pub struct UdpServiceDetectionResult {
     /// The address that the open port was found on.
