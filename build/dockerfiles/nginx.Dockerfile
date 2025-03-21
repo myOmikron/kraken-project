@@ -18,4 +18,3 @@ EOF
 FROM nginx:latest AS final
 
 COPY --from=build-frontend /frontend /usr/share/nginx/html/frontend
-COPY ./build/nginx/swagger-initializer.js /usr/share/nginx/html/swagger-ui/
