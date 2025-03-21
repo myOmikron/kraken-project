@@ -7,29 +7,261 @@ use hickory_resolver::name_server::GenericConnector;
 use hickory_resolver::name_server::TokioRuntimeProvider;
 use hickory_resolver::AsyncResolver;
 use hickory_resolver::TokioAsyncResolver;
+use kraken_proto::any_attack_response;
+use kraken_proto::push_attack_request;
+use kraken_proto::shared;
+use kraken_proto::shared::dns_txt_scan::Info;
+use kraken_proto::shared::spf_directive;
+use kraken_proto::shared::spf_part;
+use kraken_proto::shared::DnsTxtKnownService;
+use kraken_proto::shared::DnsTxtKnownServiceList;
+use kraken_proto::shared::DnsTxtServiceHint;
+use kraken_proto::shared::Net;
+use kraken_proto::shared::SpfDirective;
+use kraken_proto::shared::SpfExplanationModifier;
+use kraken_proto::shared::SpfInfo;
+use kraken_proto::shared::SpfMechanismA;
+use kraken_proto::shared::SpfMechanismAll;
+use kraken_proto::shared::SpfMechanismExists;
+use kraken_proto::shared::SpfMechanismInclude;
+use kraken_proto::shared::SpfMechanismIp;
+use kraken_proto::shared::SpfMechanismMx;
+use kraken_proto::shared::SpfMechanismPtr;
+use kraken_proto::shared::SpfPart;
+use kraken_proto::shared::SpfQualifier;
+use kraken_proto::shared::SpfRedirectModifier;
+use kraken_proto::shared::SpfUnknownModifier;
+use kraken_proto::DnsTxtScanRequest;
+use kraken_proto::DnsTxtScanResponse;
+use kraken_proto::RepeatedDnsTxtScanResponse;
 use log::debug;
 use log::info;
 use once_cell::sync::Lazy;
 use regex::bytes::Regex;
+use serde::Serialize;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinSet;
+use tonic::Status;
 
 use crate::modules::dns::resolve;
+use crate::modules::StreamedAttack;
 
 type ResolverT = AsyncResolver<GenericConnector<TokioRuntimeProvider>>;
 
 use super::errors::DnsResolutionError;
 use super::spf::parse_spf;
+use super::spf::SPFMechanism;
 use super::spf::SPFPart;
+use super::spf::SPFQualifier;
+
+/// Attack scanning DNS TXT recursively
+pub struct DnsTxtScan;
+#[tonic::async_trait]
+impl StreamedAttack for DnsTxtScan {
+    type Settings = DnsTxtScanSettings;
+    type Output = DnsTxtScanResult;
+    type Error = DnsResolutionError;
+    async fn execute(
+        settings: Self::Settings,
+        sender: Sender<Self::Output>,
+    ) -> Result<(), Self::Error> {
+        start_dns_txt_scan(settings, sender).await
+    }
+
+    type Request = DnsTxtScanRequest;
+    fn get_attack_uuid(request: &Self::Request) -> &str {
+        &request.attack_uuid
+    }
+    fn decode_settings(request: Self::Request) -> Result<Self::Settings, Status> {
+        if request.targets.is_empty() {
+            return Err(Status::invalid_argument("nothing to resolve"));
+        }
+
+        Ok(DnsTxtScanSettings {
+            domains: request.targets,
+        })
+    }
+
+    type Response = DnsTxtScanResponse;
+    fn encode_output(output: Self::Output) -> Self::Response {
+        DnsTxtScanResponse {
+            record: Some(shared::DnsTxtScan {
+                domain: output.domain,
+                info: Some(match output.info {
+                    TxtScanInfo::SPF { parts } => Info::Spf(SpfInfo {
+                        parts: parts
+                            .iter()
+                            .map(|part| SpfPart {
+                                rule: part.encode_spf(),
+                                part: Some(match part {
+                                    SPFPart::Directive {
+                                        qualifier,
+                                        mechanism,
+                                    } => spf_part::Part::Directive(SpfDirective {
+                                        mechanism: Some(match mechanism {
+                                            SPFMechanism::All => {
+                                                spf_directive::Mechanism::All(SpfMechanismAll {})
+                                            }
+                                            SPFMechanism::Include { domain } => {
+                                                spf_directive::Mechanism::Include(
+                                                    SpfMechanismInclude {
+                                                        domain: domain.clone(),
+                                                    },
+                                                )
+                                            }
+                                            SPFMechanism::A {
+                                                domain,
+                                                ipv4_cidr,
+                                                ipv6_cidr,
+                                            } => spf_directive::Mechanism::A(SpfMechanismA {
+                                                domain: domain.clone(),
+                                                ipv4_cidr: ipv4_cidr.map(|a| a as _),
+                                                ipv6_cidr: ipv6_cidr.map(|a| a as _),
+                                            }),
+                                            SPFMechanism::MX {
+                                                domain,
+                                                ipv4_cidr,
+                                                ipv6_cidr,
+                                            } => spf_directive::Mechanism::Mx(SpfMechanismMx {
+                                                domain: domain.clone(),
+                                                ipv4_cidr: ipv4_cidr.map(|a| a as _),
+                                                ipv6_cidr: ipv6_cidr.map(|a| a as _),
+                                            }),
+                                            SPFMechanism::PTR { domain } => {
+                                                spf_directive::Mechanism::Ptr(SpfMechanismPtr {
+                                                    domain: domain.clone(),
+                                                })
+                                            }
+                                            SPFMechanism::IP { ipnet } => {
+                                                spf_directive::Mechanism::Ip(SpfMechanismIp {
+                                                    ip: Some(Net::from(*ipnet)),
+                                                })
+                                            }
+                                            SPFMechanism::Exists { domain } => {
+                                                spf_directive::Mechanism::Exists(
+                                                    SpfMechanismExists {
+                                                        domain: domain.clone(),
+                                                    },
+                                                )
+                                            }
+                                        }),
+                                        qualifier: match qualifier {
+                                            SPFQualifier::Pass => SpfQualifier::Pass as _,
+                                            SPFQualifier::Fail => SpfQualifier::Fail as _,
+                                            SPFQualifier::SoftFail => SpfQualifier::SoftFail as _,
+                                            SPFQualifier::Neutral => SpfQualifier::Neutral as _,
+                                        },
+                                    }),
+                                    SPFPart::RedirectModifier { domain } => {
+                                        spf_part::Part::Redirect(SpfRedirectModifier {
+                                            domain: domain.clone(),
+                                        })
+                                    }
+                                    SPFPart::ExplanationModifier { domain } => {
+                                        spf_part::Part::Explanation(SpfExplanationModifier {
+                                            domain: domain.clone(),
+                                        })
+                                    }
+                                    SPFPart::UnknownModifier { name, value } => {
+                                        spf_part::Part::UnknownModifier(SpfUnknownModifier {
+                                            name: name.clone(),
+                                            value: value.clone(),
+                                        })
+                                    }
+                                }),
+                            })
+                            .collect(),
+                    }),
+                    TxtScanInfo::ServiceHints { hints } => {
+                        Info::WellKnown(DnsTxtKnownServiceList {
+                            hints: hints
+                                .into_iter()
+                                .map(|hint| DnsTxtKnownService {
+                                    rule: hint.0,
+                                    service: match hint.1 {
+                                        TxtServiceHint::HasGoogleAccount => {
+                                            DnsTxtServiceHint::HasGoogleAccount as _
+                                        }
+                                        TxtServiceHint::HasDocusignAccount => {
+                                            DnsTxtServiceHint::HasDocusignAccount as _
+                                        }
+                                        TxtServiceHint::HasAppleAccount => {
+                                            DnsTxtServiceHint::HasAppleAccount as _
+                                        }
+                                        TxtServiceHint::HasFacebookAccount => {
+                                            DnsTxtServiceHint::HasFacebookAccount as _
+                                        }
+                                        TxtServiceHint::HasHubspotAccount => {
+                                            DnsTxtServiceHint::HasHubspotAccount as _
+                                        }
+                                        TxtServiceHint::HasMsDynamics365 => {
+                                            DnsTxtServiceHint::HasMsDynamics365 as _
+                                        }
+                                        TxtServiceHint::HasStripeAccount => {
+                                            DnsTxtServiceHint::HasStripeAccount as _
+                                        }
+                                        TxtServiceHint::HasOneTrustSso => {
+                                            DnsTxtServiceHint::HasOneTrustSso as _
+                                        }
+                                        TxtServiceHint::HasBrevoAccount => {
+                                            DnsTxtServiceHint::HasBrevoAccount as _
+                                        }
+                                        TxtServiceHint::HasGlobalsignAccount => {
+                                            DnsTxtServiceHint::HasGlobalsignAccount as _
+                                        }
+                                        TxtServiceHint::HasGlobalsignSMime => {
+                                            DnsTxtServiceHint::HasGlobalsignSMime as _
+                                        }
+                                        TxtServiceHint::OwnsAtlassianAccounts => {
+                                            DnsTxtServiceHint::OwnsAtlassianAccounts as _
+                                        }
+                                        TxtServiceHint::OwnsZoomAccounts => {
+                                            DnsTxtServiceHint::OwnsZoomAccounts as _
+                                        }
+                                        TxtServiceHint::EmailProtonMail => {
+                                            DnsTxtServiceHint::EmailProtonMail as _
+                                        }
+                                    },
+                                })
+                                .collect(),
+                        })
+                    }
+                }),
+            }),
+        }
+    }
+
+    fn print_output(output: &Self::Output) {
+        match &output.info {
+            TxtScanInfo::SPF { parts } => {
+                info!("Found SPF entry for {}:", output.domain);
+                for part in parts {
+                    info!("  {part}");
+                }
+            }
+            _ => {
+                info!("Found txt entry for {}: {}", output.domain, output.info);
+            }
+        };
+    }
+
+    fn wrap_for_backlog(response: Self::Response) -> any_attack_response::Response {
+        any_attack_response::Response::DnsTxtScan(response)
+    }
+    fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response {
+        push_attack_request::Response::DnsTxtScan(RepeatedDnsTxtScanResponse { responses })
+    }
+}
 
 /// DNS TXT scanning settings
+#[derive(Debug)]
 pub struct DnsTxtScanSettings {
     /// The domains to start resolving TXT settings in
     pub domains: Vec<String>,
 }
 
 /// Represents a single parsed DNS TXT entry.
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub enum TxtScanInfo {
     /// Aggregation of all well-known service hint patterns in all the TXT entries for the domain.
     ServiceHints {
@@ -45,7 +277,7 @@ pub enum TxtScanInfo {
 
 /// A simple service hint with no complex information other than it existing. Indicates possible ownership of third
 /// party service accounts or possible control over external services.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Serialize, Clone, Copy)]
 pub enum TxtServiceHint {
     /// regex: /^GOOGLE-SITE-VERIFICATION=/i
     /// Google Search Console
@@ -201,7 +433,7 @@ impl Display for TxtScanInfo {
 }
 
 /// Contains a single parsed TXT line along with the domain it was found on.
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct DnsTxtScanResult {
     /// The domain this DNS entry was found on
     pub domain: String,
@@ -278,7 +510,7 @@ fn process_txt_record(record: &[u8]) -> Option<TxtScanInfo> {
 }
 
 async fn domain_impl(resolver: ResolverT, tx: Sender<DnsTxtScanResult>, domain: String) {
-    if let Ok(Some(res)) = resolve(resolver.txt_lookup(&domain)).await {
+    if let Ok(res) = resolve(resolver.txt_lookup(&domain)).await {
         let records = res.as_lookup().records();
         let mut services = Vec::new();
         for record in records {

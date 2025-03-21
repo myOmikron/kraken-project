@@ -1,16 +1,28 @@
+use std::error::Error;
 use std::net::SocketAddr;
 use std::num::NonZeroU32;
 use std::ops::RangeInclusive;
+use std::sync::Arc;
 use std::time::Duration;
 
 use futures::StreamExt;
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
+use kraken_proto::any_attack_response;
+use kraken_proto::any_attack_response::Response;
+use kraken_proto::push_attack_request;
+use kraken_proto::shared;
+use kraken_proto::RepeatedServiceDetectionResponse;
+use kraken_proto::ServiceCertainty;
+use kraken_proto::ServiceDetectionRequest;
+use kraken_proto::ServiceDetectionResponse;
 use log::info;
 use log::warn;
+use serde::Serialize;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
 use tokio_stream::wrappers::ReceiverStream;
+use tonic::Status;
 
 use self::detection::detect_service;
 pub use self::oneshot::OneShotTcpSettings;
@@ -23,11 +35,130 @@ use crate::modules::service_detection::error::ResultExt;
 use crate::modules::service_detection::DynError;
 use crate::modules::service_detection::DynResult;
 use crate::modules::service_detection::Service;
+use crate::modules::StreamedAttack;
 use crate::utils::IteratorExt;
 
 mod detection;
 mod oneshot;
 mod scanner;
+
+/// Attack scanning for open tcp ports and detecting their services
+pub struct TcpServiceDetection;
+#[tonic::async_trait]
+impl StreamedAttack for TcpServiceDetection {
+    type Settings = TcpServiceDetectionSettings;
+    type Output = TcpServiceDetectionResult;
+    // thanks std
+    // Arc<dyn Error> does implement Error while Box<dyn Error> doesn't
+    type Error = Arc<dyn Error + Send + Sync + 'static>;
+
+    async fn execute(
+        settings: Self::Settings,
+        sender: Sender<Self::Output>,
+    ) -> Result<(), Self::Error> {
+        start_tcp_service_detection(settings, sender)
+            .await
+            .map_err(From::from)
+    }
+
+    type Request = ServiceDetectionRequest;
+
+    fn get_attack_uuid(request: &Self::Request) -> &str {
+        &request.attack_uuid
+    }
+
+    fn decode_settings(request: Self::Request) -> Result<Self::Settings, Status> {
+        let mut ports = request
+            .ports
+            .into_iter()
+            .map(RangeInclusive::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
+        if ports.is_empty() {
+            ports.push(1..=u16::MAX);
+        }
+
+        let concurrent_limit = NonZeroU32::new(request.concurrent_limit)
+            .ok_or_else(|| Status::invalid_argument("concurrent_limit can't be zero"))?;
+
+        Ok(TcpServiceDetectionSettings {
+            addresses: request
+                .targets
+                .into_iter()
+                .map(IpNetwork::try_from)
+                .collect::<Result<_, _>>()?,
+            ports,
+            connect_timeout: Duration::from_millis(request.connect_timeout),
+            receive_timeout: Duration::from_millis(request.receive_timeout),
+            max_retries: request.max_retries,
+            retry_interval: Duration::from_millis(request.retry_interval),
+            concurrent_limit,
+            skip_icmp_check: request.skip_icmp_check,
+            just_scan: false,
+        })
+    }
+
+    type Response = ServiceDetectionResponse;
+    fn encode_output(
+        TcpServiceDetectionResult {
+            tls_service,
+            tcp_service,
+            addr,
+        }: Self::Output,
+    ) -> Self::Response {
+        let mut response = ServiceDetectionResponse {
+            address: Some(shared::Address::from(addr.ip())),
+            port: addr.port() as u32,
+            // The following are updated in the 2 match statements below
+            is_tls: true,
+            tcp_certainty: ServiceCertainty::Unknown as _,
+            tcp_services: Vec::new(),
+            tls_certainty: ServiceCertainty::Unknown as _,
+            tls_services: Vec::new(),
+        };
+        match tcp_service {
+            Service::Unknown => (),
+            Service::Maybe(services) => {
+                response.tcp_certainty = ServiceCertainty::Maybe as _;
+                response.tcp_services = services.into_iter().map(str::to_string).collect();
+            }
+            Service::Definitely(service) => {
+                response.tcp_certainty = ServiceCertainty::Definitely as _;
+                response.tcp_services = vec![service.to_string()];
+            }
+        }
+        match tls_service {
+            None => {
+                response.is_tls = false;
+            }
+            Some(Service::Unknown) => (),
+            Some(Service::Maybe(services)) => {
+                response.tls_certainty = ServiceCertainty::Maybe as _;
+                response.tls_services = services.into_iter().map(str::to_string).collect();
+            }
+            Some(Service::Definitely(service)) => {
+                response.tls_certainty = ServiceCertainty::Definitely as _;
+                response.tls_services = vec![service.to_string()];
+            }
+        }
+        response
+    }
+
+    fn print_output(output: &Self::Output) {
+        info!("Open port found: {}", output.addr,);
+        info!("It's running: {:?} (TCP)", output.tcp_service);
+        info!("It's running: {:?} (TLS over TCP)", output.tls_service);
+    }
+
+    fn wrap_for_backlog(response: Self::Response) -> Response {
+        any_attack_response::Response::ServiceDetection(response)
+    }
+
+    fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response {
+        push_attack_request::Response::ServiceDetection(RepeatedServiceDetectionResponse {
+            responses,
+        })
+    }
+}
 
 /// Settings for a service detection
 #[derive(Clone, Debug)]
@@ -63,7 +194,7 @@ pub struct TcpServiceDetectionSettings {
 }
 
 /// A found open port and the potentially detected service
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct TcpServiceDetectionResult {
     /// The socket address found to be open
     pub addr: SocketAddr,

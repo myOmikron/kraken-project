@@ -5,13 +5,26 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::net::IpAddr;
 use std::net::SocketAddr;
+use std::num::NonZeroUsize;
 use std::time::Duration;
 
+use ipnetwork::IpNetwork;
 use itertools::Itertools;
+use kraken_proto::any_attack_response;
+use kraken_proto::push_attack_request;
+use kraken_proto::shared::Address;
+use kraken_proto::shared::OperatingSystem;
+use kraken_proto::OsDetectionRequest;
+use kraken_proto::OsDetectionResponse;
+use kraken_proto::RepeatedOsDetectionResponse;
 use log::debug;
+use serde::Serialize;
 use strum_macros::EnumString;
+use tokio::sync::mpsc::Sender;
 use tokio::task::JoinSet;
 use tokio::time::timeout;
+use tonic::async_trait;
+use tonic::Status;
 
 use crate::modules::os_detection::errors::OsDetectionError;
 use crate::modules::os_detection::errors::TcpFingerprintError;
@@ -21,15 +34,184 @@ use crate::modules::os_detection::tcp_fingerprint::fingerprint_tcp;
 use crate::modules::os_detection::tcp_fingerprint::TcpFingerprint;
 use crate::modules::service_detection::tcp::OneShotTcpSettings;
 use crate::modules::service_detection::tcp::ProbeTcpResult;
+use crate::modules::StreamedAttack;
+use crate::utils::IteratorExt;
 
 pub mod errors;
 mod fingerprint_db;
 mod syn_scan;
 pub mod tcp_fingerprint;
 
+/// Attack detecting a host's OS through various methods
+pub struct OsDetection;
+#[async_trait]
+impl StreamedAttack for OsDetection {
+    type Settings = OsDetectionSettings;
+    type Output = OsDetectionResult;
+    type Error = OsDetectionError;
+
+    async fn execute(
+        settings: Self::Settings,
+        sender: Sender<Self::Output>,
+    ) -> Result<(), Self::Error> {
+        os_detection(settings, sender).await
+    }
+
+    type Request = OsDetectionRequest;
+
+    fn get_attack_uuid(request: &Self::Request) -> &str {
+        &request.attack_uuid
+    }
+
+    fn decode_settings(request: Self::Request) -> Result<Self::Settings, Status> {
+        if request.targets.is_empty() {
+            return Err(Status::invalid_argument("no targets specified"));
+        }
+
+        let addresses: Vec<_> = request
+            .targets
+            .into_iter()
+            .map(IpNetwork::try_from)
+            .collect::<Result<_, _>>()?;
+
+        let fingerprint_port = match request.fingerprint_port {
+            None => None,
+            Some(p) => Some(
+                u16::try_from(p)
+                    .map_err(|_| Status::invalid_argument("`fingerprint_port` out of range"))?,
+            ),
+        };
+
+        let ssh_port = match request.ssh_port {
+            None => None,
+            Some(p) => Some(
+                u16::try_from(p)
+                    .map_err(|_| Status::invalid_argument("`ssh_port` out of range"))?,
+            ),
+        };
+
+        Ok(OsDetectionSettings {
+            addresses,
+            fingerprint_port,
+            fingerprint_timeout: Duration::from_millis(request.fingerprint_timeout),
+            ssh_port,
+            ssh_connect_timeout: Duration::from_millis(request.ssh_connect_timeout),
+            ssh_timeout: Duration::from_millis(request.ssh_timeout),
+            port_ack_timeout: Duration::from_millis(request.port_ack_timeout),
+            port_parallel_syns: request.port_parallel_syns as usize,
+            concurrent_limit: request.concurrent_limit,
+        })
+    }
+
+    type Response = OsDetectionResponse;
+
+    fn encode_output(OsDetectionResult { address, os }: Self::Output) -> Self::Response {
+        let host = Some(Address::from(address));
+        match os {
+            OperatingSystemInfo::Unknown { hint } => OsDetectionResponse {
+                host,
+                os: OperatingSystem::Unknown as _,
+                hints: hint.iter().cloned().collect(),
+                versions: Vec::new(),
+            },
+            OperatingSystemInfo::Linux {
+                distro,
+                kernel_version,
+                hint,
+            } => OsDetectionResponse {
+                host,
+                os: OperatingSystem::Linux as _,
+                hints: if kernel_version.is_empty() {
+                    hint.iter().cloned().collect()
+                } else {
+                    hint.iter()
+                        .cloned()
+                        .chain(vec![format!(
+                            "Kernel {}",
+                            kernel_version.iter().join(" OR ")
+                        )])
+                        .collect()
+                },
+                versions: distro
+                    .iter()
+                    .map(|(distro, v)| match v {
+                        None => format!("{distro:?}"),
+                        Some(v) => format!("{distro:?} {v}"),
+                    })
+                    .collect(),
+            },
+            OperatingSystemInfo::BSD { version, hint } => OsDetectionResponse {
+                host,
+                os: OperatingSystem::Bsd as _,
+                hints: hint.iter().cloned().collect(),
+                versions: version.iter().cloned().collect(),
+            },
+            OperatingSystemInfo::Android { version, hint } => OsDetectionResponse {
+                host,
+                os: OperatingSystem::Android as _,
+                hints: hint.iter().cloned().collect(),
+                versions: version.iter().cloned().collect(),
+            },
+            OperatingSystemInfo::OSX { version, hint } => OsDetectionResponse {
+                host,
+                os: OperatingSystem::Osx as _,
+                hints: hint.iter().cloned().collect(),
+                versions: version.iter().cloned().collect(),
+            },
+            OperatingSystemInfo::IOS { version, hint } => OsDetectionResponse {
+                host,
+                os: OperatingSystem::Ios as _,
+                hints: hint.iter().cloned().collect(),
+                versions: version.iter().cloned().collect(),
+            },
+            OperatingSystemInfo::Windows { version, hint } => OsDetectionResponse {
+                host,
+                os: OperatingSystem::Windows as _,
+                hints: hint.iter().cloned().collect(),
+                versions: version
+                    .iter()
+                    .map(|(ver, v)| match v {
+                        None => format!("{ver}"),
+                        Some(v) => format!("{ver} {v}"),
+                    })
+                    .collect(),
+            },
+        }
+    }
+
+    fn print_output(output: &Self::Output) {
+        println!("OS detection result:");
+        println!("- likely OS: {}", output.os);
+        let hints = output.os.hints();
+        if !hints.is_empty() {
+            println!("- hints:");
+            for hint in hints {
+                println!("\t- {hint}");
+            }
+        }
+    }
+
+    fn wrap_for_backlog(response: Self::Response) -> any_attack_response::Response {
+        any_attack_response::Response::OsDetection(response)
+    }
+
+    fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response {
+        push_attack_request::Response::OsDetection(RepeatedOsDetectionResponse { responses })
+    }
+}
+
+/// A detected OS and the address it was detected on
+#[derive(Debug, Serialize, Clone)]
+pub struct OsDetectionResult {
+    /// The address that the os was detected on.
+    pub address: IpAddr,
+    /// The os that was detected
+    pub os: OperatingSystemInfo,
+}
+
 /// Various known linux distribution names. Version is stored outside of this enum, e.g. in the tuple in
 /// OperatingSystemInfo.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash, EnumString)]
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, PartialOrd, Hash, EnumString)]
 #[allow(missing_docs)]
 pub enum LinuxDistro {
     // independent non-android linux distros
@@ -67,7 +249,7 @@ pub enum LinuxDistro {
 }
 
 /// Various known Windows / Windows Server versions.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Hash, EnumString)]
+#[derive(Debug, Serialize, Clone, PartialEq, Eq, PartialOrd, Hash, EnumString)]
 #[allow(missing_docs)]
 pub enum WindowsVersion {
     WindowsXP,
@@ -110,7 +292,7 @@ impl Display for WindowsVersion {
 }
 
 /// Information about a detected operating system.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Serialize, Clone, PartialEq)]
 pub enum OperatingSystemInfo {
     /// Unknown OS, but possibly containing human-readable hints
     Unknown {
@@ -545,35 +727,49 @@ fn aggregate_os_results(infos: &[OperatingSystemInfo]) -> Option<OperatingSystem
 }
 
 /// OS detection settings.
+#[derive(Debug)]
 pub struct OsDetectionSettings {
     /// The host IP address to scan
-    pub ip_addr: IpAddr,
+    pub addresses: Vec<IpNetwork>,
+
     /// Optionally set a fixed TCP fingerprint port. This port must be open and accept connections.
     pub fingerprint_port: Option<u16>,
+
     /// The timeout for TCP fingerprinting
     pub fingerprint_timeout: Duration,
+
     /// If set, perform OS detection via SSH header on this port.
     pub ssh_port: Option<u16>,
+
     /// The timeout how long to wait at most for the SSH connection to be established.
     /// Has no effect if `ssh_port` is `None`.
     pub ssh_connect_timeout: Duration,
+
     /// The total timeout for SSH detection. Must be more than `ssh_connect_timeout`.
     /// Has no effect if `ssh_port` is `None`.
     pub ssh_timeout: Duration,
+
     /// The timeout for a SYN/ACK response on a port for guessing open ports.
     /// Has no effect if `fingerprint_port` is set, since that will just be used instead.
     pub port_ack_timeout: Duration,
+
     /// The amount of parallel SYN requests to try out finding ports.
     /// Has no effect if `fingerprint_port` is set, since that will just be used instead.
     pub port_parallel_syns: usize,
+
+    /// Maximum of concurrent tasks that should be spawned
+    ///
+    /// 0 means, that there should be no limit.
+    pub concurrent_limit: u32,
 }
 
 /// Calls a bunch of OS detection methods to try to find out the operating system running on the given host IP address.
 pub async fn os_detection(
     settings: OsDetectionSettings,
-) -> Result<OperatingSystemInfo, OsDetectionError> {
+    tx: Sender<OsDetectionResult>,
+) -> Result<(), OsDetectionError> {
     let OsDetectionSettings {
-        ip_addr,
+        addresses,
         fingerprint_timeout,
         fingerprint_port,
         ssh_connect_timeout,
@@ -581,47 +777,69 @@ pub async fn os_detection(
         ssh_port,
         port_ack_timeout,
         port_parallel_syns,
+        concurrent_limit,
     } = settings;
 
-    if ssh_timeout <= ssh_connect_timeout {
-        return Err(OsDetectionError::InvalidSetting(String::from(
-            "`ssh_timeout` must be larger than `ssh_connect_timeout`",
-        )));
-    }
-    if port_parallel_syns == 0 {
-        return Err(OsDetectionError::InvalidSetting(String::from(
-            "`port_parallel_syns` must be non-zero",
-        )));
-    }
+    addresses
+        .into_iter()
+        .flat_map(|network| network.into_iter())
+        .try_for_each_concurrent(
+            NonZeroUsize::new(concurrent_limit as usize),
+            |ip_addr| async move {
+                if ssh_timeout <= ssh_connect_timeout {
+                    return Err(OsDetectionError::InvalidSetting(String::from(
+                        "`ssh_timeout` must be larger than `ssh_connect_timeout`",
+                    )));
+                }
+                if port_parallel_syns == 0 {
+                    return Err(OsDetectionError::InvalidSetting(String::from(
+                        "`port_parallel_syns` must be non-zero",
+                    )));
+                }
 
-    let (opened_port, _) = match fingerprint_port {
-        None => find_open_and_closed_port(ip_addr, port_ack_timeout, port_parallel_syns).await?,
-        Some(p) => (p, 1),
-    };
+                let (opened_port, _) = match fingerprint_port {
+                    None => {
+                        find_open_and_closed_port(ip_addr, port_ack_timeout, port_parallel_syns)
+                            .await?
+                    }
+                    Some(p) => (p, 1),
+                };
 
-    let mut tasks = JoinSet::new();
+                let mut tasks = JoinSet::new();
 
-    tasks.spawn(os_detect_tcp_fingerprint(
-        SocketAddr::new(ip_addr, opened_port),
-        fingerprint_timeout,
-    ));
-    if let Some(ssh_port) = ssh_port {
-        tasks.spawn(os_detect_ssh(
-            ip_addr,
-            ssh_port,
-            ssh_timeout - ssh_connect_timeout,
-            ssh_timeout,
-        ));
-    }
+                tasks.spawn(os_detect_tcp_fingerprint(
+                    SocketAddr::new(ip_addr, opened_port),
+                    fingerprint_timeout,
+                ));
+                if let Some(ssh_port) = ssh_port {
+                    tasks.spawn(os_detect_ssh(
+                        ip_addr,
+                        ssh_port,
+                        ssh_timeout - ssh_connect_timeout,
+                        ssh_timeout,
+                    ));
+                }
 
-    let mut found = Vec::new();
+                let mut found = Vec::new();
 
-    while let Some(result) = tasks.join_next().await {
-        debug!("Found OS detection partial result: {result:?}");
-        found.push(result??);
-    }
+                while let Some(result) = tasks.join_next().await {
+                    debug!("Found OS detection partial result: {result:?}");
+                    found.push(result??);
+                }
 
-    aggregate_os_results(&found).ok_or(OsDetectionError::Ambiguous(found))
+                let os = aggregate_os_results(&found).ok_or(OsDetectionError::Ambiguous(found))?;
+
+                let _ = tx
+                    .send(OsDetectionResult {
+                        address: ip_addr,
+                        os,
+                    })
+                    .await;
+                Ok(())
+            },
+        )
+        .await?;
+    Ok(())
 }
 
 /// Opens half a TCP connection and reads implementation-defined characteristics from the initial SYN/ACK.

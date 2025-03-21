@@ -6,6 +6,12 @@ use std::time::Duration;
 use futures::stream;
 use futures::StreamExt;
 use ipnetwork::IpNetwork;
+use kraken_proto::any_attack_response;
+use kraken_proto::push_attack_request;
+use kraken_proto::shared::Address;
+use kraken_proto::HostsAliveRequest;
+use kraken_proto::HostsAliveResponse;
+use kraken_proto::RepeatedHostsAliveResponse;
 use log::debug;
 use log::error;
 use log::info;
@@ -18,8 +24,64 @@ use surge_ping::PingSequence;
 use surge_ping::SurgeError;
 use surge_ping::ICMP;
 use tokio::sync::mpsc::Sender;
+use tonic::Status;
 
 use crate::modules::host_alive::error::IcmpScanError;
+use crate::modules::StreamedAttack;
+
+/// Attack scanning hosts with ICMP
+pub struct IcmpScan;
+#[tonic::async_trait]
+impl StreamedAttack for IcmpScan {
+    type Settings = IcmpScanSettings;
+    type Output = IpAddr;
+    type Error = IcmpScanError;
+    async fn execute(
+        settings: Self::Settings,
+        sender: Sender<Self::Output>,
+    ) -> Result<(), Self::Error> {
+        start_icmp_scan(settings, sender).await
+    }
+
+    type Request = HostsAliveRequest;
+    fn get_attack_uuid(request: &Self::Request) -> &str {
+        &request.attack_uuid
+    }
+    fn decode_settings(request: Self::Request) -> Result<Self::Settings, Status> {
+        if request.targets.is_empty() {
+            return Err(Status::invalid_argument("no hosts to check"));
+        }
+
+        Ok(IcmpScanSettings {
+            concurrent_limit: request.concurrent_limit,
+            timeout: Duration::from_millis(request.timeout),
+            addresses: request
+                .targets
+                .into_iter()
+                .map(IpNetwork::try_from)
+                .collect::<Result<_, _>>()?,
+        })
+    }
+
+    type Response = HostsAliveResponse;
+    fn encode_output(output: Self::Output) -> Self::Response {
+        HostsAliveResponse {
+            host: Some(Address::from(output)),
+        }
+    }
+
+    fn print_output(output: &Self::Output) {
+        info!("Host up: {output}");
+    }
+
+    fn wrap_for_backlog(response: Self::Response) -> any_attack_response::Response {
+        any_attack_response::Response::HostsAlive(response)
+    }
+
+    fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response {
+        push_attack_request::Response::HostsAlive(RepeatedHostsAliveResponse { responses })
+    }
+}
 
 /// The settings of a icmp scan
 #[derive(Debug)]

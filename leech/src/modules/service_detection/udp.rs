@@ -8,21 +8,109 @@ use futures::stream;
 use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
+use kraken_proto::any_attack_response;
+use kraken_proto::push_attack_request;
+use kraken_proto::shared;
+use kraken_proto::RepeatedUdpServiceDetectionResponse;
+use kraken_proto::ServiceCertainty;
+use kraken_proto::UdpServiceDetectionRequest;
+use kraken_proto::UdpServiceDetectionResponse;
 use log::debug;
 use log::info;
+use serde::Serialize;
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinSet;
 use tokio::time::sleep;
 use tokio::time::timeout;
+use tonic::Status;
 
 use super::error::UdpServiceScanError;
 use super::Service;
 use crate::modules::service_detection::generated;
 use crate::modules::service_detection::generated::Match;
+use crate::modules::StreamedAttack;
+
+/// Attack detecting UDP services behind a port by sending it probes
+pub struct UdpServiceDetection;
+#[tonic::async_trait]
+impl StreamedAttack for UdpServiceDetection {
+    type Settings = UdpServiceDetectionSettings;
+    type Output = UdpServiceDetectionResult;
+    type Error = UdpServiceScanError;
+    async fn execute(
+        settings: Self::Settings,
+        sender: Sender<Self::Output>,
+    ) -> Result<(), Self::Error> {
+        start_udp_service_detection(&settings, sender).await
+    }
+
+    type Request = UdpServiceDetectionRequest;
+    fn get_attack_uuid(request: &Self::Request) -> &str {
+        &request.attack_uuid
+    }
+    fn decode_settings(request: Self::Request) -> Result<Self::Settings, Status> {
+        let mut ports = request
+            .ports
+            .into_iter()
+            .map(RangeInclusive::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
+        if ports.is_empty() {
+            ports.push(1..=u16::MAX);
+        }
+
+        Ok(UdpServiceDetectionSettings {
+            addresses: request
+                .targets
+                .into_iter()
+                .map(IpNetwork::try_from)
+                .collect::<Result<_, _>>()?,
+            ports,
+            concurrent_limit: request.concurrent_limit,
+            max_retries: request.max_retries,
+            retry_interval: Duration::from_millis(request.retry_interval),
+            timeout: Duration::from_millis(request.timeout),
+        })
+    }
+
+    type Response = UdpServiceDetectionResponse;
+    fn encode_output(output: Self::Output) -> Self::Response {
+        UdpServiceDetectionResponse {
+            address: Some(shared::Address::from(output.address)),
+            port: output.port as u32,
+            certainty: match output.service {
+                Service::Unknown => ServiceCertainty::Unknown as _,
+                Service::Maybe(_) => ServiceCertainty::Maybe as _,
+                Service::Definitely { .. } => ServiceCertainty::Definitely as _,
+            },
+            services: match output.service {
+                Service::Unknown => Vec::new(),
+                Service::Maybe(services) => services.into_iter().map(str::to_string).collect(),
+                Service::Definitely(service) => vec![service.to_string()],
+            },
+        }
+    }
+
+    fn print_output(output: &Self::Output) {
+        info!(
+            "detected service on {}:{}: {:?}",
+            output.address, output.port, output.service
+        );
+    }
+
+    fn wrap_for_backlog(response: Self::Response) -> any_attack_response::Response {
+        any_attack_response::Response::UdpServiceDetection(response)
+    }
+
+    fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response {
+        push_attack_request::Response::UdpServiceDetection(RepeatedUdpServiceDetectionResponse {
+            responses,
+        })
+    }
+}
 
 /// Settings for a service detection
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct UdpServiceDetectionSettings {
     /// Ip addresses / networks to scan
     pub addresses: Vec<IpNetwork>,
@@ -112,7 +200,7 @@ async fn single_probe_udp(
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 /// A found open or detected UDP service on a specific port.
 pub struct UdpServiceDetectionResult {
     /// The address that the open port was found on.

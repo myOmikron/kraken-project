@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 use ipnetwork::IpNetwork;
 use log::debug;
+use serde::Serialize;
 use thiserror::Error;
 
 /*
@@ -23,7 +24,7 @@ mx ip4:87.139.193.6 ip4:212.227.181.119 ~all
 use crate::utils::RE;
 
 /// In the (whitespace delimited) SPF string this is one part of it such as `~all` or `include:_spf.example.org`
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub enum SPFPart {
     /// SPF Directive as defined per RFC, if this matches a given sender this controls what happens to the SPF result.
     Directive {
@@ -89,7 +90,7 @@ impl Display for SPFPart {
 }
 
 /// Represents is the return value if a mechanism matches (pass or fail)
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub enum SPFQualifier {
     /// equal to spf '+' (default value)
     Pass,
@@ -134,7 +135,7 @@ impl TryFrom<u8> for SPFQualifier {
 /// Describes a SPF mechanism that can match a given sender, or in our case,
 /// includes IPs and domains that are likely in the owners control or otherwise
 /// related to the scanned domain.
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub enum SPFMechanism {
     /// spf 'all'
     All,

@@ -2,6 +2,19 @@
 
 ## WIP
 
+### Features leech
+
+- any attack startable from kraken can now be started directly in leech's CLI
+  pushing the results to kraken
+- any attack startable from kraken has a json output when run directly in
+  leech's CLI
+
+## 0.5.1
+
+- Fixed dns in leech
+
+## 0.5.0
+
 ### Feature: Finding Factory
 
 - service detection can auto-create findings for certain services:

@@ -61,6 +61,6 @@ impl<'a> NativeTlsError<'a> {
             }
         }
 
-        return Self::OpenSsl(stack);
+        Self::OpenSsl(stack)
     }
 }

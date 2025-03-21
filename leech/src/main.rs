@@ -15,64 +15,62 @@
 
 use std::env;
 use std::error::Error;
+use std::fmt;
 use std::fs;
+use std::io;
 use std::io::Write;
 use std::net::IpAddr;
 use std::net::SocketAddr;
 use std::num::NonZeroU32;
+use std::ops::ControlFlow;
+use std::path::Path;
 use std::path::PathBuf;
+use std::process::Stdio;
 use std::str::FromStr;
 use std::time::Duration;
 
-use chrono::Datelike;
-use chrono::Timelike;
 use clap::ArgAction;
 use clap::Parser;
 use clap::Subcommand;
-use clap::ValueEnum;
 use dehashed_rs::SearchType;
 use hickory_resolver::Name;
 use ipnetwork::IpNetwork;
-use itertools::Itertools;
-use kraken_proto::push_attack_request;
 use kraken_proto::push_attack_service_client::PushAttackServiceClient;
-use kraken_proto::shared::CertEntry;
-use kraken_proto::CertificateTransparencyResponse;
 use kraken_proto::PushAttackRequest;
 use log::error;
 use log::info;
-use log::warn;
-use prost_types::Timestamp;
 use rorm::cli;
 use rorm::Database;
 use rorm::DatabaseConfiguration;
 use tokio::sync::mpsc;
 use tokio::task;
+use tonic::transport::Endpoint;
 use uuid::Uuid;
 
 use crate::backlog::start_backlog;
 use crate::config::Config;
 use crate::config::DB;
-use crate::modules::bruteforce_subdomains::bruteforce_subdomains;
-use crate::modules::bruteforce_subdomains::BruteforceSubdomainResult;
+use crate::modules::bruteforce_subdomains::BruteforceSubdomain;
 use crate::modules::bruteforce_subdomains::BruteforceSubdomainsSettings;
-use crate::modules::certificate_transparency::query_ct_api;
+use crate::modules::certificate_transparency::CertificateTransparency;
 use crate::modules::certificate_transparency::CertificateTransparencySettings;
 use crate::modules::dehashed;
-use crate::modules::dns::txt::start_dns_txt_scan;
+use crate::modules::dns::txt::DnsTxtScan;
 use crate::modules::dns::txt::DnsTxtScanSettings;
-use crate::modules::host_alive::icmp_scan::start_icmp_scan;
+use crate::modules::host_alive::icmp_scan::IcmpScan;
 use crate::modules::host_alive::icmp_scan::IcmpScanSettings;
-use crate::modules::os_detection::os_detection;
 use crate::modules::os_detection::tcp_fingerprint::fingerprint_tcp;
+use crate::modules::os_detection::OsDetection;
 use crate::modules::os_detection::OsDetectionSettings;
-use crate::modules::service_detection;
-use crate::modules::service_detection::tcp::start_tcp_service_detection;
-use crate::modules::service_detection::tcp::TcpServiceDetectionResult;
+use crate::modules::service_detection::tcp::TcpServiceDetection;
 use crate::modules::service_detection::tcp::TcpServiceDetectionSettings;
-use crate::modules::testssl;
+use crate::modules::service_detection::udp::UdpServiceDetection;
+use crate::modules::service_detection::udp::UdpServiceDetectionSettings;
+use crate::modules::testssl::TestSSL;
 use crate::modules::testssl::TestSSLSettings;
 use crate::modules::whois;
+use crate::modules::Attack;
+use crate::modules::StreamedAttack;
 use crate::rpc::start_rpc_server;
 use crate::utils::input;
 use crate::utils::kraken_endpoint;
@@ -83,15 +81,6 @@ pub mod models;
 pub mod modules;
 pub mod rpc;
 pub mod utils;
-
-/// The technique to use for the port scan
-#[derive(Debug, ValueEnum, Copy, Clone)]
-pub enum PortScanTechnique {
-    /// A tcp connect scan
-    TcpCon,
-    /// A icmp scan
-    Icmp,
-}
 
 /// The execution commands
 #[derive(Subcommand)]
@@ -267,9 +256,6 @@ pub enum RunCommand {
     OsDetection {
         /// The ip to query information for.
         ip: IpAddr,
-        /// Timeout in milliseconds after which to abort checks and discard all immediate results.
-        #[clap(default_value_t = 60000)]
-        total_timeout: u64,
         /// Timeout for each probe.
         #[clap(default_value_t = 5000)]
         timeout: u64,
@@ -318,6 +304,10 @@ pub enum Command {
         /// Api key to authenticate when pushing
         #[clap(long)]
         api_key: Option<String>,
+
+        /// Output the results as json
+        #[clap(long)]
+        json: bool,
 
         /// the subcommand to execute
         #[clap(subcommand)]
@@ -368,6 +358,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         Command::Execute {
             config_path,
+            json,
             command,
             verbosity,
             push,
@@ -382,7 +373,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
             env_logger::init();
 
-            if let Some(workspace) = push {
+            let push = if let Some(workspace) = push {
                 if !config_path.exists() {
                     return Err("The config file does not exist at the specified path".into());
                 }
@@ -396,6 +387,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         .map_err(|e| format!("io error while reading the config file: {e}"))?,
                 )
                 .map_err(|e| format!("The config file contains invalid TOML: {e}"))?;
+                let endpoint = kraken_endpoint(&config.kraken)?;
 
                 let api_key = if let Some(api_key) = api_key {
                     api_key
@@ -406,156 +398,38 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         .await?
                         .ok_or_else(|| "Can't push to kraken without api key".to_string())?
                 };
-
-                match command {
-                    RunCommand::CertificateTransparency {
-                        target,
-                        include_expired,
-                        max_retries,
-                        retry_interval,
-                    } => {
-                        let ct = CertificateTransparencySettings {
-                            target,
-                            include_expired,
-                            max_retries,
-                            retry_interval: Duration::from_millis(retry_interval as u64),
-                        };
-
-                        let entries = query_ct_api(ct).await?;
-
-                        for x in entries
-                            .iter()
-                            .flat_map(|e| {
-                                let mut name_value = e.name_value.clone();
-
-                                name_value.push(e.common_name.clone());
-                                name_value
-                            })
-                            .sorted()
-                            .dedup()
-                        {
-                            info!("{x}");
-                        }
-
-                        info!("Sending results to kraken");
-
-                        let endpoint = kraken_endpoint(&config.kraken)?;
-                        let chan = endpoint.connect().await.unwrap();
-
-                        let mut client = PushAttackServiceClient::new(chan);
-                        client
-                            .push_attack(PushAttackRequest {
-                                workspace_uuid: workspace.to_string(),
-                                api_key,
-                                response: Some(
-                                    push_attack_request::Response::CertificateTransparency(
-                                        CertificateTransparencyResponse {
-                                            entries: entries
-                                                .into_iter()
-                                                .map(|x| CertEntry {
-                                                    value_names: x.name_value,
-                                                    common_name: x.common_name,
-                                                    serial_number: x.serial_number,
-                                                    not_after: x.not_after.map(|ts| {
-                                                        Timestamp::date_time_nanos(
-                                                            ts.year() as i64,
-                                                            ts.month() as u8,
-                                                            ts.day() as u8,
-                                                            ts.hour() as u8,
-                                                            ts.minute() as u8,
-                                                            ts.second() as u8,
-                                                            ts.nanosecond(),
-                                                        )
-                                                        .unwrap()
-                                                    }),
-                                                    not_before: x.not_before.map(|ts| {
-                                                        Timestamp::date_time_nanos(
-                                                            ts.year() as i64,
-                                                            ts.month() as u8,
-                                                            ts.day() as u8,
-                                                            ts.hour() as u8,
-                                                            ts.minute() as u8,
-                                                            ts.second() as u8,
-                                                            ts.nanosecond(),
-                                                        )
-                                                        .unwrap()
-                                                    }),
-                                                    issuer_name: x.issuer_name,
-                                                })
-                                                .collect(),
-                                        },
-                                    ),
-                                ),
-                            })
-                            .await
-                            .unwrap();
-
-                        info!("Finished sending results to kraken")
-                    }
-                    _ => todo!("Not supported right now for pushing to kraken"),
-                }
+                Some((endpoint, workspace, api_key))
             } else {
+                None
+            };
+
+            {
                 match command {
                     RunCommand::BruteforceSubdomains {
                         target,
                         wordlist_path,
                         concurrent_limit,
                     } => {
-                        let (tx, mut rx) = mpsc::channel(128);
-
-                        let join_handle = task::spawn(bruteforce_subdomains(
+                        run_streamed_attack::<BruteforceSubdomain>(
                             BruteforceSubdomainsSettings {
                                 domain: target.to_string(),
                                 wordlist_path,
                                 concurrent_limit: u32::from(concurrent_limit),
                             },
-                            tx,
-                        ));
-
-                        while let Some(res) = rx.recv().await {
-                            match res {
-                                BruteforceSubdomainResult::A { source, target } => {
-                                    info!("Found a record for {source}: {target}");
-                                }
-                                BruteforceSubdomainResult::Aaaa { source, target } => {
-                                    info!("Found aaaa record for {source}: {target}");
-                                }
-                                BruteforceSubdomainResult::Cname { source, target } => {
-                                    info!("Found cname record for {source}: {target}");
-                                }
-                            };
-                        }
-
-                        join_handle.await??;
+                            push,
+                            json,
+                        )
+                        .await?;
                     }
                     RunCommand::DnsTxt { target } => {
-                        let (tx, mut rx) = mpsc::channel(128);
-
-                        let join_handle = task::spawn(start_dns_txt_scan(
+                        run_streamed_attack::<DnsTxtScan>(
                             DnsTxtScanSettings {
                                 domains: Vec::from([target.to_string()]),
                             },
-                            tx,
-                        ));
-
-                        while let Some(res) = rx.recv().await {
-                            match res.info {
-                                modules::dns::txt::TxtScanInfo::SPF { parts } => {
-                                    info!("Found SPF entry for {}:", res.domain);
-                                    for part in parts {
-                                        info!("  {part}");
-                                    }
-                                }
-                                modules::dns::txt::TxtScanInfo::ServiceHints { hints } => {
-                                    info!("Found service hints for {}:", res.domain);
-                                    for (_rule, hint) in hints {
-                                        info!("  {hint}");
-                                    }
-                                }
-                            };
-                        }
-
-                        join_handle.await??;
+                            push,
+                            json,
+                        )
+                        .await?;
                     }
                     RunCommand::CertificateTransparency {
                         target,
@@ -563,52 +437,36 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         max_retries,
                         retry_interval,
                     } => {
-                        let ct = CertificateTransparencySettings {
-                            target,
-                            include_expired,
-                            max_retries,
-                            retry_interval: Duration::from_millis(retry_interval as u64),
-                        };
-
-                        let entries = query_ct_api(ct).await?;
-                        for x in entries
-                            .into_iter()
-                            .flat_map(|mut e| {
-                                e.name_value.push(e.common_name);
-                                e.name_value
-                            })
-                            .sorted()
-                            .dedup()
-                        {
-                            info!("{x}");
-                        }
+                        run_normal_attack::<CertificateTransparency>(
+                            CertificateTransparencySettings {
+                                target,
+                                include_expired,
+                                max_retries,
+                                retry_interval: Duration::from_millis(retry_interval as u64),
+                            },
+                            push,
+                            json,
+                        )
+                        .await?;
                     }
                     RunCommand::IcmpScanner {
                         targets,
                         timeout,
                         concurrent_limit,
                     } => {
-                        let addresses = targets
-                            .iter()
-                            .map(|s| IpNetwork::from_str(s))
-                            .collect::<Result<_, _>>()?;
-
-                        let settings = IcmpScanSettings {
-                            addresses,
-                            timeout: Duration::from_millis(timeout as u64),
-                            concurrent_limit: u32::from(concurrent_limit),
-                        };
-                        let (tx, mut rx) = mpsc::channel(1);
-
-                        task::spawn(async move {
-                            while let Some(addr) = rx.recv().await {
-                                info!("Host up: {addr}");
-                            }
-                        });
-
-                        if let Err(err) = start_icmp_scan(settings, tx).await {
-                            error!("{err}");
-                        }
+                        run_streamed_attack::<IcmpScan>(
+                            IcmpScanSettings {
+                                addresses: targets
+                                    .iter()
+                                    .map(|s| IpNetwork::from_str(s))
+                                    .collect::<Result<_, _>>()?,
+                                timeout: Duration::from_millis(timeout as u64),
+                                concurrent_limit: u32::from(concurrent_limit),
+                            },
+                            push,
+                            json,
+                        )
+                        .await?;
                     }
                     RunCommand::Dehashed { query } => {
                         let email = match env::var("DEHASHED_EMAIL") {
@@ -657,30 +515,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         skip_icmp_check,
                         just_scan,
                     } => {
-                        let addresses = targets
-                            .iter()
-                            .map(|s| IpNetwork::from_str(s))
-                            .collect::<Result<_, _>>()?;
-
-                        let (tx, mut rx) = mpsc::channel::<TcpServiceDetectionResult>(1);
-                        if just_scan {
-                            tokio::spawn(async move {
-                                while let Some(result) = rx.recv().await {
-                                    info!("Open port found: {}", result.addr);
-                                }
-                            });
-                        } else {
-                            tokio::spawn(async move {
-                                while let Some(result) = rx.recv().await {
-                                    info!("Open port found: {}", result.addr,);
-                                    info!("It's running: {:?} (TCP)", result.tcp_service);
-                                    info!("It's running: {:?} (TLS over TCP)", result.tls_service);
-                                }
-                            });
-                        }
-                        start_tcp_service_detection(
+                        run_streamed_attack::<TcpServiceDetection>(
                             TcpServiceDetectionSettings {
-                                addresses,
+                                addresses: targets
+                                    .iter()
+                                    .map(|s| IpNetwork::from_str(s))
+                                    .collect::<Result<_, _>>()?,
                                 ports: utils::parse_ports(&ports, Some(1..=u16::MAX))?,
                                 connect_timeout: Duration::from_millis(connect_timeout as u64),
                                 receive_timeout: Duration::from_millis(receive_timeout as u64),
@@ -690,10 +530,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 skip_icmp_check,
                                 just_scan,
                             },
-                            tx,
+                            push,
+                            json,
                         )
-                        .await
-                        .map_err(|e| e.to_string())?;
+                        .await?;
                     }
                     RunCommand::ServiceDetectionUdp {
                         targets,
@@ -703,38 +543,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         retry_interval,
                         concurrent_limit,
                     } => {
-                        let addresses = targets
-                            .iter()
-                            .map(|s| IpNetwork::from_str(s))
-                            .collect::<Result<_, _>>()?;
-
-                        let (tx, mut rx) =
-                            mpsc::channel::<service_detection::udp::UdpServiceDetectionResult>(1);
-
-                        task::spawn(async move {
-                            while let Some(result) = rx.recv().await {
-                                info!(
-                                    "detected service on {}:{}: {:?}",
-                                    result.address, result.port, result.service
-                                );
-                            }
-                        });
-
-                        if let Err(err) = service_detection::udp::start_udp_service_detection(
-                            &service_detection::udp::UdpServiceDetectionSettings {
-                                addresses,
+                        run_streamed_attack::<UdpServiceDetection>(
+                            UdpServiceDetectionSettings {
+                                addresses: targets
+                                    .iter()
+                                    .map(|s| IpNetwork::from_str(s))
+                                    .collect::<Result<_, _>>()?,
                                 ports: utils::parse_ports(&ports, Some(1..=u16::MAX))?,
                                 max_retries: port_retries,
                                 retry_interval: Duration::from_millis(retry_interval),
                                 timeout: Duration::from_millis(timeout),
                                 concurrent_limit: u32::from(concurrent_limit),
                             },
-                            tx,
+                            push,
+                            json,
                         )
-                        .await
-                        {
-                            error!("{err}");
-                        }
+                        .await?;
                     }
                     RunCommand::TcpFingerprint { ip, port, timeout } => {
                         let fp = fingerprint_tcp(
@@ -746,15 +570,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     }
                     RunCommand::OsDetection {
                         ip,
-                        total_timeout,
                         timeout,
                         port_timeout,
                         ssh_port,
                     } => {
-                        let os = tokio::time::timeout(
-                            Duration::from_millis(total_timeout),
-                            os_detection(OsDetectionSettings {
-                                ip_addr: ip,
+                        run_streamed_attack::<OsDetection>(
+                            OsDetectionSettings {
+                                addresses: vec![ip.into()],
                                 fingerprint_port: None,
                                 fingerprint_timeout: Duration::from_millis(timeout),
                                 ssh_port: Some(ssh_port),
@@ -762,52 +584,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 ssh_timeout: Duration::from_millis(timeout),
                                 port_ack_timeout: Duration::from_millis(port_timeout),
                                 port_parallel_syns: 8,
-                            }),
+                                concurrent_limit: 0,
+                            },
+                            push,
+                            json,
                         )
                         .await?;
-
-                        match os {
-                            Ok(os) => {
-                                println!("OS detection result:");
-                                println!("- likely OS: {}", os);
-                                let hints = os.hints();
-                                if !hints.is_empty() {
-                                    println!("- hints:");
-                                    for hint in hints {
-                                        println!("\t- {hint}");
-                                    }
-                                }
-                            }
-                            Err(err) => {
-                                println!("Failed detecting OS: {err}")
-                            }
-                        }
                     }
                     RunCommand::TestSSL { domain, ip, port } => {
-                        let json = testssl::run_testssl(TestSSLSettings {
-                            domain,
-                            ip,
-                            port,
-                            ..Default::default()
-                        })
+                        run_normal_attack::<TestSSL>(
+                            TestSSLSettings {
+                                domain,
+                                ip,
+                                port,
+                                ..Default::default()
+                            },
+                            push,
+                            json,
+                        )
                         .await?;
-                        for result in &json.scan_result {
-                            if let testssl::Service::Result(service) = result {
-                                for (_section, findings) in service.iter() {
-                                    for finding in findings {
-                                        let finding_id = testssl::finding_id::FindingId::from(
-                                            finding.id.as_str(),
-                                        );
-                                        if let testssl::finding_id::FindingId::Unknown(id) =
-                                            finding_id
-                                        {
-                                            warn!("Unknown finding_id: {id}");
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        println!("{}", serde_json::to_string_pretty(&json)?);
                     }
                 }
             }
@@ -845,4 +640,126 @@ async fn get_db() -> Result<Database, String> {
     Database::connect(db_config)
         .await
         .map_err(|e| format!("Error connecting to the database: {e}"))
+}
+
+async fn run_normal_attack<A: Attack>(
+    settings: A::Settings,
+    push: Option<(Endpoint, Uuid, String)>,
+    json: bool,
+) -> Result<(), Box<dyn Error>> {
+    let output = A::execute(settings).await?;
+
+    if json {
+        println!("{}", serde_json::to_string(&output)?);
+    } else {
+        A::print_output(&output);
+    }
+
+    if let Some((endpoint, workspace, api_key)) = push {
+        if ask_push_confirmation(&output)?.is_continue() {
+            let mut kraken = PushAttackServiceClient::connect(endpoint).await?;
+            kraken
+                .push_attack(PushAttackRequest {
+                    workspace_uuid: workspace.to_string(),
+                    api_key,
+                    response: Some(A::wrap_for_push(A::encode_output(output))),
+                })
+                .await?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn run_streamed_attack<A: StreamedAttack>(
+    settings: A::Settings,
+    push: Option<(Endpoint, Uuid, String)>,
+    json: bool,
+) -> Result<(), Box<dyn Error>> {
+    let (tx, mut rx) = mpsc::channel::<A::Output>(1);
+
+    let should_collect = push.is_some() || json;
+    let collector = task::spawn(async move {
+        let mut outputs = Vec::new();
+        while let Some(output) = rx.recv().await {
+            if !json {
+                A::print_output(&output);
+            }
+            if should_collect {
+                outputs.push(output);
+            }
+        }
+        outputs
+    });
+
+    A::execute(settings, tx).await?;
+    let outputs = collector.await?;
+
+    if json {
+        println!("{}", serde_json::to_string(&outputs)?);
+    }
+
+    if let Some((endpoint, workspace, api_key)) = push {
+        if ask_push_confirmation(&outputs)?.is_continue() {
+            let mut kraken = PushAttackServiceClient::connect(endpoint).await?;
+            kraken
+                .push_attack(PushAttackRequest {
+                    workspace_uuid: workspace.to_string(),
+                    api_key,
+                    response: Some(A::wrap_for_push(
+                        outputs.into_iter().map(A::encode_output).collect(),
+                    )),
+                })
+                .await?;
+        }
+    }
+
+    Ok(())
+}
+
+fn ask_push_confirmation(data: &impl fmt::Debug) -> io::Result<ControlFlow<()>> {
+    let pager = env::var("PAGER")
+        .ok()
+        .or_else(|| {
+            Path::new("/usr/bin/pager")
+                .exists()
+                .then_some("/usr/bin/pager".to_string())
+        })
+        .unwrap_or_else(|| "less".to_string());
+
+    loop {
+        print!("Do you want to push these results? [y/N/p/pp/?]: ");
+        io::stdout().flush()?;
+
+        let mut input = String::new();
+        io::stdin().read_line(&mut input)?;
+        input = input.trim().to_ascii_lowercase();
+
+        match input.as_str() {
+            "" | "n" => return Ok(ControlFlow::Break(())),
+            "y" => return Ok(ControlFlow::Continue(())),
+            "p" | "pp" => {
+                let mut process = std::process::Command::new(&pager)
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::inherit())
+                    .spawn()?;
+
+                if input.len() == 1 {
+                    write!(process.stdin.take().unwrap(), "{data:?}")?;
+                } else {
+                    write!(process.stdin.take().unwrap(), "{data:#?}")?;
+                }
+
+                process.wait()?;
+            }
+            "?" => {
+                println!("y  - yes");
+                println!("n  - no");
+                println!("p  - print data to push");
+                println!("pp - pretty print data to push");
+                println!("?  - show this message");
+            }
+            _ => println!("Unknown option"),
+        }
+    }
 }

@@ -24,6 +24,15 @@ use hickory_resolver::proto::rr::Record;
 use hickory_resolver::proto::rr::RecordType;
 use hickory_resolver::TokioAsyncResolver;
 use itertools::Itertools;
+use kraken_proto::any_attack_response;
+use kraken_proto::push_attack_request;
+use kraken_proto::shared;
+use kraken_proto::shared::Aaaa;
+use kraken_proto::shared::DnsRecord;
+use kraken_proto::shared::GenericRecord;
+use kraken_proto::BruteforceSubdomainRequest;
+use kraken_proto::BruteforceSubdomainResponse;
+use kraken_proto::RepeatedBruteforceSubdomainResponse;
 use log::debug;
 use log::error;
 use log::info;
@@ -32,11 +41,92 @@ use log::warn;
 use rand::distr::Alphanumeric;
 use rand::distr::SampleString;
 use rand::rng;
+use serde::Serialize;
 use tokio::sync::mpsc;
+use tokio::sync::mpsc::Sender;
 use tokio::task::JoinSet;
 use tokio::time::sleep;
+use tonic::Status;
 
 use crate::modules::bruteforce_subdomains::error::BruteforceSubdomainError;
+use crate::modules::StreamedAttack;
+
+/// Attack enumerating subdomains by brute forcing dns records with a wordlist.
+pub struct BruteforceSubdomain;
+#[tonic::async_trait]
+impl StreamedAttack for BruteforceSubdomain {
+    type Settings = BruteforceSubdomainsSettings;
+    type Output = BruteforceSubdomainResult;
+    type Error = BruteforceSubdomainError;
+    async fn execute(
+        settings: Self::Settings,
+        sender: Sender<Self::Output>,
+    ) -> Result<(), Self::Error> {
+        bruteforce_subdomains(settings, sender).await
+    }
+
+    type Request = BruteforceSubdomainRequest;
+    fn get_attack_uuid(request: &Self::Request) -> &str {
+        &request.attack_uuid
+    }
+    fn decode_settings(request: Self::Request) -> Result<Self::Settings, Status> {
+        Ok(BruteforceSubdomainsSettings {
+            domain: request.domain,
+            wordlist_path: request.wordlist_path.parse().unwrap(),
+            concurrent_limit: request.concurrent_limit,
+        })
+    }
+
+    type Response = BruteforceSubdomainResponse;
+    fn encode_output(output: Self::Output) -> Self::Response {
+        BruteforceSubdomainResponse {
+            record: Some(match output {
+                BruteforceSubdomainResult::A { source, target } => DnsRecord {
+                    record: Some(shared::dns_record::Record::A(shared::A {
+                        source,
+                        to: Some(shared::Ipv4::from(target)),
+                    })),
+                },
+                BruteforceSubdomainResult::Aaaa { source, target } => DnsRecord {
+                    record: Some(shared::dns_record::Record::Aaaa(Aaaa {
+                        source,
+                        to: Some(shared::Ipv6::from(target)),
+                    })),
+                },
+                BruteforceSubdomainResult::Cname { source, target } => DnsRecord {
+                    record: Some(shared::dns_record::Record::Cname(GenericRecord {
+                        source,
+                        to: target,
+                    })),
+                },
+            }),
+        }
+    }
+
+    fn print_output(output: &Self::Output) {
+        match output {
+            BruteforceSubdomainResult::A { source, target } => {
+                info!("Found a record for {source}: {target}");
+            }
+            BruteforceSubdomainResult::Aaaa { source, target } => {
+                info!("Found aaaa record for {source}: {target}");
+            }
+            BruteforceSubdomainResult::Cname { source, target } => {
+                info!("Found cname record for {source}: {target}");
+            }
+        };
+    }
+
+    fn wrap_for_backlog(response: Self::Response) -> any_attack_response::Response {
+        any_attack_response::Response::BruteforceSubdomain(response)
+    }
+
+    fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response {
+        push_attack_request::Response::BruteforceSubdomain(RepeatedBruteforceSubdomainResponse {
+            responses,
+        })
+    }
+}
 
 pub mod error;
 
@@ -63,7 +153,7 @@ pub struct BruteforceSubdomainsSettings {
 }
 
 /// Result of a subdomain
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub enum BruteforceSubdomainResult {
     /// A record
     A {

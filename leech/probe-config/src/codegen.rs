@@ -153,7 +153,7 @@ impl<'a> From<&'a [ProbeFile]> for AllProbes<'a> {
     }
 }
 
-impl<'a> fmt::Display for AllProbes<'a> {
+impl fmt::Display for AllProbes<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         const HEADER: &str = r#"
 use once_cell::sync::Lazy;
@@ -217,7 +217,7 @@ pub static PROBES: Lazy<AllProbes> = Lazy::new(|| AllProbes {"#;
 }
 
 struct ProbeGroup<'a, T>(pub &'a Vec<T>);
-impl<'a, T: fmt::Display> fmt::Display for ProbeGroup<'a, T> {
+impl<T: fmt::Display> fmt::Display for ProbeGroup<'_, T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "vec![")?;
         for probe in self.0 {
@@ -227,7 +227,7 @@ impl<'a, T: fmt::Display> fmt::Display for ProbeGroup<'a, T> {
     }
 }
 
-impl<'a> fmt::Display for RegexProbe<'a> {
+impl fmt::Display for RegexProbe<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self {
             service,
@@ -242,7 +242,7 @@ impl<'a> fmt::Display for RegexProbe<'a> {
     }
 }
 
-impl<'a> fmt::Display for PayloadProbe<'a> {
+impl fmt::Display for PayloadProbe<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self { base, payload } = self;
         write!(f, "PayloadProbe {{ base: {base}, payload: ")?;
@@ -255,7 +255,7 @@ impl<'a> fmt::Display for PayloadProbe<'a> {
     }
 }
 
-impl<'a> fmt::Display for TlsProbe<'a> {
+impl fmt::Display for TlsProbe<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self {
             base,
@@ -277,7 +277,7 @@ impl<'a> fmt::Display for TlsProbe<'a> {
     }
 }
 
-impl<'a> fmt::Display for RustProbe<'a> {
+impl fmt::Display for RustProbe<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self {
             service,
