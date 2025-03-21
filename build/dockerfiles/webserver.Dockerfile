@@ -6,11 +6,9 @@ WORKDIR /app
 
 RUN <<EOF
 apt-get update
-apt-get install openssl libssl-dev pkg-config mold curl -y
+apt-get install openssl libssl-dev pkg-config curl -y
 apt-get install libprotobuf-dev protobuf-compiler build-essential -y
 EOF
-
-COPY ./build/webserver/cargo-config.toml .cargo/config.toml
 
 RUN --mount=type=bind,source=kraken/,target=kraken/ \
     --mount=type=bind,source=kraken-proto/,target=kraken-proto/ \
@@ -22,8 +20,8 @@ RUN --mount=type=bind,source=kraken/,target=kraken/ \
     --mount=type=cache,target=/usr/local/cargo/registry/ \
     <<EOF
 set -e
-cargo build --package kraken --features bin --locked
-cp ./target/debug/kraken /bin/server
+cargo build --release --package kraken --features bin --locked
+cp ./target/release/kraken /bin/server
 EOF
 
 
@@ -40,7 +38,7 @@ RUN chmod +x /startup.sh
 
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/   #user
-ARG UID=1000
+ARG UID=10000
 RUN adduser \
     --disabled-password \
     --gecos "" \
