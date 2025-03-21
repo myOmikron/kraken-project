@@ -47,7 +47,7 @@ export function ListFindingDefinition(props: ListFindingDefinitionProps) {
             </div>
             <div className={"list-finding-definition-list"}>
                 {defs
-                    .filter(({ name }) => name.includes(search))
+                    .filter(({ name }) => name.toLowerCase().includes(search.toLowerCase()))
                     .map((def) => (
                         <div
                             className={"list-finding-definition-item pane"}
