@@ -2,12 +2,24 @@
 
 ## WIP
 
+## 0.6.0
+
 ### Features leech
 
 - any attack startable from kraken can now be started directly in leech's CLI
   pushing the results to kraken
 - any attack startable from kraken has a json output when run directly in
   leech's CLI
+
+### Frontend Fixes
+
+- Finding Definitions are now searchable case-insensitive
+- Fixed height of findings table in workspaces
+
+### General
+
+- Kraken is now fully supported to be run via docker
+- Leech is on the way
 
 ## 0.5.1
 
