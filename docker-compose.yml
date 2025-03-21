@@ -6,7 +6,7 @@ services:
     ports:
       - "127.0.0.1:8080:80"
     volumes:
-      - ./data/conf/nginx/admin.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./data/conf/nginx/kraken.conf:/etc/nginx/conf.d/default.conf:ro
     build:
       dockerfile: ./build/dockerfiles/nginx.Dockerfile
 
