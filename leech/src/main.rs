@@ -7,7 +7,7 @@
 //!
 //! You can also use the leech as a cli utility without a kraken attached for manual
 //! execution and testing. See the subcommand `run` for further information.
-// #![warn(missing_docs)]
+#![warn(missing_docs)]
 #![cfg_attr(
     feature = "rorm-main",
     allow(dead_code, unused_variables, unused_imports)

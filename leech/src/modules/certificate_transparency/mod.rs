@@ -28,6 +28,7 @@ use crate::modules::certificate_transparency::crt_sh_types::CertLogEntry;
 use crate::modules::certificate_transparency::error::CertificateTransparencyError;
 use crate::modules::Attack;
 
+/// Attack querying the crt.sh certificate transparency api.
 pub struct CertificateTransparency;
 #[tonic::async_trait]
 impl Attack for CertificateTransparency {

@@ -53,6 +53,7 @@ use super::spf::SPFMechanism;
 use super::spf::SPFPart;
 use super::spf::SPFQualifier;
 
+/// Attack scanning DNS TXT recursively
 pub struct DnsTxtScan;
 #[tonic::async_trait]
 impl StreamedAttack for DnsTxtScan {

@@ -35,6 +35,7 @@ use tonic::Status;
 use crate::modules::dns::errors::DnsResolutionError;
 use crate::modules::StreamedAttack;
 
+/// Attack resolving DNS
 pub struct DnsResolution;
 #[tonic::async_trait]
 impl StreamedAttack for DnsResolution {

@@ -41,6 +41,7 @@ mod detection;
 mod oneshot;
 mod scanner;
 
+/// Attack scanning for open tcp ports and detecting their services
 pub struct TcpServiceDetection;
 #[tonic::async_trait]
 impl StreamedAttack for TcpServiceDetection {

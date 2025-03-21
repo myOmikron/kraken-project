@@ -30,6 +30,7 @@ use crate::modules::service_detection::generated;
 use crate::modules::service_detection::generated::Match;
 use crate::modules::StreamedAttack;
 
+/// Attack detecting UDP services behind a port by sending it probes
 pub struct UdpServiceDetection;
 #[tonic::async_trait]
 impl StreamedAttack for UdpServiceDetection {

@@ -41,6 +41,7 @@ mod fingerprint_db;
 mod syn_scan;
 pub mod tcp_fingerprint;
 
+/// Attack detecting a host's OS through various methods
 pub struct OsDetection;
 #[async_trait]
 impl StreamedAttack for OsDetection {
@@ -198,6 +199,7 @@ impl StreamedAttack for OsDetection {
     }
 }
 
+/// A detected OS and the address it was detected on
 #[derive(Debug, Clone)]
 pub struct OsDetectionResult {
     /// The address that the os was detected on.

@@ -50,6 +50,7 @@ use tonic::Status;
 use crate::modules::bruteforce_subdomains::error::BruteforceSubdomainError;
 use crate::modules::StreamedAttack;
 
+/// Attack enumerating subdomains by brute forcing dns records with a wordlist.
 pub struct BruteforceSubdomain;
 #[tonic::async_trait]
 impl StreamedAttack for BruteforceSubdomain {

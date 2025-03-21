@@ -20,6 +20,12 @@ pub mod service_detection;
 pub mod testssl;
 pub mod whois;
 
+/// Everything which is need to implement an attack.
+///
+/// This trait should be implemented on a unit struct (ex: `struct MyAttack;`).
+/// It bundles the various types and functions required to implement an attack.
+///
+/// An attack's core functionality is the [`execute`] function and its associated types.
 #[tonic::async_trait]
 pub trait Attack {
     /// A struct containing the parameters to run the attack with
@@ -48,9 +54,18 @@ pub trait Attack {
     /// Print an output to stdout for a cli use to see
     fn print_output(output: &Self::Output);
 
+    /// Wrap the attack's response in its [`push_attack_request::Response`] variant used for pushing it to the kraken.
+    ///
+    /// This function shouldn't do more logic than simply wrapping `response` in an enum variant.
     fn wrap_for_push(response: Self::Response) -> push_attack_request::Response;
 }
 
+/// Everything which is need to implement an attack which streams its results.
+///
+/// This trait should be implemented on a unit struct (ex: `struct MyAttack;`).
+/// It bundles the various types and functions required to implement an attack.
+///
+/// An attack's core functionality is the [`execute`] function and its associated types.
 #[tonic::async_trait]
 pub trait StreamedAttack {
     /// A struct containing the parameters to run the attack with
@@ -89,6 +104,13 @@ pub trait StreamedAttack {
     /// Print an output to stdout for a cli use to see
     fn print_output(output: &Self::Output);
 
+    /// Wrap the attack's response in its [`any_attack_response::Response`] variant used for storing them to the backlog.
+    ///
+    /// This function shouldn't do more logic than simply wrapping `response` in an enum variant.
     fn wrap_for_backlog(response: Self::Response) -> any_attack_response::Response;
+
+    /// Wrap the attack's responses in its [`push_attack_request::Response`] variant used for pushing them to the kraken.
+    ///
+    /// This function shouldn't do more logic than simply wrapping `responses` in an enum variant and the `Repeated...` intermediate.
     fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response;
 }

@@ -33,6 +33,7 @@ mod json;
 mod json_pretty;
 pub use self::json_pretty::*;
 
+/// Attack running `testssl.sh`
 pub struct TestSSL;
 #[async_trait]
 impl Attack for TestSSL {

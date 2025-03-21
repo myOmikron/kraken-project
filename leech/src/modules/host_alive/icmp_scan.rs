@@ -29,6 +29,7 @@ use tonic::Status;
 use crate::modules::host_alive::error::IcmpScanError;
 use crate::modules::StreamedAttack;
 
+/// Attack scanning hosts with ICMP
 pub struct IcmpScan;
 #[tonic::async_trait]
 impl StreamedAttack for IcmpScan {
