@@ -48,8 +48,11 @@ RUN adduser \
     --uid "${UID}" \
     appuser
 
-RUN mkdir -p /var/lib/kraken /migrations
+RUN mkdir -p /var/lib/kraken
 RUN chown ${UID} -R /var/lib/kraken
+
+# Copy migrations
+COPY ./kraken/migrations /migrations
 
 # Copy the executable from the "build" stage.
 COPY --from=buildrust /bin/server /bin/
