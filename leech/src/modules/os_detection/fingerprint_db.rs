@@ -33,8 +33,7 @@ impl FingerprintPattern {
 }
 
 fn parse_fingerprint_db(db: &str) -> Vec<FingerprintPattern> {
-    return db
-        .lines()
+    db.lines()
         .filter(|&s| !s.trim().is_empty() && !s.trim().starts_with('#'))
         .map(|s| s.splitn(3, '|'))
         .map(|mut p| {
@@ -84,7 +83,7 @@ fn parse_fingerprint_db(db: &str) -> Vec<FingerprintPattern> {
                 _ => panic!("unknown OS type: {}", os),
             },
         })
-        .collect();
+        .collect()
 }
 
 #[cfg(test)]

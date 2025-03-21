@@ -90,7 +90,7 @@ fn format_list<T>(v: &[T]) -> String
 where
     T: Display,
 {
-    return v.iter().map(|v| format!("- {}", v)).join("\n");
+    v.iter().map(|v| format!("- {}", v)).join("\n")
 }
 
 impl Display for ResolutionStatus {

@@ -96,7 +96,7 @@ where
     D: Deserializer<'de>,
 {
     struct Bool11Visitor;
-    impl<'de> Visitor<'de> for Bool11Visitor {
+    impl Visitor<'_> for Bool11Visitor {
         type Value = bool;
 
         fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {

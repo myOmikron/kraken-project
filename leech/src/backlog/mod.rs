@@ -67,7 +67,7 @@ const DB_QUERY_LIMIT: usize = 1000;
 /// Starts the backlog upload server
 pub async fn start_backlog(db: Database) -> Result<Backlog, Box<dyn Error>> {
     let secret = LEECH_SECRET.parse()?;
-    let endpoint = kraken_endpoint(&*KRAKEN)?;
+    let endpoint = kraken_endpoint(&KRAKEN)?;
     let notify = Arc::new(Notify::new());
 
     tokio::spawn({

@@ -283,7 +283,7 @@ async fn resolve<T, Func>(resolver: Func) -> Result<T, ()>
 where
     Func: Future<Output = Result<T, ResolveError>>,
 {
-    return resolver.await.map_err(|err| match err.kind() {
+    resolver.await.map_err(|err| match err.kind() {
         ResolveErrorKind::Message(err) => error!("Message: {err}"),
         ResolveErrorKind::Msg(err) => error!("Msg: {err}"),
         ResolveErrorKind::NoConnections => {
@@ -296,7 +296,7 @@ where
             debug!("Wildcard test: no wildcard")
         }
         _ => error!("Unknown error"),
-    });
+    })
 }
 
 async fn send_records(domain: &str, tx: &Sender<DnsRecordResult>, records: &[Record]) {
