@@ -3,6 +3,7 @@
 use std::io;
 use std::net::IpAddr;
 
+use kraken_proto::push_attack_request;
 use kraken_proto::test_ssl_scans;
 use kraken_proto::test_ssl_service;
 use kraken_proto::StartTlsProtocol;
@@ -188,6 +189,10 @@ impl Attack for TestSSL {
             serde_json::to_string_pretty(&output)
                 .unwrap_or_else(|error| format!("<Error: {error}>"))
         );
+    }
+
+    fn wrap_for_push(response: Self::Response) -> push_attack_request::Response {
+        push_attack_request::Response::Testssl(response)
     }
 }
 

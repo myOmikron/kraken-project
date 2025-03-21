@@ -172,14 +172,14 @@ impl Attacks {
 
                         // Save this item to the backlog
                         backlog
-                            .store(attack_uuid, (A::BACKLOG_WRAPPER)(response))
+                            .store(attack_uuid, A::wrap_for_backlog(response))
                             .await;
 
                         // Drain all remaining items into the backlog, because the stream is gone
                         while let Some(output) = to_middleware.recv().await {
                             let response = A::encode_output(output);
                             backlog
-                                .store(attack_uuid, (A::BACKLOG_WRAPPER)(response))
+                                .store(attack_uuid, A::wrap_for_backlog(response))
                                 .await;
                         }
                         return;

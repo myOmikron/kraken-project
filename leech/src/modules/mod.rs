@@ -5,6 +5,7 @@ use std::error::Error;
 use std::fmt::Debug;
 
 use kraken_proto::any_attack_response;
+use kraken_proto::push_attack_request;
 use prost::Message;
 use tokio::sync::mpsc::Sender;
 use tonic::Status;
@@ -46,6 +47,8 @@ pub trait Attack {
 
     /// Print an output to stdout for a cli use to see
     fn print_output(output: &Self::Output);
+
+    fn wrap_for_push(response: Self::Response) -> push_attack_request::Response;
 }
 
 #[tonic::async_trait]
@@ -83,9 +86,9 @@ pub trait StreamedAttack {
     /// Convert the attack's output to its response
     fn encode_output(output: Self::Output) -> Self::Response;
 
-    /// The [`any_attack_response::Response`] variant to store the response as in the backlog
-    const BACKLOG_WRAPPER: fn(Self::Response) -> any_attack_response::Response;
-
     /// Print an output to stdout for a cli use to see
     fn print_output(output: &Self::Output);
+
+    fn wrap_for_backlog(response: Self::Response) -> any_attack_response::Response;
+    fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response;
 }

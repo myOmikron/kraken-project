@@ -8,8 +8,10 @@ use futures::stream;
 use futures::TryStreamExt;
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
-use kraken_proto::any_attack_response::Response;
+use kraken_proto::any_attack_response;
+use kraken_proto::push_attack_request;
 use kraken_proto::shared;
+use kraken_proto::RepeatedUdpServiceDetectionResponse;
 use kraken_proto::ServiceCertainty;
 use kraken_proto::UdpServiceDetectionRequest;
 use kraken_proto::UdpServiceDetectionResponse;
@@ -87,13 +89,21 @@ impl StreamedAttack for UdpServiceDetection {
         }
     }
 
-    const BACKLOG_WRAPPER: fn(Self::Response) -> Response = Response::UdpServiceDetection;
-
     fn print_output(output: &Self::Output) {
         info!(
             "detected service on {}:{}: {:?}",
             output.address, output.port, output.service
         );
+    }
+
+    fn wrap_for_backlog(response: Self::Response) -> any_attack_response::Response {
+        any_attack_response::Response::UdpServiceDetection(response)
+    }
+
+    fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response {
+        push_attack_request::Response::UdpServiceDetection(RepeatedUdpServiceDetectionResponse {
+            responses,
+        })
     }
 }
 

@@ -8,8 +8,11 @@ use std::time::Duration;
 use futures::StreamExt;
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
+use kraken_proto::any_attack_response;
 use kraken_proto::any_attack_response::Response;
+use kraken_proto::push_attack_request;
 use kraken_proto::shared;
+use kraken_proto::RepeatedServiceDetectionResponse;
 use kraken_proto::ServiceCertainty;
 use kraken_proto::ServiceDetectionRequest;
 use kraken_proto::ServiceDetectionResponse;
@@ -138,12 +141,20 @@ impl StreamedAttack for TcpServiceDetection {
         response
     }
 
-    const BACKLOG_WRAPPER: fn(Self::Response) -> Response = Response::ServiceDetection;
-
     fn print_output(output: &Self::Output) {
         info!("Open port found: {}", output.addr,);
         info!("It's running: {:?} (TCP)", output.tcp_service);
         info!("It's running: {:?} (TLS over TCP)", output.tls_service);
+    }
+
+    fn wrap_for_backlog(response: Self::Response) -> Response {
+        any_attack_response::Response::ServiceDetection(response)
+    }
+
+    fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response {
+        push_attack_request::Response::ServiceDetection(RepeatedServiceDetectionResponse {
+            responses,
+        })
     }
 }
 

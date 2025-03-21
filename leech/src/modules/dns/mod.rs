@@ -15,7 +15,8 @@ use hickory_resolver::error::ResolveErrorKind;
 use hickory_resolver::proto::rr::Record;
 use hickory_resolver::proto::rr::RecordType;
 use hickory_resolver::TokioAsyncResolver;
-use kraken_proto::any_attack_response::Response;
+use kraken_proto::any_attack_response;
+use kraken_proto::push_attack_request;
 use kraken_proto::shared;
 use kraken_proto::shared::Aaaa;
 use kraken_proto::shared::DnsRecord;
@@ -23,6 +24,7 @@ use kraken_proto::shared::GenericRecord;
 use kraken_proto::shared::A;
 use kraken_proto::DnsResolutionRequest;
 use kraken_proto::DnsResolutionResponse;
+use kraken_proto::RepeatedDnsResolutionResponse;
 use log::debug;
 use log::error;
 use log::info;
@@ -110,8 +112,6 @@ impl StreamedAttack for DnsResolution {
         }
     }
 
-    const BACKLOG_WRAPPER: fn(Self::Response) -> Response = Response::DnsResolution;
-
     fn print_output(output: &Self::Output) {
         match output {
             DnsRecordResult::A { source, target } => {
@@ -136,6 +136,14 @@ impl StreamedAttack for DnsResolution {
                 info!("Found txt record for {source}: {target}");
             }
         };
+    }
+
+    fn wrap_for_backlog(response: Self::Response) -> any_attack_response::Response {
+        any_attack_response::Response::DnsResolution(response)
+    }
+
+    fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response {
+        push_attack_request::Response::DnsResolution(RepeatedDnsResolutionResponse { responses })
     }
 }
 

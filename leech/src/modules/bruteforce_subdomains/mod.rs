@@ -24,13 +24,15 @@ use hickory_resolver::proto::rr::Record;
 use hickory_resolver::proto::rr::RecordType;
 use hickory_resolver::TokioAsyncResolver;
 use itertools::Itertools;
-use kraken_proto::any_attack_response::Response;
+use kraken_proto::any_attack_response;
+use kraken_proto::push_attack_request;
 use kraken_proto::shared;
 use kraken_proto::shared::Aaaa;
 use kraken_proto::shared::DnsRecord;
 use kraken_proto::shared::GenericRecord;
 use kraken_proto::BruteforceSubdomainRequest;
 use kraken_proto::BruteforceSubdomainResponse;
+use kraken_proto::RepeatedBruteforceSubdomainResponse;
 use log::debug;
 use log::error;
 use log::info;
@@ -99,8 +101,6 @@ impl StreamedAttack for BruteforceSubdomain {
         }
     }
 
-    const BACKLOG_WRAPPER: fn(Self::Response) -> Response = Response::BruteforceSubdomain;
-
     fn print_output(output: &Self::Output) {
         match output {
             BruteforceSubdomainResult::A { source, target } => {
@@ -113,6 +113,16 @@ impl StreamedAttack for BruteforceSubdomain {
                 info!("Found cname record for {source}: {target}");
             }
         };
+    }
+
+    fn wrap_for_backlog(response: Self::Response) -> any_attack_response::Response {
+        any_attack_response::Response::BruteforceSubdomain(response)
+    }
+
+    fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response {
+        push_attack_request::Response::BruteforceSubdomain(RepeatedBruteforceSubdomainResponse {
+            responses,
+        })
     }
 }
 

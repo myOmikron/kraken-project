@@ -7,7 +7,8 @@ use hickory_resolver::name_server::GenericConnector;
 use hickory_resolver::name_server::TokioRuntimeProvider;
 use hickory_resolver::AsyncResolver;
 use hickory_resolver::TokioAsyncResolver;
-use kraken_proto::any_attack_response::Response;
+use kraken_proto::any_attack_response;
+use kraken_proto::push_attack_request;
 use kraken_proto::shared;
 use kraken_proto::shared::dns_txt_scan::Info;
 use kraken_proto::shared::spf_directive;
@@ -32,6 +33,7 @@ use kraken_proto::shared::SpfRedirectModifier;
 use kraken_proto::shared::SpfUnknownModifier;
 use kraken_proto::DnsTxtScanRequest;
 use kraken_proto::DnsTxtScanResponse;
+use kraken_proto::RepeatedDnsTxtScanResponse;
 use log::debug;
 use log::info;
 use once_cell::sync::Lazy;
@@ -227,8 +229,6 @@ impl StreamedAttack for DnsTxtScan {
         }
     }
 
-    const BACKLOG_WRAPPER: fn(Self::Response) -> Response = Response::DnsTxtScan;
-
     fn print_output(output: &Self::Output) {
         match &output.info {
             TxtScanInfo::SPF { parts } => {
@@ -241,6 +241,13 @@ impl StreamedAttack for DnsTxtScan {
                 info!("Found txt entry for {}: {}", output.domain, output.info);
             }
         };
+    }
+
+    fn wrap_for_backlog(response: Self::Response) -> any_attack_response::Response {
+        any_attack_response::Response::DnsTxtScan(response)
+    }
+    fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response {
+        push_attack_request::Response::DnsTxtScan(RepeatedDnsTxtScanResponse { responses })
     }
 }
 

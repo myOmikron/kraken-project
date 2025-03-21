@@ -6,10 +6,12 @@ use std::time::Duration;
 use futures::stream;
 use futures::StreamExt;
 use ipnetwork::IpNetwork;
-use kraken_proto::any_attack_response::Response;
+use kraken_proto::any_attack_response;
+use kraken_proto::push_attack_request;
 use kraken_proto::shared::Address;
 use kraken_proto::HostsAliveRequest;
 use kraken_proto::HostsAliveResponse;
+use kraken_proto::RepeatedHostsAliveResponse;
 use log::debug;
 use log::error;
 use log::info;
@@ -67,10 +69,16 @@ impl StreamedAttack for IcmpScan {
         }
     }
 
-    const BACKLOG_WRAPPER: fn(Self::Response) -> Response = Response::HostsAlive;
-
     fn print_output(output: &Self::Output) {
         info!("Host up: {output}");
+    }
+
+    fn wrap_for_backlog(response: Self::Response) -> any_attack_response::Response {
+        any_attack_response::Response::HostsAlive(response)
+    }
+
+    fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response {
+        push_attack_request::Response::HostsAlive(RepeatedHostsAliveResponse { responses })
     }
 }
 

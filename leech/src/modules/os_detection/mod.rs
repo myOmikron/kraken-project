@@ -10,11 +10,13 @@ use std::time::Duration;
 
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
-use kraken_proto::any_attack_response::Response;
+use kraken_proto::any_attack_response;
+use kraken_proto::push_attack_request;
 use kraken_proto::shared::Address;
 use kraken_proto::shared::OperatingSystem;
 use kraken_proto::OsDetectionRequest;
 use kraken_proto::OsDetectionResponse;
+use kraken_proto::RepeatedOsDetectionResponse;
 use log::debug;
 use strum_macros::EnumString;
 use tokio::sync::mpsc::Sender;
@@ -175,8 +177,6 @@ impl StreamedAttack for OsDetection {
         }
     }
 
-    const BACKLOG_WRAPPER: fn(Self::Response) -> Response = Response::OsDetection;
-
     fn print_output(output: &Self::Output) {
         println!("OS detection result:");
         println!("- likely OS: {}", output.os);
@@ -187,6 +187,14 @@ impl StreamedAttack for OsDetection {
                 println!("\t- {hint}");
             }
         }
+    }
+
+    fn wrap_for_backlog(response: Self::Response) -> any_attack_response::Response {
+        any_attack_response::Response::OsDetection(response)
+    }
+
+    fn wrap_for_push(responses: Vec<Self::Response>) -> push_attack_request::Response {
+        push_attack_request::Response::OsDetection(RepeatedOsDetectionResponse { responses })
     }
 }
 
