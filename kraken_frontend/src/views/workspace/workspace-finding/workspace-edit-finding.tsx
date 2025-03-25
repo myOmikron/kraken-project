@@ -202,8 +202,8 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                 )
                     .then((affected) =>
                         affected.map(([uuid, { userDetails, exportDetails, ...fullAffected }]) => {
-                            if (userDetails.length > 0) addAffectedModel(uuid, "User", userDetails);
-                            if (exportDetails.length > 0) addAffectedModel(uuid, "Export", exportDetails);
+                            addAffectedModel(uuid, "User", userDetails);
+                            addAffectedModel(uuid, "Export", exportDetails);
                             return [uuid, fullAffected];
                         }),
                     )
@@ -273,8 +273,8 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                             ...affected,
                             [affectedUuid]: newAffected,
                         }));
-                        if (userDetails.length > 0) addAffectedModel(affectedUuid, "User", userDetails);
-                        if (exportDetails.length > 0) addAffectedModel(affectedUuid, "Export", exportDetails);
+                        addAffectedModel(affectedUuid, "User", userDetails);
+                        addAffectedModel(affectedUuid, "Export", exportDetails);
                     }),
                 );
             }),
@@ -293,24 +293,6 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                 setAffected(({ [affectedUuid]: _, ...rest }) => rest);
                 affectedModels.removeModel(`${affectedUuid}-user`);
                 affectedModels.removeModel(`${affectedUuid}-export`);
-            }),
-            WS.addEventListener("message.EditorChangedContent", ({ target }) => {
-                if (!("findingAffected" in target)) return;
-                if (target.findingAffected.finding !== finding) return;
-                const affectedUuid = target.findingAffected.affected;
-                if (affectedModels.models[`${affectedUuid}-${target.findingAffected.findingDetails.toLowerCase()}`])
-                    return;
-
-                Api.workspaces.findings.getAffected(workspace, finding, affectedUuid).then(
-                    handleApiError(({ userDetails, exportDetails, ...newAffected }) => {
-                        setAffected((affected) => ({
-                            ...affected,
-                            [affectedUuid]: newAffected,
-                        }));
-                        addAffectedModel(affectedUuid, "User", userDetails);
-                        addAffectedModel(affectedUuid, "Export", exportDetails);
-                    }),
-                );
             }),
         ];
         return () => {
@@ -550,45 +532,35 @@ export default function WorkspaceEditFinding(props: WorkspaceEditFindingProps) {
                                                 <EditorPopup
                                                     trigger={
                                                         <div className="details">
-                                                            {affectedModels.models[`${affectedUuid}-user`]?.value
-                                                                ?.length > 0
+                                                            {affectedModels.models[`${affectedUuid}-user`].value
+                                                                .length > 0
                                                                 ? ["Edit User Details", <EditIcon />]
                                                                 : ["Add User Details", <PlusIcon />]}
                                                         </div>
                                                     }
-                                                    onOpen={() => {
-                                                        if (!affectedModels.models[`${affectedUuid}-user`]) {
-                                                            addAffectedModel(affectedUuid, "User", "");
-                                                        }
-                                                    }}
-                                                    value={affectedModels.models[`${affectedUuid}-user`]?.value}
+                                                    value={affectedModels.models[`${affectedUuid}-user`].value}
                                                     heading={"User Details"}
                                                     subHeading={
                                                         <AffectedLabel affected={fullAffected.affected} pretty />
                                                     }
-                                                    model={affectedModels.models[`${affectedUuid}-user`]?.model}
+                                                    model={affectedModels.models[`${affectedUuid}-user`].model}
                                                 />
                                                 <EditorPopup
                                                     trigger={
                                                         <div className="details">
-                                                            {affectedModels.models[`${affectedUuid}-export`]?.value
-                                                                ?.length > 0
+                                                            {affectedModels.models[`${affectedUuid}-export`].value
+                                                                .length > 0
                                                                 ? ["Edit Export Details", <EditIcon />]
                                                                 : ["Add Export Details", <PlusIcon />]}
                                                         </div>
                                                     }
-                                                    onOpen={() => {
-                                                        if (!affectedModels.models[`${affectedUuid}-export`]) {
-                                                            addAffectedModel(affectedUuid, "Export", "");
-                                                        }
-                                                    }}
-                                                    value={affectedModels.models[`${affectedUuid}-export`]?.value}
+                                                    value={affectedModels.models[`${affectedUuid}-export`].value}
                                                     preview={null}
                                                     heading={"Export Details"}
                                                     subHeading={
                                                         <AffectedLabel affected={fullAffected.affected} pretty />
                                                     }
-                                                    model={affectedModels.models[`${affectedUuid}-export`]?.model}
+                                                    model={affectedModels.models[`${affectedUuid}-export`].model}
                                                 />
                                                 <TagList
                                                     tags={fullAffected.affectedTags}

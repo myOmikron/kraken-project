@@ -33,9 +33,6 @@ export type EditorPopupProps = {
 
     /** Optional sub heading for the popup providing some more detail */
     subHeading?: React.ReactNode;
-
-    /** Callback when the popup is opened */
-    onOpen?: () => void;
 } & (
     | {
           /** Callback invoked by the editor to change its value */
@@ -56,10 +53,10 @@ export type EditorPopupProps = {
 
 /** A [`<Popup />`]{@link EditorPopup} which opens an editor */
 export default function EditorPopup(props: EditorPopupProps) {
-    const { trigger, value, preview, heading, subHeading, onOpen } = props;
+    const { trigger, value, preview, heading, subHeading } = props;
 
     return (
-        <Popup className="editor-popup" trigger={trigger} nested modal on={"click"} onOpen={onOpen}>
+        <Popup className="editor-popup" trigger={trigger} nested modal on={"click"}>
             <div className="pane">
                 <div className="label">
                     <h1 className="sub-heading">{heading}</h1>
