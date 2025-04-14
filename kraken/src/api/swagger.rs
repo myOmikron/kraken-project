@@ -444,6 +444,7 @@ pub(crate) struct FrontendApi;
         oauth::handler::auth,
         oauth::handler::token,
         data_export::handler::export_workspace,
+        data_export::handler::download_export_file,
     ),
     components(schemas(
         domains::schema::DomainCertainty,

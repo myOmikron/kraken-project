@@ -1,6 +1,8 @@
 use std::collections::HashMap;
+use std::fs::File;
 use std::future::ready;
 
+use actix_files::NamedFile;
 use actix_web::get;
 use actix_web::web::Json;
 use actix_web::web::Path;
@@ -26,6 +28,8 @@ use crate::api::handler::data_export::schema::AggregatedPort;
 use crate::api::handler::data_export::schema::AggregatedRelation;
 use crate::api::handler::data_export::schema::AggregatedService;
 use crate::api::handler::data_export::schema::AggregatedWorkspace;
+use crate::api::handler::files::schema::PathFile;
+use crate::api::handler::files::utils::media_file_path;
 use crate::chan::global::GLOBAL;
 use crate::chan::ws_manager::schema::AggregationType;
 use crate::models::convert::FromDb;
@@ -44,6 +48,7 @@ use crate::models::HostWorkspaceTag;
 use crate::models::HttpService;
 use crate::models::HttpServiceGlobalTag;
 use crate::models::HttpServiceWorkspaceTag;
+use crate::models::MediaFile;
 use crate::models::Port;
 use crate::models::PortGlobalTag;
 use crate::models::PortWorkspaceTag;
@@ -250,6 +255,17 @@ pub(crate) async fn export_workspace(
         },
     )
     .await?;
+    let affected_screenshots: HashMap<_, _> = query!(
+        &mut tx,
+        (
+            FindingAffected::F.uuid,
+            FindingAffected::F.details.screenshot,
+        )
+    )
+    .condition(FindingAffected::F.workspace.equals(path.uuid))
+    .stream()
+    .try_collect()
+    .await?;
     let mut affected = query!(&mut tx, FindingAffected)
         .condition(FindingAffected::F.workspace.equals(path.uuid))
         .stream()
@@ -305,14 +321,18 @@ pub(crate) async fn export_workspace(
         })
         .try_fold(
             HashMap::<Uuid, HashMap<Uuid, AggregatedFindingAffected>>::new(),
-            |mut map, (finding, aggr_uuid, aggr_type)| async move {
-                let (details, _) = GLOBAL.editor_cache.finding_affected_export_details.get((finding,aggr_uuid)).await?.unwrap_or_default();
-                map.entry(finding).or_default().insert(aggr_uuid, AggregatedFindingAffected {
-                    uuid: aggr_uuid,
-                    r#type: aggr_type,
-                    details,
-                });
-                Ok(map)
+            |mut map, (finding, aggr_uuid, aggr_type)| {
+                let screenshot = affected_screenshots.get(&aggr_uuid).and_then(Option::as_ref).map(|fm| *fm.key());
+                async move {
+                    let (details, _) = GLOBAL.editor_cache.finding_affected_export_details.get((finding,aggr_uuid)).await?.unwrap_or_default();
+                    map.entry(finding).or_default().insert(aggr_uuid, AggregatedFindingAffected {
+                        uuid: aggr_uuid,
+                        r#type: aggr_type,
+                        details,
+                        screenshot,
+                    });
+                    Ok(map)
+                }
             }
         )
         .await?;
@@ -326,12 +346,22 @@ pub(crate) async fn export_workspace(
             Finding::F.remediation_duration,
             Finding::F.sorting_weight,
             Finding::F.created_at,
+            Finding::F.details.screenshot,
         )
     )
     .condition(Finding::F.workspace.equals(path.uuid))
     .stream()
     .and_then(
-        |(uuid, name, cve, severity, remediation_duration, sorting_weight, created_at)| {
+        |(
+            uuid,
+            name,
+            cve,
+            severity,
+            remediation_duration,
+            sorting_weight,
+            created_at,
+            screenshot,
+        )| {
             let affected = affected.remove(&uuid).unwrap_or_default();
             let categories = categories.remove(&uuid).unwrap_or_default();
             async move {
@@ -354,6 +384,7 @@ pub(crate) async fn export_workspace(
                         affected,
                         created_at,
                         categories,
+                        screenshot: screenshot.map(|fm| *fm.key()),
                     },
                 ))
             }
@@ -372,6 +403,54 @@ pub(crate) async fn export_workspace(
         relations,
         findings,
     }))
+}
+
+/// Downloads a file from the exported workspace
+#[utoipa::path(
+    tag = "Data Export",
+    context_path = "/api/v1/export",
+    responses(
+        (status = 200, description = "File has been downloaded successfully", body = Vec<u8>),
+        (status = 400, description = "Client error", body = ApiErrorResponse),
+        (status = 500, description = "Server error", body = ApiErrorResponse),
+    ),
+    params(PathFile),
+    security(("bearer_token" = []))
+)]
+#[get("/workspace/{w_uuid}/file/{f_uuid}")]
+pub(crate) async fn download_export_file(
+    path: Path<PathFile>,
+    token: BearerToken,
+) -> ApiResult<NamedFile> {
+    let PathFile { w_uuid, f_uuid } = path.into_inner();
+    let mut tx = GLOBAL.db.start_transaction().await?;
+
+    // Check access
+    query!(&mut tx, (WorkspaceAccessToken::F.id,))
+        .condition(and![
+            WorkspaceAccessToken::F.token.equals(token.as_str()),
+            WorkspaceAccessToken::F.workspace.equals(w_uuid),
+            WorkspaceAccessToken::F.expires_at.greater_than(Utc::now()),
+        ])
+        .optional()
+        .await?
+        .ok_or(ApiError::MissingPrivileges)?;
+
+    let (name,) = query!(&mut tx, (MediaFile::F.name,))
+        .condition(MediaFile::F.uuid.equals(f_uuid))
+        .optional()
+        .await?
+        .ok_or(ApiError::NotFound)?;
+
+    tx.commit().await?;
+
+    File::open(media_file_path(f_uuid))
+        .and_then(|file| NamedFile::from_file(file, name))
+        .map(|file| file.use_etag(true).use_last_modified(true))
+        .map_err(|err| {
+            error!("Failed to open file for download: {err}");
+            ApiError::InternalServerError
+        })
 }
 
 impl From<Host> for AggregatedHost {
