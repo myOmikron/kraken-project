@@ -717,7 +717,7 @@ impl<Impl: EditorCacheImpl> EditorCache<Impl> {
         let cache_item = self.read_cache().get(&key).cloned();
 
         // Check if ws notes have already been queried once
-        return if let Some(item) = cache_item {
+        if let Some(item) = cache_item {
             Ok(item.map(|x| (x.data, x.workspace)))
         } else {
             // Query the db to populate the cache
@@ -741,7 +741,7 @@ impl<Impl: EditorCacheImpl> EditorCache<Impl> {
             );
 
             Ok(Some((notes, workspace)))
-        };
+        }
     }
 
     /// Invalidates everything marked as "Not found in DB"

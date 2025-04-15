@@ -401,7 +401,7 @@ impl HttpServiceAST {
 /// ## Arguments
 /// - `input` is the source string to parse
 /// - `parse_column` is a callback which is invoked with each column which is encountered.
-///     Its arguments are the ast being constructed, the column's name and the cursor to parse the column's expression.
+///   Its arguments are the ast being constructed, the column's name and the cursor to parse the column's expression.
 pub fn parse_ast<A: Default>(
     input: &str,
     parse_column: impl Fn(&mut A, &str, &mut Cursor) -> Result<(), ParseError>,

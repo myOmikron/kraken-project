@@ -2,7 +2,7 @@ use crate::api::handler::attacks::schema::PortOrRange;
 
 impl From<PortOrRange> for kraken_proto::PortOrRange {
     fn from(value: PortOrRange) -> Self {
-        return kraken_proto::PortOrRange {
+        kraken_proto::PortOrRange {
             port_or_range: Some(match value {
                 PortOrRange::Port(port) => {
                     kraken_proto::port_or_range::PortOrRange::Single(port as u32)
@@ -14,6 +14,6 @@ impl From<PortOrRange> for kraken_proto::PortOrRange {
                     })
                 }
             }),
-        };
+        }
     }
 }

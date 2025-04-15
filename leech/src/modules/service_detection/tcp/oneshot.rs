@@ -86,13 +86,12 @@ impl OneShotTcpSettings {
 
         let raw_result = async {
             // Configure TLS
-            let alpns = alpn.as_ref().map(std::slice::from_ref).unwrap_or(&[]);
             let connector = tokio_native_tls::TlsConnector::from(
                 native_tls::TlsConnector::builder()
                     .danger_accept_invalid_certs(true)
                     .danger_accept_invalid_hostnames(true)
                     .use_sni(false)
-                    .request_alpns(alpns)
+                    .request_alpns(alpn.as_slice())
                     .build()
                     .map_err(io::Error::other)?,
             );

@@ -118,7 +118,7 @@ impl<'p> DeleteFile<'p> {
         self.0 = None;
     }
 }
-impl<'p> Drop for DeleteFile<'p> {
+impl Drop for DeleteFile<'_> {
     fn drop(&mut self) {
         if let Some(path) = self.0.take() {
             let path = path.to_path_buf();

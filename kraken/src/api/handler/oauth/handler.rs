@@ -143,14 +143,14 @@ pub async fn auth(
     };
 
     if !Workspace::is_user_member_or_owner(&mut tx, workspace, user_uuid).await?
-        && !query!(&GLOBAL.db, (User::F.uuid,))
+        && query!(&GLOBAL.db, (User::F.uuid,))
             .condition(and![
                 User::F.uuid.equals(user_uuid),
                 User::F.permission.equals(UserPermission::Admin)
             ])
             .optional()
             .await?
-            .is_some()
+            .is_none()
     {
         return build_redirect(
             &client.redirect_uri,
