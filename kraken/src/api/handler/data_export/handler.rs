@@ -317,12 +317,12 @@ pub(crate) async fn export_workspace(
                     return ready(Err(ApiError::InternalServerError));
                 }
             };
-            ready(Ok((*x.finding.key(), aggr_uuid, aggr_type)))
+            ready(Ok((x.uuid, *x.finding.key(), aggr_uuid, aggr_type)))
         })
         .try_fold(
             HashMap::<Uuid, HashMap<Uuid, AggregatedFindingAffected>>::new(),
-            |mut map, (finding, aggr_uuid, aggr_type)| {
-                let screenshot = affected_screenshots.get(&aggr_uuid).and_then(Option::as_ref).map(|fm| *fm.key());
+            |mut map, (affected_uuid, finding, aggr_uuid, aggr_type)| {
+                let screenshot = affected_screenshots.get(&affected_uuid).and_then(Option::as_ref).map(|fm| *fm.key());
                 async move {
                     let (details, _) = GLOBAL.editor_cache.finding_affected_export_details.get((finding,aggr_uuid)).await?.unwrap_or_default();
                     map.entry(finding).or_default().insert(aggr_uuid, AggregatedFindingAffected {
