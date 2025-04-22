@@ -167,7 +167,7 @@ pub fn kraken_endpoint(config: &KrakenConfig) -> Result<Endpoint, tonic::transpo
 /// https://stackoverflow.com/questions/48891727/using-socket-af-packet-sock-raw-but-tell-kernel-to-not-send-rst
 pub fn raw_socket(domain: socket2::Domain, protocol: socket2::Protocol) -> io::Result<UdpSocket> {
     let socket = socket2::Socket::new(domain, socket2::Type::RAW, Some(protocol))?;
-    socket.set_header_included(true)?;
+    socket.set_header_included_v4(true)?;
     socket.set_nonblocking(true)?;
 
     UdpSocket::from_std(unsafe { std::net::UdpSocket::from_raw_fd(socket.into_raw_fd()) })

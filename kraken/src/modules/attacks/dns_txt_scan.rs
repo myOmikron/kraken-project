@@ -327,7 +327,7 @@ fn generate_dns_txt_rows(collection_uuid: Uuid, entry: &DnsTxtScan) -> Option<Ve
                                 ),
                                 spf_directive::Mechanism::Ip(ip) => (
                                     DnsTxtScanSpfType::Ip,
-                                    Some(IpNetwork::try_from(ip.ip.clone()?).ok()?),
+                                    Some(IpNetwork::try_from(ip.ip?).ok()?),
                                     None,
                                     None,
                                     None,

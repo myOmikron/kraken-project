@@ -57,11 +57,9 @@ where
 
         let logged_in = session
             .get("logged_in")
-            .map(|logged_in_maybe| logged_in_maybe.map_or(false, |v| v));
+            .map(|logged_in_maybe| logged_in_maybe == Some(true));
 
-        let second_factor = session
-            .get("2fa")
-            .map(|sec_fac| sec_fac.map_or(false, |v| v));
+        let second_factor = session.get("2fa").map(|sec_fac| sec_fac == Some(true));
 
         let uuid = session.get("uuid");
 
