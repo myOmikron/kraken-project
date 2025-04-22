@@ -2,6 +2,10 @@
 
 ## WIP
 
+### Backend
+
+- Endpoint to retrieve screenshots from kraken
+
 ## 0.6.0
 
 ### Features leech
