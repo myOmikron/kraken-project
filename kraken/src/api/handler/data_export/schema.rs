@@ -261,6 +261,9 @@ pub struct AggregatedFinding {
     /// The details of this finding
     pub details: String,
 
+    /// An optional screenshot demonstrating the finding
+    pub screenshot: Option<Uuid>,
+
     /// List of all affected objects
     pub affected: HashMap<Uuid, AggregatedFindingAffected>,
 
@@ -284,6 +287,9 @@ pub struct AggregatedFindingAffected {
 
     /// The details of this affected
     pub details: String,
+
+    /// An optional screenshot demonstrating the finding
+    pub screenshot: Option<Uuid>,
 }
 
 /// Set of global and local tags

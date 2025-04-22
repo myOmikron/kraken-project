@@ -76,4 +76,36 @@ impl KrakenExportClient {
 
         Ok(deserialized)
     }
+
+    /// Downloads a file from an exported workspace
+    pub async fn download_file(
+        &self,
+        workspace: Uuid,
+        file: Uuid,
+    ) -> KrakenResult<reqwest::Response> {
+        #[allow(clippy::expect_used)]
+        let url = self
+            .base_url
+            .join(&format!("api/v1/export/workspace/{workspace}/file/{file}"))
+            .expect("Valid url");
+        let response = self
+            .client
+            .get(url)
+            .header("Authorization", self.bearer.clone())
+            .send()
+            .await?;
+
+        let status = response.status();
+        if !status.is_success() {
+            let text = response.text().await?;
+            let error: ApiErrorResponse =
+                serde_json::from_str(&text).map_err(|_| KrakenError::DeserializeError(text))?;
+            if error.status_code == ApiStatusCode::Unauthenticated {
+                return Err(KrakenError::AuthenticationFailed);
+            }
+            return Err(KrakenError::ApiError(error));
+        }
+
+        Ok(response)
+    }
 }

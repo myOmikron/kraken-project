@@ -143,7 +143,11 @@ pub async fn start_server() -> Result<(), StartServerError> {
                     .service(oauth::handler::deny),
             )
             .service(scope("/api/v1/oauth-server").service(oauth::handler::token))
-            .service(scope("/api/v1/export").service(data_export::handler::export_workspace))
+            .service(
+                scope("/api/v1/export")
+                    .service(data_export::handler::export_workspace)
+                    .service(data_export::handler::download_export_file),
+            )
             .service(
                 scope("/api/v1/service")
                     .wrap(TokenRequired)
