@@ -168,6 +168,7 @@ pub async fn start_server() -> Result<(), StartServerError> {
                     .service(users::handler_admin::get_all_users_admin)
                     .service(workspaces::handler_admin::get_workspace_admin)
                     .service(workspaces::handler_admin::get_all_workspaces_admin)
+                    .service(workspaces::handler_admin::clone_workspace)
                     .service(files::handler_admin::get_all_files_admin)
                     .service(files::handler_admin::download_file_admin)
                     .service(files::handler_admin::delete_file_admin)

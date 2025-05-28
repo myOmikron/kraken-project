@@ -5,6 +5,7 @@ use rorm::db::executor::Stream;
 use rorm::db::sql::value::Value;
 use rorm::db::transaction::Transaction;
 use rorm::db::Executor;
+use rorm::imr::Annotation;
 use rorm::insert;
 use rorm::prelude::ForeignModelByField;
 use rorm::query;
@@ -219,4 +220,48 @@ pub(crate) async fn get_workspace_unchecked(
         archived: workspace.archived,
         created_at: workspace.created_at,
     })
+}
+
+/// Inserts a bulk of models skipping all fields which are not insertable
+pub async fn insert_models<'ex, M: Model>(
+    executor: impl Executor<'ex>,
+    models: Vec<M>,
+) -> Result<(), rorm::Error> {
+    let mut columns = Vec::with_capacity(M::COLUMNS.len());
+    let mut to_skip = Vec::new();
+    'field: for (index, field) in M::get_imr().fields.into_iter().enumerate() {
+        for annotation in field.annotations {
+            match annotation {
+                Annotation::AutoCreateTime
+                | Annotation::AutoUpdateTime
+                | Annotation::AutoIncrement => {
+                    to_skip.push(index);
+                    continue 'field;
+                }
+                _ => {}
+            }
+        }
+
+        columns.push(M::COLUMNS[index]);
+    }
+
+    let mut tmp_values = Vec::with_capacity(M::COLUMNS.len());
+    let mut values = Vec::with_capacity(columns.len() * models.len());
+    for model in models {
+        model.push_values(&mut tmp_values);
+        for (index, value) in tmp_values.drain(..).enumerate() {
+            if to_skip.contains(&index) {
+                continue;
+            }
+
+            values.push(value);
+        }
+    }
+
+    let sql_values = values.iter().map(|v| v.as_sql()).collect::<Vec<_>>();
+    let rows = sql_values.chunks(columns.len()).collect::<Vec<_>>();
+
+    rorm::db::database::insert_bulk(executor, M::TABLE, &columns, &rows).await?;
+
+    Ok(())
 }

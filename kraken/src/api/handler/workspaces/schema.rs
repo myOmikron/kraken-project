@@ -177,3 +177,12 @@ pub struct SearchEntry {
     /// The search term that was used
     pub search_term: String,
 }
+
+/// The request to clone a workspace
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct CloneWorkspaceRequest {
+    /// Uuid of the cloned workspace's owner
+    ///
+    /// Will default to the original workspace's owner.
+    pub new_owner: Option<Uuid>,
+}
