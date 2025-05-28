@@ -9,8 +9,6 @@ use actix_web::web::Json;
 use actix_web::web::Path;
 use futures::TryStreamExt;
 use log::error;
-use rorm::db::Executor;
-use rorm::imr::Annotation;
 use rorm::prelude::ForeignModelByField;
 use rorm::query;
 use rorm::FieldAccess;
