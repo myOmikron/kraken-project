@@ -2,6 +2,14 @@
 
 ## WIP
 
+## 0.7.0
+
+### Backend
+
+- (Admin) Endpoint to clone a workspace
+
+## 0.6.1
+
 ### Backend
 
 - Endpoint to retrieve screenshots from kraken
