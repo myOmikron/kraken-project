@@ -156,7 +156,7 @@ pub async fn auth(
             &client.redirect_uri,
             AuthError {
                 error: AuthErrorType::AccessDenied,
-                state: None,
+                state: request.state,
                 error_description: Some("The user is not member of this workspace"),
             },
         );
@@ -167,7 +167,7 @@ pub async fn auth(
             &client.redirect_uri,
             AuthError {
                 error: AuthErrorType::InvalidRequest,
-                state: None,
+                state: request.state,
                 error_description: Some("Missing state"),
             },
         );
@@ -178,7 +178,7 @@ pub async fn auth(
             &client.redirect_uri,
             AuthError {
                 error: AuthErrorType::InvalidRequest,
-                state: None,
+                state: Some(state),
                 error_description: Some("Missing code_challenge"),
             },
         );
@@ -188,7 +188,7 @@ pub async fn auth(
             &client.redirect_uri,
             AuthError {
                 error: AuthErrorType::InvalidRequest,
-                state: None,
+                state: Some(state),
                 error_description: Some("Unsupported code_challenge_method"),
             },
         );
