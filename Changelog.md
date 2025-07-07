@@ -2,6 +2,12 @@
 
 ## WIP
 
+## 0.7.1
+
+### Backend
+
+- Fixed oauth errors
+
 ## 0.7.0
 
 ### Backend
